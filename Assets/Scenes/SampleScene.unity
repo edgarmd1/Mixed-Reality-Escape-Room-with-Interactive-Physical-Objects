@@ -3177,6 +3177,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3179695248675943825, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
+      propertyPath: m_text
+      value: Mixed Reality
+      objectReference: {fileID: 0}
     - target: {fileID: 3179695248887908164, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
