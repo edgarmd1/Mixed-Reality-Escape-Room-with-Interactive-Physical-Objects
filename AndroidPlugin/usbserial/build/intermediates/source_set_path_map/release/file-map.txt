@@ -1,0 +1,7 @@
+com.tfg.usbserial-pngs-0 /Users/edgarmesadominguez/Documents/UPC/TFG/Unity/TFG/AndroidPlugin/usbserial/build/generated/res/pngs/release
+com.tfg.usbserial-resValues-1 /Users/edgarmesadominguez/Documents/UPC/TFG/Unity/TFG/AndroidPlugin/usbserial/build/generated/res/resValues/release
+com.tfg.usbserial-mergeReleaseResources-2 /Users/edgarmesadominguez/Documents/UPC/TFG/Unity/TFG/AndroidPlugin/usbserial/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+com.tfg.usbserial-mergeReleaseResources-3 /Users/edgarmesadominguez/Documents/UPC/TFG/Unity/TFG/AndroidPlugin/usbserial/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+com.tfg.usbserial-merged_res-4 /Users/edgarmesadominguez/Documents/UPC/TFG/Unity/TFG/AndroidPlugin/usbserial/build/intermediates/merged_res/release
+com.tfg.usbserial-main-5 /Users/edgarmesadominguez/Documents/UPC/TFG/Unity/TFG/AndroidPlugin/usbserial/src/main/res
+com.tfg.usbserial-release-6 /Users/edgarmesadominguez/Documents/UPC/TFG/Unity/TFG/AndroidPlugin/usbserial/src/release/res

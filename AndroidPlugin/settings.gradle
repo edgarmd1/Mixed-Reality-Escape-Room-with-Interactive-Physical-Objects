@@ -1,0 +1,2 @@
+rootProject.name = "USBSerialPlugin"
+include ':usbserial'
