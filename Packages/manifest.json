@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.meta.xr.sdk.core": "83.0.4",
     "com.unity.feature.development": "1.0.2",
     "com.unity.ide.rider": "3.0.38",
     "com.unity.inputsystem": "1.14.2",
@@ -14,7 +15,7 @@
     "com.unity.xr.core-utils": "2.5.3",
     "com.unity.xr.hands": "1.7.1",
     "com.unity.xr.interaction.toolkit": "3.3.0",
-    "com.unity.xr.management": "4.5.3",
+    "com.unity.xr.management": "4.5.4",
     "com.unity.xr.meta-openxr": "2.3.0",
     "com.unity.xr.openxr": "1.15.1",
     "com.unity.modules.accessibility": "1.0.0",
