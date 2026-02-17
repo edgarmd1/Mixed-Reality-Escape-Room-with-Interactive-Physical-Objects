@@ -1,17 +1,17 @@
 using UnityEngine;
-using System.IO.Ports; // Necesario para el puerto serie
+using System.IO.Ports; 
 
 public class ArduinoController : MonoBehaviour
 {
-    SerialPort stream = new SerialPort("COM4", 9600); // AJUSTA TU PUERTO COM
-    public Transform controllerTransform; // Arrastra aquí el mando de Meta
-    public Transform arduinoTarget;     // Punto donde "está" la placa
-    public float activationDistance = 0.2f; // 20 cm
+    SerialPort stream = new SerialPort("COM4", 9600); 
+    public Transform controllerTransform; 
+    public Transform arduinoTarget;     
+    public float activationDistance = 0.2f; 
 
     bool isOn = false;
 
     void Start() {
-        stream.Open(); // Abrir conexión
+        stream.Open(); 
         stream.ReadTimeout = 50;
     }
 
@@ -33,6 +33,6 @@ public class ArduinoController : MonoBehaviour
     }
 
     void OnApplicationQuit() {
-        stream.Close(); // ¡Importante cerrar el puerto al salir!
+        stream.Close(); 
     }
 }

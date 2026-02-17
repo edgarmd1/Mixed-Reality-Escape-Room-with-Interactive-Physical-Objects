@@ -3,7 +3,11 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags: []
+  tags:
+  - Real_World
+  - Virtual_World
+  - Mundo_Real
+  - Mundo_Virtual
   layers:
   - Default
   - TransparentFX
@@ -13,8 +17,8 @@ TagManager:
   - UI
   - Spawner Contact
   - Placeable Surface
-  - 
-  - 
+  - Mundo_Real
+  - Mundo_Virtual
   - 
   - 
   - 
