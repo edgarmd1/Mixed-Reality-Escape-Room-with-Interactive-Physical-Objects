@@ -2227,6 +2227,7 @@ GameObject:
   - component: {fileID: 1675770379}
   - component: {fileID: 1675770378}
   - component: {fileID: 1675770377}
+  - component: {fileID: 1675770381}
   m_Layer: 8
   m_Name: CubeArduino
   m_TagString: Mundo_Real
@@ -2323,6 +2324,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1675770381
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1675770376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cf383e5eb7b2b34884b575b4cd714e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  arduinoTransform: {fileID: 1675770380}
+  leftController: {fileID: 1766750151}
+  isCalibrating: 0
 --- !u!1 &1731410470
 GameObject:
   m_ObjectHideFlags: 0
@@ -2496,7 +2512,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6484816944661230508, guid: 86a5bf68cb51f4e44bd3893bd22a2ba7, type: 3}
       propertyPath: m_CullingMask.m_Bits
-      value: 1073742583
+      value: 1073742327
       objectReference: {fileID: 0}
     - target: {fileID: 6484816944748581674, guid: 86a5bf68cb51f4e44bd3893bd22a2ba7, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3561,7 +3577,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1771677581793342042, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_text
-      value: Apagar bombilla
+      value: Calibrar Arduino
       objectReference: {fileID: 0}
     - target: {fileID: 1771677582893249544, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3585,7 +3601,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1771677582893249551, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_Name
-      value: ApagarBombilla
+      value: CalibrarArduino
       objectReference: {fileID: 0}
     - target: {fileID: 2278274070319506764, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -3765,11 +3781,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3331091096969189957, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_text
-      value: Encender bombilla
+      value: "Acabar Calibraci\xF3n"
       objectReference: {fileID: 0}
     - target: {fileID: 3331091097867770896, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_Name
-      value: EncenderBombilla
+      value: CalibOK
       objectReference: {fileID: 0}
     - target: {fileID: 3331091097867770903, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_AnchorMax.y
@@ -4070,14 +4086,14 @@ PrefabInstance:
     - target: {fileID: 5930018702012464346, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1731410473}
+      objectReference: {fileID: 1675770381}
     - target: {fileID: 5930018702012464346, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ApagarLED
+      value: StartCalibration
       objectReference: {fileID: 0}
     - target: {fileID: 5930018702012464346, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: ArduinoUSBSerial, Assembly-CSharp
+      value: ArduinoPositionManager, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 6054590504125423291, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_AnchorMax.y
@@ -4194,14 +4210,14 @@ PrefabInstance:
     - target: {fileID: 7270923596239738053, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1731410473}
+      objectReference: {fileID: 1675770381}
     - target: {fileID: 7270923596239738053, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: EncenderLED
+      value: StopCalibration
       objectReference: {fileID: 0}
     - target: {fileID: 7270923596239738053, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: ArduinoUSBSerial, Assembly-CSharp
+      value: ArduinoPositionManager, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 7647314696107631088, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_AnchorMax.y
@@ -4347,6 +4363,10 @@ PrefabInstance:
       propertyPath: onValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
+    - target: {fileID: 8811963068569831146, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
+      propertyPath: m_text
+      value: "Parar calibraci\xF3n"
+      objectReference: {fileID: 0}
     - target: {fileID: 8811963069517791416, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -4369,7 +4389,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8811963069517791423, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_Name
-      value: Asset Spawner Dropdown
+      value: CalibracionOK
       objectReference: {fileID: 0}
     - target: {fileID: 8892635268612093390, guid: b6d57cedc6a73c94aad8ce006a26b41b, type: 3}
       propertyPath: m_IsActive
