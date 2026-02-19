@@ -79,14 +79,16 @@ public class CameraCullingMaskController : MonoBehaviour
             SetLayerObjectsActive(mundoRealLayer, true);
             SetLayerVisibility(mundoRealLayer, true);
             SetLayerVisibility(mundoVirtualLayer, false);
-            Debug.Log("CameraCullingMaskController: Modo MR - Mundo_Real visible e interactuable.");
+            SetLayerObjectsActive<VRSiempreActivo>(mundoVirtualLayer, false);
+            Debug.Log("CameraCullingMaskController: Modo MR - Mundo_Real activo, Mundo_Virtual desactivado.");
         }
         else
         {
             SetLayerVisibility(mundoRealLayer, false);
-            SetLayerObjectsActive(mundoRealLayer, false);
+            SetLayerObjectsActive<MRSiempreActivo>(mundoRealLayer, false);
+            SetLayerObjectsActive(mundoVirtualLayer, true);
             SetLayerVisibility(mundoVirtualLayer, true);
-            Debug.Log("CameraCullingMaskController: Modo VR - Mundo_Real oculto y desactivado.");
+            Debug.Log("CameraCullingMaskController: Modo VR - Mundo_Virtual activo, Mundo_Real desactivado.");
         }
     }
 
@@ -111,12 +113,25 @@ public class CameraCullingMaskController : MonoBehaviour
         GameObject[] allObjects = FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (GameObject go in allObjects)
         {
+            if (go.layer == layer)
+                go.SetActive(active);
+        }
+    }
+
+    private void SetLayerObjectsActive<T>(int layer, bool active) where T : Component
+    {
+        if (layer == -1)
+            return;
+
+        GameObject[] allObjects = FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (GameObject go in allObjects)
+        {
             if (go.layer != layer)
                 continue;
 
-            if (!active && go.GetComponent<MRSiempreActivo>() != null)
+            if (!active && go.GetComponent<T>() != null)
             {
-                Debug.Log($"[CameraCullingMask] '{go.name}' conserva MRSiempreActivo → permanece activo en VR.");
+                Debug.Log($"[CameraCullingMask] '{go.name}' tiene marcador '{typeof(T).Name}' → permanece activo.");
                 continue;
             }
 
