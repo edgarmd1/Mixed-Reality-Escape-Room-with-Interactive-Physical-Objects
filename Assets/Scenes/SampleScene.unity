@@ -3245,6 +3245,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a2d7d89889b4d94fa1f8d6fe49788e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1446173667
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1446173669}
+  - component: {fileID: 1446173668}
+  m_Layer: 0
+  m_Name: GameModeManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1446173668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1446173667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 329e2097669263c4284b98604a15ccee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1446173669
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1446173667}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.000033634715, y: -0.00031787134, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1524738017
 GameObject:
   m_ObjectHideFlags: 0
@@ -3452,7 +3496,6 @@ GameObject:
   - component: {fileID: 1675770379}
   - component: {fileID: 1675770378}
   - component: {fileID: 1675770377}
-  - component: {fileID: 1675770381}
   m_Layer: 8
   m_Name: CubeArduino
   m_TagString: Mundo_Real
@@ -3549,21 +3592,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1675770381
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1675770376}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8cf383e5eb7b2b34884b575b4cd714e8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  arduinoTransform: {fileID: 1675770380}
-  leftController: {fileID: 1766750151}
-  isCalibrating: 0
 --- !u!1 &1731410470
 GameObject:
   m_ObjectHideFlags: 0
@@ -5778,3 +5806,4 @@ SceneRoots:
   - {fileID: 1675770380}
   - {fileID: 537283268}
   - {fileID: 211488951}
+  - {fileID: 1446173669}

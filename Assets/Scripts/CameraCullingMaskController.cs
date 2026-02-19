@@ -46,14 +46,10 @@ public class CameraCullingMaskController : MonoBehaviour
         mundoVirtualLayer = LayerMask.NameToLayer(mundoVirtualLayerName);
 
         if (mundoRealLayer == -1)
-        {
-            Debug.LogWarning($"CameraCullingMaskController: La capa '{mundoRealLayerName}' no existe. Por favor créala en Project Settings > Tags and Layers.");
-        }
+            Debug.LogWarning($"CameraCullingMaskController: La capa '{mundoRealLayerName}' no existe.");
 
         if (mundoVirtualLayer == -1)
-        {
-            Debug.LogWarning($"CameraCullingMaskController: La capa '{mundoVirtualLayerName}' no existe. Por favor créala en Project Settings > Tags and Layers.");
-        }
+            Debug.LogWarning($"CameraCullingMaskController: La capa '{mundoVirtualLayerName}' no existe.");
 
         if (arFeatureController != null && arFeatureController.onARPassthroughFeatureChanged != null)
         {
@@ -70,27 +66,30 @@ public class CameraCullingMaskController : MonoBehaviour
         }
     }
 
-    /// <param name="passthroughEnabled">True si Passthrough está activado, False si está desactivado</param>
+    /// <param name="passthroughEnabled">True si Passthrough está activado (MR), False si está desactivado (VR)</param>
     private void OnPassthroughChanged(bool passthroughEnabled)
     {
         if (mainCamera == null)
             return;
 
+        GameModeManager.SetMode(passthroughEnabled);
+
         if (passthroughEnabled)
         {
+            SetLayerObjectsActive(mundoRealLayer, true);
             SetLayerVisibility(mundoRealLayer, true);
             SetLayerVisibility(mundoVirtualLayer, false);
-            Debug.Log("CameraCullingMaskController: Modo MR - Mundo_Real visible, Mundo_Virtual oculto.");
+            Debug.Log("CameraCullingMaskController: Modo MR - Mundo_Real visible e interactuable.");
         }
         else
         {
             SetLayerVisibility(mundoRealLayer, false);
+            SetLayerObjectsActive(mundoRealLayer, false);
             SetLayerVisibility(mundoVirtualLayer, true);
-            Debug.Log("CameraCullingMaskController: Modo VR - Mundo_Real oculto, Mundo_Virtual visible.");
+            Debug.Log("CameraCullingMaskController: Modo VR - Mundo_Real oculto y desactivado.");
         }
     }
 
-   
     /// <param name="layer">Índice de la capa</param>
     /// <param name="visible">True para mostrar, False para ocultar</param>
     private void SetLayerVisibility(int layer, bool visible)
@@ -99,15 +98,31 @@ public class CameraCullingMaskController : MonoBehaviour
             return;
 
         if (visible)
-        {
             mainCamera.cullingMask |= (1 << layer);
-        }
         else
-        {
             mainCamera.cullingMask &= ~(1 << layer);
-        }
     }
 
+    private void SetLayerObjectsActive(int layer, bool active)
+    {
+        if (layer == -1)
+            return;
+
+        GameObject[] allObjects = FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (GameObject go in allObjects)
+        {
+            if (go.layer != layer)
+                continue;
+
+            if (!active && go.GetComponent<MRSiempreActivo>() != null)
+            {
+                Debug.Log($"[CameraCullingMask] '{go.name}' conserva MRSiempreActivo → permanece activo en VR.");
+                continue;
+            }
+
+            go.SetActive(active);
+        }
+    }
 
     /// <param name="enableMR">True para MR, False para VR</param>
     public void SetMode(bool enableMR)
