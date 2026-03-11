@@ -3,7 +3,22 @@ guid: 4b28785de8926364fa96b531bb79cd2d
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Room2Mat
+    second: {fileID: 2100000, guid: 11bb85e9cc1ae6f4990cbac30ef3de9a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: initialShadingGroup_Room2Mat
+    second: {fileID: 2100000, guid: 38d37145f3818204a98350dce3678ccc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: room_pCube2_Room2Mat
+    second: {fileID: 2100000, guid: 7c3055d6f79e26a4d8dae9720272534c, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
