@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.IO.Ports;
+using System.Threading;
 
 public class ArduinoLuz : MonoBehaviour
 {
@@ -12,6 +13,9 @@ public class ArduinoLuz : MonoBehaviour
     [Header("Referencias de Escena")]
     public CameraCullingMaskController cameraCullingMaskController;
 
+    private volatile bool luzDetectada = false;
+    private Thread hiloSerie;
+
     void Start()
     {
         if (cameraCullingMaskController == null)
@@ -19,38 +23,53 @@ public class ArduinoLuz : MonoBehaviour
 
         if (!puerto.IsOpen)
         {
-            puerto.ReadTimeout = 100;
+            puerto.ReadTimeout = 500;
             puerto.Open();
+        }
+
+        hiloSerie = new Thread(LeerSerie) { IsBackground = true };
+        hiloSerie.Start();
+    }
+
+    void LeerSerie()
+    {
+        while (puerto.IsOpen && !puzzleCompletado)
+        {
+            try
+            {
+                string valor = puerto.ReadLine();
+                if (int.TryParse(valor.Trim(), out int luz))
+                {
+                    if (luz >= umbralActivacion)
+                        luzDetectada = true;
+                }
+            }
+            catch (System.TimeoutException) { /* normal, sin datos */ }
+            catch (System.Exception) { break; }
         }
     }
 
     void Update()
     {
-        if (puerto.IsOpen && !puzzleCompletado)
+        if (luzDetectada && !puzzleCompletado)
         {
-            try
-            {
-                string valor = puerto.ReadLine();
-                int luz = int.Parse(valor);
-                Debug.Log("Luz actual: " + luz);
-
-                if (luz >= umbralActivacion)
-                {
-                    ActivarTransicion();
-                }
-            }
-            catch (System.Exception) { }
+            ActivarTransicion();
         }
     }
 
     void ActivarTransicion()
     {
         puzzleCompletado = true;
-        Debug.Log("¡Luz detectada! Desactivando passthrough...");
+        luzDetectada = false;
 
-        // Desactiva passthrough → pasa a modo VR
         cameraCullingMaskController?.SetMode(false);
 
         puerto.Close();
+    }
+
+    void OnDestroy()
+    {
+        puerto.Close();
+        hiloSerie?.Join(200);
     }
 }
