@@ -10,6 +10,9 @@ public class CameraCullingMaskController : MonoBehaviour
     [SerializeField, Tooltip("ARFeatureController que gestiona el Passthrough")]
     private ARFeatureController arFeatureController;
 
+    [SerializeField, Tooltip("Controlador de spawn inicial en el mundo virtual")]
+    private VRSpawnController vrSpawnController;
+
     [Header("Configuración de Capas")]
     [SerializeField, Tooltip("Nombre de la capa para objetos del mundo real (MR)")]
     private string mundoRealLayerName = "Mundo_Real";
@@ -88,6 +91,10 @@ public class CameraCullingMaskController : MonoBehaviour
             SetLayerObjectsActive<MRSiempreActivo>(mundoRealLayer, false);
             SetLayerObjectsActive(mundoVirtualLayer, true);
             SetLayerVisibility(mundoVirtualLayer, true);
+
+            // Reposicionar al jugador en el spawn VR para evitar el salto en el primer teleport
+            vrSpawnController?.TeletransportarAlSpawnVR();
+
             Debug.Log("CameraCullingMaskController: Modo VR - Mundo_Virtual activo, Mundo_Real desactivado.");
         }
     }
