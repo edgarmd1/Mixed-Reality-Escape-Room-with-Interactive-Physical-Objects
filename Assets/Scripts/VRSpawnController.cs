@@ -1,11 +1,7 @@
+using System.Collections;
 using UnityEngine;
 using Unity.XR.CoreUtils;
 
-/// <summary>
-/// Repositions the XR Origin when entering VR mode so the camera starts
-/// correctly aligned with the virtual world floor, avoiding the jump on
-/// the first teleport caused by the MR origin offset.
-/// </summary>
 public class VRSpawnController : MonoBehaviour
 {
     [Header("Referencias")]
@@ -16,17 +12,20 @@ public class VRSpawnController : MonoBehaviour
     [Tooltip("XR Origin de la escena. Si se deja vacío se busca automáticamente.")]
     [SerializeField] private XROrigin xrOrigin;
 
+    [Header("Tracking")]
+    [Tooltip("Altura mínima (metros) que debe reportar la cámara para considerar que el " +
+             "tracking está activo. Reduce a 0 si el tracking siempre está listo.")]
+    [SerializeField] private float alturaTrackingMinima = 0.05f;
+
+    [Tooltip("Tiempo máximo (segundos) esperando tracking antes de aplicar el spawn igualmente.")]
+    [SerializeField] private float timeoutTracking = 5f;
+
     void Awake()
     {
         if (xrOrigin == null)
             xrOrigin = FindObjectOfType<XROrigin>();
     }
-
-    /// <summary>
-    /// Llamar a este método al entrar en modo VR para reposicionar el XR Origin.
-    /// La posición se calcula para que la cámara (cabeza del jugador) quede
-    /// sobre el punto de spawn, compensando el offset de tracking.
-    /// </summary>
+    
     public void TeletransportarAlSpawnVR()
     {
         if (xrOrigin == null)
@@ -42,33 +41,52 @@ public class VRSpawnController : MonoBehaviour
             return;
         }
 
-        // La cámara del XR Origin tiene un offset respecto al propio XR Origin
-        // (la altura del tracking del casco). Necesitamos compensarlo para que
-        // la cámara quede EXACTAMENTE sobre el punto de spawn.
+        StartCoroutine(EsperarYSpawnear());
+    }
+
+    private IEnumerator EsperarYSpawnear()
+    {
         Camera cam = xrOrigin.Camera;
         if (cam == null)
         {
             Debug.LogError("[VRSpawnController] XROrigin no tiene cámara asignada.");
-            return;
+            yield break;
         }
 
-        // Offset horizontal de la cámara respecto al XR Origin (solo X y Z)
-        Vector3 camOffsetLocal = cam.transform.localPosition;
-        Vector3 camOffsetWorld = new Vector3(camOffsetLocal.x, 0f, camOffsetLocal.z);
+        yield return new WaitForEndOfFrame();
+        
+        float tiempoEspera = 0f;
+        while (cam.transform.localPosition.y < alturaTrackingMinima && tiempoEspera < timeoutTracking)
+        {
+            tiempoEspera += Time.deltaTime;
+            yield return null;
+        }
 
-        // Nueva posición del XR Origin: spawn - offset horizontal de cámara
-        // La Y del XR Origin se pone a la Y del spawn (suelo del mundo virtual)
-        Vector3 nuevaPosicion = puntoSpawnVR.position - camOffsetWorld;
-        nuevaPosicion.y = puntoSpawnVR.position.y;
+        if (tiempoEspera >= timeoutTracking)
+            Debug.LogWarning("[VRSpawnController] Timeout esperando tracking. " +
+                             "Aplicando spawn con el offset actual.");
+        else
+            Debug.Log($"[VRSpawnController] Tracking listo. Offset cámara: {cam.transform.localPosition}");
+
+        AplicarSpawn(cam);
+    }
+
+    private void AplicarSpawn(Camera cam)
+    {
+        Vector3 camOffsetLocal = cam.transform.localPosition;
+
+        Vector3 nuevaPosicion = new Vector3(
+            puntoSpawnVR.position.x - camOffsetLocal.x,
+            puntoSpawnVR.position.y - camOffsetLocal.y,
+            puntoSpawnVR.position.z - camOffsetLocal.z
+        );
 
         xrOrigin.transform.position = nuevaPosicion;
 
-        // Orientación: ajustamos la rotación Y del XR Origin para que mire
-        // en la dirección del punto de spawn, manteniendo el up del mundo.
         float rotacionY = puntoSpawnVR.eulerAngles.y;
         xrOrigin.transform.rotation = Quaternion.Euler(0f, rotacionY, 0f);
 
-        Debug.Log($"[VRSpawnController] XR Origin reposicionado a {nuevaPosicion} " +
-                  $"para spawn VR en {puntoSpawnVR.position}");
+        Debug.Log($"[VRSpawnController] Spawn aplicado → XROrigin: {nuevaPosicion} | " +
+                  $"Spawn: {puntoSpawnVR.position} | CamOffset: {camOffsetLocal}");
     }
 }
