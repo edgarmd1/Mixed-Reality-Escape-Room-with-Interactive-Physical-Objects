@@ -6,11 +6,11 @@ public class ArduinoLuz : MonoBehaviour
 {
     SerialPort puerto = new SerialPort("COM4", 9600);
 
-    [Header("Configuración de Luz")]
     public int umbralActivacion = 700;
     public bool puzzleCompletado = false;
 
-    [Header("Referencias de Escena")]
+    public bool habilitado = false;
+
     public CameraCullingMaskController cameraCullingMaskController;
 
     private volatile bool luzDetectada = false;
@@ -44,13 +44,16 @@ public class ArduinoLuz : MonoBehaviour
                         luzDetectada = true;
                 }
             }
-            catch (System.TimeoutException) { /* normal, sin datos */ }
+            catch (System.TimeoutException) { }
             catch (System.Exception) { break; }
         }
     }
 
     void Update()
     {
+        if (!habilitado)
+            return;
+
         if (luzDetectada && !puzzleCompletado)
         {
             ActivarTransicion();
