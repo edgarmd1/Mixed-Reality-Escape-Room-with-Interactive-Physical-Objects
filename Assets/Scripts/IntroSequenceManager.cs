@@ -26,6 +26,10 @@ public class IntroSequenceManager : MonoBehaviour
     [SerializeField] private GameObject portalAscensor;
     [SerializeField] private DoorPuzzleManager doorPuzzleManager;
 
+    [Header("Modo Demo")]
+    [SerializeField, Tooltip("Si está activo, salta toda la secuencia y va directo al puzzle de la puerta")]
+    private bool modoDemo = false;
+
     private Material _overlayMat;
     private bool _secuenciaFinalizada = false;
 
@@ -42,7 +46,23 @@ public class IntroSequenceManager : MonoBehaviour
         if (arduinoLuz != null)
             arduinoLuz.habilitado = false;
 
-        StartCoroutine(SecuenciaIntro());
+        if (modoDemo)
+            StartCoroutine(SecuenciaDemoDirecta());
+        else
+            StartCoroutine(SecuenciaIntro());
+    }
+
+    // Salta toda la intro y activa directamente el puzzle de la puerta
+    private IEnumerator SecuenciaDemoDirecta()
+    {
+        SetOverlayAlpha(0f);
+        cameraCullingMask?.SetMode(true);   // asegurar modo MR
+        if (portalAscensor != null) portalAscensor.SetActive(false);
+        yield return null;                  // un frame para que todo inicialice
+        if (doorPuzzleManager != null)
+            doorPuzzleManager.IniciarPuzzle();
+        _secuenciaFinalizada = true;
+        Debug.Log("[Intro] MODO DEMO: puzzle de puerta activado directamente.");
     }
 
     private IEnumerator SecuenciaIntro()

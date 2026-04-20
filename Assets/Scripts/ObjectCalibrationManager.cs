@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR;
 using System.Collections.Generic;
 
 public class ObjectCalibrationManager : MonoBehaviour
@@ -6,17 +7,21 @@ public class ObjectCalibrationManager : MonoBehaviour
     [System.Serializable]
     public class CalibratableObject
     {
-        public string name;                    
-        public Transform objectTransform;      
-        [HideInInspector] public string prefsPrefix; 
+        public string name;
+        public Transform objectTransform;
+        [HideInInspector] public string prefsPrefix;
     }
 
     [Header("Configuración")]
     [SerializeField, Tooltip("Lista de objetos que se pueden calibrar")]
     private List<CalibratableObject> calibratableObjects = new List<CalibratableObject>();
 
-    [SerializeField, Tooltip("Controlador para posicionar objetos durante calibración")]
-    private Transform calibrationController;
+    [Header("Velocidades de calibración")]
+    [SerializeField, Tooltip("Velocidad de traslación (m/s)")]
+    private float velocidadMovimiento = 0.8f;
+
+    [SerializeField, Tooltip("Velocidad de rotación (grados/s)")]
+    private float velocidadRotacion = 60f;
 
     [Header("Estado")]
     [SerializeField, Tooltip("Índice del objeto actualmente seleccionado")]
@@ -28,27 +33,75 @@ public class ObjectCalibrationManager : MonoBehaviour
     private bool isCalibrating = false;
     private CalibratableObject currentObject;
 
+    // Caché de dispositivos XR
+    private readonly List<InputDevice> _leftDevices  = new List<InputDevice>();
+    private readonly List<InputDevice> _rightDevices = new List<InputDevice>();
+
     void Start()
     {
         for (int i = 0; i < calibratableObjects.Count; i++)
-        {
             calibratableObjects[i].prefsPrefix = $"CalObj_{i}_";
-        }
+
         if (calibratableObjects.Count > 0)
-        {
             selectedObjectName = calibratableObjects[0].name;
-        }
 
         LoadAllPositions();
     }
 
     void Update()
     {
-        if (isCalibrating && currentObject != null && calibrationController != null)
+        if (!isCalibrating || currentObject == null) return;
+
+        // ── Leer thumbsticks de los mandos vía XR InputDevices ───────────
+        InputDevices.GetDevicesWithCharacteristics(
+            InputDeviceCharacteristics.Left | InputDeviceCharacteristics.Controller,
+            _leftDevices);
+        InputDevices.GetDevicesWithCharacteristics(
+            InputDeviceCharacteristics.Right | InputDeviceCharacteristics.Controller,
+            _rightDevices);
+
+        Vector2 leftStick  = Vector2.zero;
+        Vector2 rightStick = Vector2.zero;
+        bool    gripLeft   = false;
+
+        if (_leftDevices.Count > 0)
         {
-            currentObject.objectTransform.position = calibrationController.position;
-            currentObject.objectTransform.rotation = calibrationController.rotation;
+            _leftDevices[0].TryGetFeatureValue(CommonUsages.primary2DAxis, out leftStick);
+            _leftDevices[0].TryGetFeatureValue(CommonUsages.gripButton,    out gripLeft);
         }
+        if (_rightDevices.Count > 0)
+            _rightDevices[0].TryGetFeatureValue(CommonUsages.primary2DAxis, out rightStick);
+
+        float dt = Time.deltaTime;
+        Transform obj = currentObject.objectTransform;
+
+        // ── Traslación ────────────────────────────────────────────────────
+        if (!gripLeft)
+        {
+            // Stick izquierdo → mover en XZ relativo a la cámara
+            Camera cam = Camera.main;
+            if (cam != null && leftStick.sqrMagnitude > 0.01f)
+            {
+                Vector3 forward = new Vector3(cam.transform.forward.x, 0f, cam.transform.forward.z).normalized;
+                Vector3 right   = new Vector3(cam.transform.right.x,   0f, cam.transform.right.z).normalized;
+                obj.position += (right   * leftStick.x +
+                                 forward * leftStick.y) * velocidadMovimiento * dt;
+            }
+        }
+        else
+        {
+            // Grip izquierdo + stick izquierdo → mover en Y
+            obj.position += Vector3.up * leftStick.y * velocidadMovimiento * dt;
+        }
+
+        // ── Rotación ──────────────────────────────────────────────────────
+        // Stick derecho X → rotar alrededor de Y (girar la puerta/hacha)
+        if (Mathf.Abs(rightStick.x) > 0.05f)
+            obj.Rotate(Vector3.up, rightStick.x * velocidadRotacion * dt, Space.World);
+
+        // Stick derecho Y → inclinar hacia adelante/atrás
+        if (Mathf.Abs(rightStick.y) > 0.05f)
+            obj.Rotate(obj.right, -rightStick.y * velocidadRotacion * dt, Space.World);
     }
 
     public void SelectObject(int index)
@@ -69,12 +122,6 @@ public class ObjectCalibrationManager : MonoBehaviour
     public void StartCalibration()
     {
         Debug.Log($"ObjectCalibrationManager: StartCalibration llamado. Índice seleccionado: {selectedObjectIndex}");
-        
-        if (calibrationController == null)
-        {
-            Debug.LogError("ObjectCalibrationManager: calibrationController no asignado.");
-            return;
-        }
 
         if (calibratableObjects.Count == 0)
         {
