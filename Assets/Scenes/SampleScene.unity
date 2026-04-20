@@ -4922,7 +4922,7 @@ MonoBehaviour:
   - {fileID: 232848761}
   - {fileID: 430031157}
   telefonoManager: {fileID: 1799922762}
-  sonidoPortalAbierto: {fileID: 0}
+  sonidoPortalAbierto: {fileID: 1457197127}
 --- !u!4 &1505812996
 Transform:
   m_ObjectHideFlags: 0

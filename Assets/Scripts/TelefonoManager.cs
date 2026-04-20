@@ -3,15 +3,15 @@ using UnityEngine;
 
 public class TelefonoManager : MonoBehaviour
 {
-    private ArduinoLuz arduinoLuz;
+    [SerializeField] private ArduinoLuz arduinoLuz;
 
-    private AudioSource telefonoSonando;
+    [Header("Audio")]
+    [SerializeField] private AudioSource telefonoSonando;
+    [SerializeField] private AudioSource vozAudio;
 
-    private AudioSource vozAudio;
-
-    private float retrasoPrimeroSonido = 1.2f;
-
-    private float fadeSalidaTelefono = 0.4f;
+    [Header("Timings")]
+    [SerializeField] private float retrasoPrimeroSonido = 1.2f;
+    [SerializeField] private float fadeSalidaTelefono = 0.4f;
 
     private bool _telefonoActivo  = false;
     private bool _vozActivada     = false;
@@ -23,7 +23,8 @@ public class TelefonoManager : MonoBehaviour
         bool descolgado = false;
 
 #if UNITY_EDITOR
-        if (Input.GetKeyDown(KeyCode.T)) descolgado = true;
+        var kb = UnityEngine.InputSystem.Keyboard.current;
+        if (kb != null && kb.tKey.wasPressedThisFrame) descolgado = true;
 #endif
 
         if (arduinoLuz != null && arduinoLuz.TelefonoDescolgado)
