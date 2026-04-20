@@ -24,6 +24,7 @@ public class IntroSequenceManager : MonoBehaviour
 
     [SerializeField] private AudioSource audioMusica;
     [SerializeField] private GameObject portalAscensor;
+    [SerializeField] private DoorPuzzleManager doorPuzzleManager;
 
     private Material _overlayMat;
     private bool _secuenciaFinalizada = false;
@@ -70,6 +71,9 @@ public class IntroSequenceManager : MonoBehaviour
             portalAscensor.SetActive(true); //enable portal
 
         yield return StartCoroutine(CoroutineFadeOverlay(0f, duracionFadeVuelta)); //fade overlay
+
+        if (doorPuzzleManager != null)
+            doorPuzzleManager.IniciarPuzzle(); //start door puzzle
 
         _secuenciaFinalizada = true; //end sequence
     }

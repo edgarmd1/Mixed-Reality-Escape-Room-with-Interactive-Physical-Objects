@@ -1,0 +1,82 @@
+using System.Collections;
+using UnityEngine;
+
+public class TelefonoManager : MonoBehaviour
+{
+    private ArduinoLuz arduinoLuz;
+
+    private AudioSource telefonoSonando;
+
+    private AudioSource vozAudio;
+
+    private float retrasoPrimeroSonido = 1.2f;
+
+    private float fadeSalidaTelefono = 0.4f;
+
+    private bool _telefonoActivo  = false;
+    private bool _vozActivada     = false;
+
+    void Update()
+    {
+        if (!_telefonoActivo || _vozActivada) return;
+
+        bool descolgado = false;
+
+#if UNITY_EDITOR
+        if (Input.GetKeyDown(KeyCode.T)) descolgado = true;
+#endif
+
+        if (arduinoLuz != null && arduinoLuz.TelefonoDescolgado)
+            descolgado = true;
+
+        if (descolgado)
+            StartCoroutine(ActivarVoz());
+    }
+
+    public void IniciarTelefono()
+    {
+        if (_telefonoActivo) return;
+
+        _telefonoActivo = true;
+
+        if (arduinoLuz != null)
+            arduinoLuz.HabilitarTelefono();
+
+        StartCoroutine(EmpezarSonidoTelefono());
+        Debug.Log("[Telefono] Teléfono iniciado – esperando que el jugador descuelgue el auricular.");
+    }
+
+    private IEnumerator EmpezarSonidoTelefono()
+    {
+        yield return new WaitForSeconds(retrasoPrimeroSonido);
+
+        if (telefonoSonando != null)
+        {
+            telefonoSonando.loop = true;
+            telefonoSonando.Play();
+        }
+    }
+
+    private IEnumerator ActivarVoz()
+    {
+        _vozActivada = true;
+        Debug.Log("[Telefono] Auricular descolgado – reproduciendo voz del Hotel Overlook.");
+
+        if (telefonoSonando != null && telefonoSonando.isPlaying)
+        {
+            float volInicial = telefonoSonando.volume;
+            float t = 0f;
+            while (t < fadeSalidaTelefono)
+            {
+                t += Time.deltaTime;
+                telefonoSonando.volume = Mathf.Lerp(volInicial, 0f, t / fadeSalidaTelefono);
+                yield return null;
+            }
+            telefonoSonando.Stop();
+            telefonoSonando.volume = volInicial;
+        }
+
+        if (vozAudio != null)
+            vozAudio.Play();
+    }
+}
