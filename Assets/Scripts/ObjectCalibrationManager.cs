@@ -33,6 +33,10 @@ public class ObjectCalibrationManager : MonoBehaviour
     private bool isCalibrating = false;
     private CalibratableObject currentObject;
 
+    // Ángulos de Euler gestionados explícitamente para evitar gimbal lock
+    private float _eulerY = 0f;   // Rotación horizontal (stick derecho X)
+    private float _eulerX = 0f;   // Inclinación vertical  (stick derecho Y)
+
     // Caché de dispositivos XR
     private readonly List<InputDevice> _leftDevices  = new List<InputDevice>();
     private readonly List<InputDevice> _rightDevices = new List<InputDevice>();
@@ -94,14 +98,13 @@ public class ObjectCalibrationManager : MonoBehaviour
             obj.position += Vector3.up * leftStick.y * velocidadMovimiento * dt;
         }
 
-        // ── Rotación ──────────────────────────────────────────────────────
-        // Stick derecho X → rotar alrededor de Y (girar la puerta/hacha)
-        if (Mathf.Abs(rightStick.x) > 0.05f)
-            obj.Rotate(Vector3.up, rightStick.x * velocidadRotacion * dt, Space.World);
-
-        // Stick derecho Y → inclinar hacia adelante/atrás
-        if (Mathf.Abs(rightStick.y) > 0.05f)
-            obj.Rotate(obj.right, -rightStick.y * velocidadRotacion * dt, Space.World);
+        // ── Rotación sin gimbal lock ──────────────────────────────────────
+        // Se acumulan ángulos de Euler por separado y se aplican de una vez
+        // con Quaternion.Euler, evitando que los ejes se mezclen entre sí.
+        _eulerY += rightStick.x * velocidadRotacion * dt;
+        _eulerX -= rightStick.y * velocidadRotacion * dt;
+        _eulerX  = Mathf.Clamp(_eulerX, -85f, 85f); // evitar volteo completo
+        obj.rotation = Quaternion.Euler(_eulerX, _eulerY, 0f);
     }
 
     public void SelectObject(int index)
@@ -130,6 +133,15 @@ public class ObjectCalibrationManager : MonoBehaviour
         }
 
         currentObject = calibratableObjects[selectedObjectIndex];
+        
+        // Al empezar la calibración, continuamos desde la orientación actual
+        Vector3 currentAngles = currentObject.objectTransform.rotation.eulerAngles;
+        _eulerX = currentAngles.x;
+        _eulerY = currentAngles.y;
+        
+        // Formatear _eulerX al rango [-180, 180] para que Mathf.Clamp funcione bien
+        if (_eulerX > 180f) _eulerX -= 360f;
+
         Debug.Log($"ObjectCalibrationManager: ✅ Calibrando '{currentObject.name}' (Transform: {currentObject.objectTransform.name})");
         
         isCalibrating = true;

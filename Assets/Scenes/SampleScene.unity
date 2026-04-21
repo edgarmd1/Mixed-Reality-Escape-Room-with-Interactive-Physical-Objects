@@ -464,11 +464,6 @@ Transform:
   - {fileID: 741326659}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &170116420 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 47073222fef5dca47bc243bdd924b20e, type: 3}
-  m_PrefabInstance: {fileID: 582161122}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &172572435
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -631,12 +626,13 @@ MonoBehaviour:
     objectTransform: {fileID: 537283268}
     prefsPrefix: 
   - name: Puerta
-    objectTransform: {fileID: 582161123}
+    objectTransform: {fileID: 1732679466}
     prefsPrefix: 
   - name: Hacha
     objectTransform: {fileID: 1287687082}
     prefsPrefix: 
-  calibrationController: {fileID: 1766750151}
+  velocidadMovimiento: 0.8
+  velocidadRotacion: 60
   selectedObjectIndex: 0
   selectedObjectName: 
 --- !u!4 &211488951
@@ -2091,11 +2087,11 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 1732679466}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 47073222fef5dca47bc243bdd924b20e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.62
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 47073222fef5dca47bc243bdd924b20e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2103,7 +2099,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 47073222fef5dca47bc243bdd924b20e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 3.9365482
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 47073222fef5dca47bc243bdd924b20e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2111,7 +2107,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 47073222fef5dca47bc243bdd924b20e, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 47073222fef5dca47bc243bdd924b20e, type: 3}
       propertyPath: m_LocalRotation.y
@@ -2147,7 +2143,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -2706704556614155620, guid: 47073222fef5dca47bc243bdd924b20e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3.13
+      value: 0.21
+      objectReference: {fileID: 0}
+    - target: {fileID: -2706704556614155620, guid: 47073222fef5dca47bc243bdd924b20e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.384
       objectReference: {fileID: 0}
     - target: {fileID: -2706704556614155620, guid: 47073222fef5dca47bc243bdd924b20e, type: 3}
       propertyPath: m_LocalPosition.z
@@ -4913,7 +4913,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a652d6d08cbe7134fbc4ba5a046feb7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  puertaRoot: {fileID: 170116420}
+  puertaRoot: {fileID: 1732679465}
   hachaRoot: {fileID: 351648253}
   tablones:
   - {fileID: 1563631522}
@@ -5406,6 +5406,38 @@ MonoBehaviour:
   baudRate: 9600
   autoConnectOnStart: 1
   enableDebugLogs: 1
+--- !u!1 &1732679465
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1732679466}
+  m_Layer: 0
+  m_Name: FrameRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1732679466
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1732679465}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 582161123}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1733886290
 GameObject:
   m_ObjectHideFlags: 0
@@ -5820,6 +5852,7 @@ MonoBehaviour:
   audioMusica: {fileID: 1457197127}
   portalAscensor: {fileID: 139071901}
   doorPuzzleManager: {fileID: 1505812995}
+  modoDemo: 0
 --- !u!4 &1892221550
 Transform:
   m_ObjectHideFlags: 0
@@ -6075,11 +6108,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: ba809d10df3037f4eb70d6ff62ca5d26, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -2.98
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ba809d10df3037f4eb70d6ff62ca5d26, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -1.376
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ba809d10df3037f4eb70d6ff62ca5d26, type: 3}
       propertyPath: m_LocalPosition.z
@@ -7817,7 +7850,7 @@ SceneRoots:
   - {fileID: 492108386}
   - {fileID: 1505812996}
   - {fileID: 845507378}
-  - {fileID: 582161122}
+  - {fileID: 1732679466}
   - {fileID: 351648252}
   - {fileID: 1799922763}
   - {fileID: 258235040}
