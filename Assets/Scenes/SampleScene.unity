@@ -626,7 +626,7 @@ MonoBehaviour:
     objectTransform: {fileID: 537283268}
     prefsPrefix: 
   - name: Puerta
-    objectTransform: {fileID: 1732679466}
+    objectTransform: {fileID: 582161123}
     prefsPrefix: 
   - name: Hacha
     objectTransform: {fileID: 1287687082}
