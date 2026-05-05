@@ -25,6 +25,13 @@ public class ArduinoLuz : MonoBehaviour
     /// <summary>Llamado por TelefonoManager para empezar a escuchar el Tilt Switch.</summary>
     public void HabilitarTelefono() => _telefonoHabilitado = true;
 
+    // ── Acelerómetro (golpes en mesa) ────────────────────────────────────
+    // El Arduino envía "KNOCK\n" cuando detecta un golpe en la mesa.
+    private volatile bool _senalKnock = false;
+
+    /// <summary>Evento disparado en el hilo principal cada vez que se detecta un golpe.</summary>
+    public System.Action OnKnockDetected;
+
     // ── Serial ───────────────────────────────────────────────────────────
     private volatile bool luzDetectada = false;
     private Thread hiloSerie;
@@ -59,6 +66,11 @@ public class ArduinoLuz : MonoBehaviour
                     // Señal del Tilt Switch: auricular inclinado (descolgado)
                     _senalTelefono = true;
                 }
+                else if (valor == "KNOCK")
+                {
+                    // Señal del acelerómetro: golpe en la mesa
+                    _senalKnock = true;
+                }
                 else if (int.TryParse(valor, out int luz))
                 {
                     // Valor del sensor de luz
@@ -82,6 +94,14 @@ public class ArduinoLuz : MonoBehaviour
         {
             _telefonoDescolgado = true;
             Debug.Log("[ArduinoLuz] Señal PHONE recibida – teléfono descolgado.");
+        }
+
+        // ── Acelerómetro (golpes) ────────────────────────────────────────
+        if (_senalKnock)
+        {
+            _senalKnock = false;
+            OnKnockDetected?.Invoke();
+            Debug.Log("[ArduinoLuz] Señal KNOCK recibida – golpe detectado.");
         }
     }
 

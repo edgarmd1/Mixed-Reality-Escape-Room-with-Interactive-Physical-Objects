@@ -151,4 +151,32 @@ public class CameraCullingMaskController : MonoBehaviour
     {
         OnPassthroughChanged(enableMR);
     }
+
+    /// <summary>
+    /// Cambio de modo "ligero": solo ajusta el culling mask de la cámara
+    /// y el flag de GameModeManager, SIN activar/desactivar GameObjects
+    /// ni teleportar al jugador.
+    /// Útil cuando otro manager (ej. KnockPuzzleManager) necesita controlar
+    /// manualmente qué objetos se activan.
+    /// </summary>
+    /// <param name="enableMR">True para MR, False para VR</param>
+    public void SetModeSoloVisual(bool enableMR)
+    {
+        if (mainCamera == null) return;
+
+        GameModeManager.SetMode(enableMR);
+
+        if (enableMR)
+        {
+            SetLayerVisibility(mundoRealLayer, true);
+            SetLayerVisibility(mundoVirtualLayer, false);
+            Debug.Log("CameraCullingMaskController: Modo visual MR (solo culling mask).");
+        }
+        else
+        {
+            SetLayerVisibility(mundoRealLayer, false);
+            SetLayerVisibility(mundoVirtualLayer, true);
+            Debug.Log("CameraCullingMaskController: Modo visual VR (solo culling mask).");
+        }
+    }
 }
