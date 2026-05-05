@@ -1,13 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 #if UNITY_EDITOR
 using UnityEngine.InputSystem;
 #endif
 
 /// <summary>
 /// Gestiona el puzzle de la habitación 217: secuencia de golpes en la puerta,
-/// transiciones MR↔VR, validación del patrón con acelerómetro y apertura de puerta.
+/// transiciones MR↔VR mediante carga aditiva de escena, validación del patrón
+/// con acelerómetro y apertura de puerta.
+///
+/// Vive en la escena PRINCIPAL (SampleScene). La escena "Pasillo" se carga
+/// y descarga aditivamente, preservando todo el estado MR.
 /// </summary>
 public class KnockPuzzleManager : MonoBehaviour
 {
@@ -19,13 +24,13 @@ public class KnockPuzzleManager : MonoBehaviour
     {
         Inactivo,           // Esperando a ser activado por TelefonoManager
         EsperandoPortal,    // Portal activo, esperando que el jugador entre
-        TransicionAVR,      // Fade a negro → cambiar a VR
-        EnPasillo,          // Jugador en el pasillo VR, puede acercarse a la puerta
+        TransicionAVR,      // Fade a negro → cargando escena Pasillo
+        EnPasillo,          // Jugador en el pasillo VR
         SecuenciaSonando,   // Reproduciendo la secuencia de golpes de la puerta
         EsperandoLectura,   // Inscripción visible, jugador leyendo instrucciones
-        TransicionAMR,      // Fade a negro → cambiar a MR
+        TransicionAMR,      // Fade a negro → descargando escena Pasillo
         EscuchandoGolpes,   // En MR, esperando golpes del jugador en la mesa
-        ValidandoExito,     // Patrón correcto → transición de vuelta a VR
+        ValidandoExito,     // Patrón correcto → cargando escena Pasillo de nuevo
         PuertaAbierta       // Puerta abierta, puzzle completado
     }
 
@@ -49,24 +54,21 @@ public class KnockPuzzleManager : MonoBehaviour
     private float timeoutSecuencia = 8f;
 
     // ═══════════════════════════════════════════════════════════════════════
-    //  AUDIO
+    //  AUDIO (en escena principal, para que suene en MR también)
     // ═══════════════════════════════════════════════════════════════════════
 
-    [Header("Audio")]
-    [SerializeField, Tooltip("AudioSource para reproducir golpes individuales")]
-    private AudioSource audioGolpe;
-
+    [Header("Audio (escena principal)")]
     [SerializeField, Tooltip("Clip del golpe en la puerta")]
     private AudioClip clipGolpePuerta;
-
-    [SerializeField, Tooltip("AudioSource para el sonido de puerta abriéndose")]
-    private AudioSource audioPuertaAbriendo;
 
     [SerializeField, Tooltip("AudioSource para sonido de error (patrón incorrecto)")]
     private AudioSource audioError;
 
+    [SerializeField, Tooltip("AudioSource genérico para feedback de golpes en MR")]
+    private AudioSource audioFeedbackGolpe;
+
     // ═══════════════════════════════════════════════════════════════════════
-    //  REFERENCIAS
+    //  REFERENCIAS (escena principal)
     // ═══════════════════════════════════════════════════════════════════════
 
     [Header("Referencias")]
@@ -74,40 +76,9 @@ public class KnockPuzzleManager : MonoBehaviour
     [SerializeField] private CameraCullingMaskController cameraCulling;
     [SerializeField] private Renderer overlayRenderer;
 
-    [Header("Posicionamiento – Frame Root")]
-    [SerializeField, Tooltip("Transform del Frame Root (puerta MR calibrada).\n" +
-        "El pasillo se reposicionará automáticamente detrás de este.\n" +
-        "Coloca el pasillo donde quieras en el editor relativo al frame;\n" +
-        "el script calculará el offset automáticamente.")]
-    private Transform frameRoot;
-
-    [Header("Pasillo VR (root)")]
-    [SerializeField, Tooltip("GameObject raíz 'Pasillo' que contiene todo.\n" +
-        "Dejarlo en capa Default para que KnockPuzzleManager tenga control exclusivo.")]
-    private GameObject pasilloRoot;
-
-    [SerializeField, Tooltip("Punto de spawn al inicio del pasillo VR (hijo de Pasillo)")]
-    private Transform spawnPasillo;
-
-    [Header("Puerta 217 (hijos de Pasillo)")]
-    [SerializeField, Tooltip("Transform de la puerta que rota al abrirse (Sketchfab_HN3_Door)")]
-    private Transform puerta217;
-
-    [SerializeField, Tooltip("Ángulo de apertura de la puerta (grados)")]
-    private float anguloApertura = -90f;
-
-    [SerializeField, Tooltip("Duración de la animación de apertura (s)")]
-    private float duracionApertura = 1.5f;
-
-    [SerializeField, Tooltip("Collider de la puerta para detectar interacción")]
-    private Collider puertaInteractable;
-
-    [Header("Elementos UI dentro del Pasillo")]
-    [SerializeField, Tooltip("GameObject con la inscripción en la pared (hijo de Pasillo)")]
-    private GameObject inscripcion;
-
-    [SerializeField, Tooltip("Botón/trigger para volver al mundo real (hijo de Pasillo)")]
-    private GameObject botonVolverMR;
+    [Header("Escena del Pasillo")]
+    [SerializeField, Tooltip("Nombre de la escena del pasillo (debe estar en Build Settings)")]
+    private string nombreEscenaPasillo = "Pasillo";
 
     // ═══════════════════════════════════════════════════════════════════════
     //  TRANSICIÓN (FADE)
@@ -122,7 +93,6 @@ public class KnockPuzzleManager : MonoBehaviour
     //  ESTADO INTERNO
     // ═══════════════════════════════════════════════════════════════════════
 
-    // Golpes del jugador
     private readonly List<float> _timestampsGolpes = new List<float>();
     private float _tiempoInicioEscucha;
     private int _totalGolpesEsperados;
@@ -131,17 +101,11 @@ public class KnockPuzzleManager : MonoBehaviour
     private Vector3 _posicionMRGuardada;
     private Quaternion _rotacionMRGuardada;
 
-    // Offset relativo del pasillo respecto al Frame Root
-    // (calculado automáticamente en Start según cómo estén puestos en el editor)
-    private Vector3 _offsetPasilloLocal;
-    private Quaternion _offsetPasilloRot;
-
-    // Posición del frame guardada (para cuando el Frame Root se desactiva al ir a VR)
-    private Vector3 _frameRootPosGuardada;
-    private Quaternion _frameRootRotGuardada;
-
     // Control de intentos
     private int _intentos = 0;
+
+    // Referencia al PasilloManager (tras cargar la escena)
+    private PasilloManager _pasilloManager;
 
     // ═══════════════════════════════════════════════════════════════════════
     //  INICIALIZACIÓN
@@ -153,25 +117,6 @@ public class KnockPuzzleManager : MonoBehaviour
 
         if (overlayRenderer != null)
             _overlayMat = overlayRenderer.material;
-
-        // Desactivar el pasillo entero al inicio
-        if (pasilloRoot != null) pasilloRoot.SetActive(false);
-    }
-
-    void Start()
-    {
-        // Calcular el offset relativo entre el pasillo y el Frame Root
-        // tal como el usuario los ha colocado en el editor.
-        // Así si el frame se calibra/mueve, el pasillo lo seguirá.
-        if (pasilloRoot != null && frameRoot != null)
-        {
-            Quaternion invFrameRot = Quaternion.Inverse(frameRoot.rotation);
-            _offsetPasilloLocal = invFrameRot * (pasilloRoot.transform.position - frameRoot.position);
-            _offsetPasilloRot = invFrameRot * pasilloRoot.transform.rotation;
-
-            Debug.Log($"[KnockPuzzle] Offset pasillo→frame calculado: " +
-                      $"pos={_offsetPasilloLocal}, rot={_offsetPasilloRot.eulerAngles}");
-        }
     }
 
     void OnEnable()
@@ -188,7 +133,6 @@ public class KnockPuzzleManager : MonoBehaviour
 
     void Update()
     {
-        // ── Debug en Editor: tecla K simula un golpe ─────────────────────
 #if UNITY_EDITOR
         if (Keyboard.current != null && Keyboard.current.kKey.wasPressedThisFrame)
         {
@@ -200,7 +144,6 @@ public class KnockPuzzleManager : MonoBehaviour
         }
 #endif
 
-        // ── Timeout de la secuencia ──────────────────────────────────────
         if (estadoActual == EstadoPuzzle.EscuchandoGolpes &&
             _timestampsGolpes.Count > 0 &&
             Time.time - _timestampsGolpes[0] > timeoutSecuencia)
@@ -233,7 +176,9 @@ public class KnockPuzzleManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Llamado cuando el jugador interactúa con la puerta 217.
+    /// Llamado cuando el jugador interactúa con la puerta 217 en la escena Pasillo.
+    /// Conectar en el Inspector de la escena Pasillo (Interactable → OnActivate).
+    /// O llamar desde PasilloManager.
     /// </summary>
     public void OnIntentarAbrirPuerta()
     {
@@ -242,7 +187,7 @@ public class KnockPuzzleManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Llamado cuando el jugador pulsa el botón "Volver al mundo real".
+    /// Llamado por ReturnToMRTrigger cuando el jugador quiere volver al MR.
     /// </summary>
     public void OnVolverAMR()
     {
@@ -254,31 +199,44 @@ public class KnockPuzzleManager : MonoBehaviour
     public bool PuzzleCompletado => estadoActual == EstadoPuzzle.PuertaAbierta;
 
     // ═══════════════════════════════════════════════════════════════════════
-    //  POSICIONAMIENTO DEL PASILLO
+    //  CARGA / DESCARGA DE ESCENA
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Posiciona el pasillo detrás del Frame Root usando el offset calculado en Start.
-    /// LLAMAR ANTES de cambiar a VR (el Frame Root se desactiva en VR).
-    /// </summary>
-    private void PosicionarPasilloDetrasDelFrame()
+    private IEnumerator CargarEscenaPasillo()
     {
-        if (pasilloRoot == null || frameRoot == null) return;
-
-        // Guardar posición actual del frame (antes de que MR se desactive)
-        if (frameRoot.gameObject.activeInHierarchy)
+        // Comprobar si ya está cargada
+        Scene escena = SceneManager.GetSceneByName(nombreEscenaPasillo);
+        if (!escena.isLoaded)
         {
-            _frameRootPosGuardada = frameRoot.position;
-            _frameRootRotGuardada = frameRoot.rotation;
+            Debug.Log($"[KnockPuzzle] Cargando escena '{nombreEscenaPasillo}' aditivamente...");
+            AsyncOperation op = SceneManager.LoadSceneAsync(nombreEscenaPasillo, LoadSceneMode.Additive);
+            yield return op;
+            Debug.Log($"[KnockPuzzle] Escena '{nombreEscenaPasillo}' cargada.");
         }
 
-        // Aplicar el offset calculado en Start a la posición actual del frame
-        pasilloRoot.transform.position = _frameRootPosGuardada
-            + _frameRootRotGuardada * _offsetPasilloLocal;
-        pasilloRoot.transform.rotation = _frameRootRotGuardada * _offsetPasilloRot;
+        // Esperar un frame para que Awake/Start del PasilloManager se ejecuten
+        yield return null;
 
-        Debug.Log($"[KnockPuzzle] Pasillo posicionado detrás del Frame Root. " +
-                  $"Frame: {_frameRootPosGuardada}, Pasillo: {pasilloRoot.transform.position}");
+        _pasilloManager = PasilloManager.Instance;
+        if (_pasilloManager == null)
+        {
+            Debug.LogError("[KnockPuzzle] No se encontró PasilloManager en la escena cargada. " +
+                           "Asegúrate de que la escena tiene un GameObject con PasilloManager.");
+        }
+    }
+
+    private IEnumerator DescargarEscenaPasillo()
+    {
+        Scene escena = SceneManager.GetSceneByName(nombreEscenaPasillo);
+        if (escena.isLoaded)
+        {
+            Debug.Log($"[KnockPuzzle] Descargando escena '{nombreEscenaPasillo}'...");
+            AsyncOperation op = SceneManager.UnloadSceneAsync(escena);
+            yield return op;
+            Debug.Log($"[KnockPuzzle] Escena '{nombreEscenaPasillo}' descargada.");
+        }
+
+        _pasilloManager = null;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -288,9 +246,9 @@ public class KnockPuzzleManager : MonoBehaviour
     private IEnumerator TransicionMRaVR()
     {
         estadoActual = EstadoPuzzle.TransicionAVR;
-        Debug.Log("[KnockPuzzle] Transición MR → VR iniciada.");
+        Debug.Log("[KnockPuzzle] Transición MR → VR (cargando escena Pasillo).");
 
-        // Guardar posición del XR Origin en MR para restaurar luego
+        // Guardar posición del XR Origin en MR
         var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
         if (xrOrigin != null)
         {
@@ -298,27 +256,21 @@ public class KnockPuzzleManager : MonoBehaviour
             _rotacionMRGuardada = xrOrigin.transform.rotation;
         }
 
-        // Posicionar el pasillo ANTES de desactivar MR (frame aún visible)
-        PosicionarPasilloDetrasDelFrame();
-
         // Fade a negro
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
 
-        // Activar el pasillo (en capa Default, no afectado por CameraCulling)
-        if (pasilloRoot != null) pasilloRoot.SetActive(true);
-        if (inscripcion != null) inscripcion.SetActive(false);
-        if (botonVolverMR != null) botonVolverMR.SetActive(false);
+        // Cargar la escena del pasillo
+        yield return StartCoroutine(CargarEscenaPasillo());
 
-        // Cambiar SOLO el culling mask, SIN activar objetos de Mundo_Virtual
-        // (así no se activa Room 2 / VirtualWorld)
+        // Cambiar solo el culling mask (no activa objetos de Mundo_Virtual)
         cameraCulling?.SetModeSoloVisual(false);
 
-        // Teleportar al inicio del pasillo
-        yield return null; // un frame para que se aplique
-        TeleportarASpawnPasillo(xrOrigin);
+        // Teleportar al spawn del pasillo
+        yield return null;
+        TeleportarASpawn(xrOrigin, _pasilloManager?.SpawnInicio);
 
         // Pausa en negro
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.2f);
 
         // Fade in
         yield return StartCoroutine(FadeOverlay(0f, duracionFade * 0.5f));
@@ -330,16 +282,13 @@ public class KnockPuzzleManager : MonoBehaviour
     private IEnumerator TransicionVRaMR()
     {
         estadoActual = EstadoPuzzle.TransicionAMR;
-        Debug.Log("[KnockPuzzle] Transición VR → MR iniciada.");
-
-        if (inscripcion != null) inscripcion.SetActive(false);
-        if (botonVolverMR != null) botonVolverMR.SetActive(false);
+        Debug.Log("[KnockPuzzle] Transición VR → MR (descargando escena Pasillo).");
 
         // Fade a negro
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
 
-        // Desactivar el pasillo
-        if (pasilloRoot != null) pasilloRoot.SetActive(false);
+        // Descargar la escena del pasillo
+        yield return StartCoroutine(DescargarEscenaPasillo());
 
         // Restaurar posición MR del XR Origin
         var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
@@ -347,14 +296,13 @@ public class KnockPuzzleManager : MonoBehaviour
         {
             xrOrigin.transform.position = _posicionMRGuardada;
             xrOrigin.transform.rotation = _rotacionMRGuardada;
+            Debug.Log($"[KnockPuzzle] Posición MR restaurada: {_posicionMRGuardada}");
         }
 
-        // Volver a MR (solo visual, sin tocar objetos)
-        // Luego reactivar objetos MR con SetMode completo
+        // Volver a MR completo (reactiva objetos MR)
         cameraCulling?.SetMode(true);
 
-        // Pausa
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.2f);
 
         // Fade in
         yield return StartCoroutine(FadeOverlay(0f, duracionFade * 0.5f));
@@ -367,24 +315,23 @@ public class KnockPuzzleManager : MonoBehaviour
     private IEnumerator TransicionExitoAVR()
     {
         estadoActual = EstadoPuzzle.ValidandoExito;
-        Debug.Log("[KnockPuzzle] ¡Patrón correcto! Volviendo a VR para abrir la puerta.");
-
-        // Reposicionar pasillo (por si el frame se recalibró)
-        PosicionarPasilloDetrasDelFrame();
+        Debug.Log("[KnockPuzzle] ¡Patrón correcto! Volviendo al pasillo para abrir la puerta.");
 
         // Fade a negro
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
 
-        // Reactivar pasillo y modo visual VR
-        if (pasilloRoot != null) pasilloRoot.SetActive(true);
+        // Cargar la escena del pasillo de nuevo
+        yield return StartCoroutine(CargarEscenaPasillo());
+
+        // Modo visual VR
         cameraCulling?.SetModeSoloVisual(false);
 
-        // Teleportar al pasillo
+        // Teleportar al spawn
         var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
         yield return null;
-        TeleportarASpawnPasillo(xrOrigin);
+        TeleportarASpawn(xrOrigin, _pasilloManager?.SpawnInicio);
 
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.2f);
 
         // Fade in
         yield return StartCoroutine(FadeOverlay(0f, duracionFade * 0.5f));
@@ -400,21 +347,21 @@ public class KnockPuzzleManager : MonoBehaviour
     //  TELEPORT HELPER
     // ═══════════════════════════════════════════════════════════════════════
 
-    private void TeleportarASpawnPasillo(Unity.XR.CoreUtils.XROrigin xrOrigin)
+    private void TeleportarASpawn(Unity.XR.CoreUtils.XROrigin xrOrigin, Transform spawn)
     {
-        if (xrOrigin == null || spawnPasillo == null) return;
+        if (xrOrigin == null || spawn == null) return;
 
         Camera cam = xrOrigin.Camera;
         if (cam != null)
         {
             Vector3 camOffset = cam.transform.localPosition;
             xrOrigin.transform.position = new Vector3(
-                spawnPasillo.position.x - camOffset.x,
-                spawnPasillo.position.y - camOffset.y,
-                spawnPasillo.position.z - camOffset.z
+                spawn.position.x - camOffset.x,
+                spawn.position.y - camOffset.y,
+                spawn.position.z - camOffset.z
             );
-            xrOrigin.transform.rotation = Quaternion.Euler(0f, spawnPasillo.eulerAngles.y, 0f);
-            Debug.Log($"[KnockPuzzle] Teleportado a spawn pasillo: {xrOrigin.transform.position}");
+            xrOrigin.transform.rotation = Quaternion.Euler(0f, spawn.eulerAngles.y, 0f);
+            Debug.Log($"[KnockPuzzle] Teleportado a spawn: {xrOrigin.transform.position}");
         }
     }
 
@@ -427,26 +374,30 @@ public class KnockPuzzleManager : MonoBehaviour
         estadoActual = EstadoPuzzle.SecuenciaSonando;
         Debug.Log("[KnockPuzzle] Reproduciendo secuencia de golpes en la puerta...");
 
-        ReproducirGolpe();
+        // Usar el AudioSource del pasillo
+        AudioSource audioGolpe = _pasilloManager?.AudioGolpe;
+
+        ReproducirGolpeEn(audioGolpe);
         for (int i = 0; i < patronIntervalos.Length; i++)
         {
             yield return new WaitForSeconds(patronIntervalos[i]);
-            ReproducirGolpe();
+            ReproducirGolpeEn(audioGolpe);
         }
 
         yield return new WaitForSeconds(1f);
 
-        if (inscripcion != null) inscripcion.SetActive(true);
-        if (botonVolverMR != null) botonVolverMR.SetActive(true);
+        // Mostrar inscripción
+        if (_pasilloManager?.Inscripcion != null)
+            _pasilloManager.Inscripcion.SetActive(true);
 
         estadoActual = EstadoPuzzle.EsperandoLectura;
-        Debug.Log("[KnockPuzzle] Inscripción visible. Esperando que el jugador decida volver al MR.");
+        Debug.Log("[KnockPuzzle] Inscripción visible. Jugador puede volver al MR.");
     }
 
-    private void ReproducirGolpe()
+    private void ReproducirGolpeEn(AudioSource source)
     {
-        if (audioGolpe != null && clipGolpePuerta != null)
-            audioGolpe.PlayOneShot(clipGolpePuerta);
+        if (source != null && clipGolpePuerta != null)
+            source.PlayOneShot(clipGolpePuerta);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -470,7 +421,9 @@ public class KnockPuzzleManager : MonoBehaviour
         _timestampsGolpes.Add(Time.time);
         Debug.Log($"[KnockPuzzle] Golpe #{_timestampsGolpes.Count}/{_totalGolpesEsperados} detectado.");
 
-        ReproducirGolpe();
+        // Feedback sonoro en MR
+        if (audioFeedbackGolpe != null && clipGolpePuerta != null)
+            audioFeedbackGolpe.PlayOneShot(clipGolpePuerta);
 
         if (_timestampsGolpes.Count >= _totalGolpesEsperados)
             ValidarPatron();
@@ -525,13 +478,18 @@ public class KnockPuzzleManager : MonoBehaviour
     //  ANIMACIÓN PUERTA
     // ═══════════════════════════════════════════════════════════════════════
 
+    [Header("Puerta 217")]
+    [SerializeField] private float anguloApertura = -90f;
+    [SerializeField] private float duracionApertura = 1.5f;
+
     private IEnumerator AnimarAperturaPuerta()
     {
-        if (puerta217 == null) yield break;
+        Transform puerta = _pasilloManager?.Puerta217;
+        if (puerta == null) yield break;
 
-        audioPuertaAbriendo?.Play();
+        _pasilloManager.AudioPuertaAbriendo?.Play();
 
-        Quaternion rotInicial = puerta217.localRotation;
+        Quaternion rotInicial = puerta.localRotation;
         Quaternion rotFinal = rotInicial * Quaternion.Euler(0f, anguloApertura, 0f);
 
         float t = 0f;
@@ -539,14 +497,14 @@ public class KnockPuzzleManager : MonoBehaviour
         {
             t += Time.deltaTime;
             float progreso = Mathf.SmoothStep(0f, 1f, t / duracionApertura);
-            puerta217.localRotation = Quaternion.Slerp(rotInicial, rotFinal, progreso);
+            puerta.localRotation = Quaternion.Slerp(rotInicial, rotFinal, progreso);
             yield return null;
         }
 
-        puerta217.localRotation = rotFinal;
+        puerta.localRotation = rotFinal;
 
-        if (puertaInteractable != null)
-            puertaInteractable.enabled = false;
+        Collider col = _pasilloManager.PuertaInteractable;
+        if (col != null) col.enabled = false;
 
         Debug.Log("[KnockPuzzle] Animación de apertura completada.");
     }
@@ -577,36 +535,5 @@ public class KnockPuzzleManager : MonoBehaviour
         if (_overlayMat == null) return;
         Color c = _overlayMat.color;
         _overlayMat.color = new Color(c.r, c.g, c.b, alpha);
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  GIZMOS
-    // ═══════════════════════════════════════════════════════════════════════
-
-    void OnDrawGizmosSelected()
-    {
-        if (spawnPasillo != null)
-        {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(spawnPasillo.position, 0.3f);
-            Gizmos.DrawRay(spawnPasillo.position, spawnPasillo.forward * 1f);
-        }
-
-        if (puerta217 != null)
-        {
-            Gizmos.color = new Color(1f, 0.5f, 0f, 0.6f);
-            Gizmos.DrawWireCube(puerta217.position, new Vector3(1f, 2f, 0.1f));
-        }
-
-        // Visualizar dónde se colocará el pasillo respecto al Frame Root
-        if (frameRoot != null && pasilloRoot != null)
-        {
-            Gizmos.color = Color.green;
-            Quaternion invFrameRot = Quaternion.Inverse(frameRoot.rotation);
-            Vector3 offset = invFrameRot * (pasilloRoot.transform.position - frameRoot.position);
-            Vector3 posPasillo = frameRoot.position + frameRoot.rotation * offset;
-            Gizmos.DrawWireCube(posPasillo, new Vector3(0.5f, 0.5f, 0.5f));
-            Gizmos.DrawLine(frameRoot.position, posPasillo);
-        }
     }
 }
