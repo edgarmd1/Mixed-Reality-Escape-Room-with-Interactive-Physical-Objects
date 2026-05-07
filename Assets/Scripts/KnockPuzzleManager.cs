@@ -214,8 +214,19 @@ public class KnockPuzzleManager : MonoBehaviour
             Debug.Log($"[KnockPuzzle] Escena '{nombreEscenaPasillo}' cargada.");
         }
 
-        // Esperar un frame para que Awake/Start del PasilloManager se ejecuten
+        // Esperar un frame para que Awake/Start se ejecuten
         yield return null;
+
+        // ── Limpiar componentes XR duplicados de la escena cargada ────────
+        // Si la escena se creó desde un template, puede traer su propio
+        // OVRManager, Camera Rig, XR Origin, etc. que conflictuarían.
+        Scene escenaCargada = SceneManager.GetSceneByName(nombreEscenaPasillo);
+        if (escenaCargada.isLoaded)
+        {
+            LimpiarXRDuplicados(escenaCargada);
+        }
+
+        yield return null; // Otro frame tras la limpieza
 
         _pasilloManager = PasilloManager.Instance;
         if (_pasilloManager == null)
@@ -223,6 +234,70 @@ public class KnockPuzzleManager : MonoBehaviour
             Debug.LogError("[KnockPuzzle] No se encontró PasilloManager en la escena cargada. " +
                            "Asegúrate de que la escena tiene un GameObject con PasilloManager.");
         }
+    }
+
+    /// <summary>
+    /// Busca y destruye componentes XR duplicados en la escena cargada
+    /// (OVRManager, OVRCameraRig, XROrigin, cámaras extra, EventSystem, etc.)
+    /// para evitar conflictos con los de la escena principal.
+    /// </summary>
+    private void LimpiarXRDuplicados(Scene escena)
+    {
+        int destruidos = 0;
+
+        foreach (GameObject root in escena.GetRootGameObjects())
+        {
+            // Destruir GameObjects con componentes XR/OVR problemáticos
+            bool destruir = false;
+            string razon = "";
+
+            // OVRManager / OVRCameraRig
+            foreach (var comp in root.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                string tipo = comp.GetType().Name;
+                if (tipo.Contains("OVRManager") || tipo.Contains("OVRCameraRig") ||
+                    tipo.Contains("OVRHeadsetEmulator"))
+                {
+                    destruir = true;
+                    razon = tipo;
+                    break;
+                }
+            }
+
+            // XR Origin
+            if (!destruir && root.GetComponentInChildren<Unity.XR.CoreUtils.XROrigin>(true) != null)
+            {
+                destruir = true;
+                razon = "XROrigin";
+            }
+
+            // EventSystem duplicado
+            if (!destruir && root.GetComponentInChildren<UnityEngine.EventSystems.EventSystem>(true) != null)
+            {
+                destruir = true;
+                razon = "EventSystem";
+            }
+
+            // Cámara suelta (no parte de PasilloManager)
+            if (!destruir && root.GetComponentInChildren<Camera>(true) != null &&
+                root.GetComponent<PasilloManager>() == null)
+            {
+                destruir = true;
+                razon = "Camera";
+            }
+
+            if (destruir)
+            {
+                Debug.Log($"[KnockPuzzle] Destruyendo '{root.name}' de escena Pasillo (contiene {razon}).");
+                Destroy(root);
+                destruidos++;
+            }
+        }
+
+        if (destruidos > 0)
+            Debug.Log($"[KnockPuzzle] Limpieza: {destruidos} objeto(s) XR duplicados eliminados de la escena Pasillo.");
+        else
+            Debug.Log("[KnockPuzzle] Limpieza: escena Pasillo limpia, sin duplicados XR.");
     }
 
     private IEnumerator DescargarEscenaPasillo()
