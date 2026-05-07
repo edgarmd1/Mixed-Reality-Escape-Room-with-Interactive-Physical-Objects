@@ -188,10 +188,20 @@ public class KnockPuzzleManager : MonoBehaviour
 
     /// <summary>
     /// Llamado por ReturnToMRTrigger cuando el jugador quiere volver al MR.
+    /// Funciona en cualquier estado mientras el jugador esté en el pasillo.
     /// </summary>
     public void OnVolverAMR()
     {
-        if (estadoActual != EstadoPuzzle.EsperandoLectura) return;
+        if (estadoActual != EstadoPuzzle.EnPasillo &&
+            estadoActual != EstadoPuzzle.SecuenciaSonando &&
+            estadoActual != EstadoPuzzle.EsperandoLectura)
+        {
+            Debug.Log($"[KnockPuzzle] OnVolverAMR ignorado – estado actual: {estadoActual}");
+            return;
+        }
+
+        // Parar coroutines de secuencia si estaban en marcha
+        StopAllCoroutines();
         StartCoroutine(TransicionVRaMR());
     }
 
