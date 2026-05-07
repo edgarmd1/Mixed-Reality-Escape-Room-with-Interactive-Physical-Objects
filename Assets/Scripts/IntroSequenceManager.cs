@@ -26,8 +26,6 @@ public class IntroSequenceManager : MonoBehaviour
     [SerializeField] private AudioSource audioMusica;
     [SerializeField, Tooltip("Efecto de sonido que se reproduce durante el parpadeo")]
     private AudioSource audioDuranteParpadeo;
-    [SerializeField, Tooltip("Efecto de sonido que se reproduce al terminar el parpadeo")]
-    private AudioSource audioFinParpadeo;
     [SerializeField] private GameObject portalAscensor;
     [SerializeField] private DoorPuzzleManager doorPuzzleManager;
 
@@ -81,12 +79,6 @@ public class IntroSequenceManager : MonoBehaviour
             audioDuranteParpadeo.Play();
 
         yield return StartCoroutine(CoroutineParpadeo()); 
-
-        if (audioDuranteParpadeo != null)
-            audioDuranteParpadeo.Stop();
-
-        if (audioFinParpadeo != null)
-            audioFinParpadeo.Play();
 
         if (arduinoLuz != null)
             arduinoLuz.habilitado = true; 
