@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.XR.Templates.MR;
 
 public class IntroSequenceManager : MonoBehaviour
 {
@@ -25,6 +26,10 @@ public class IntroSequenceManager : MonoBehaviour
     [SerializeField] private AudioSource audioMusica;
     [SerializeField] private GameObject portalAscensor;
     [SerializeField] private DoorPuzzleManager doorPuzzleManager;
+
+    [Header("Environment VR")]
+    [SerializeField, Tooltip("FadeMaterial del Environment para hacerlo visible en la escena VR")]
+    private FadeMaterial environmentFade;
 
     [Header("Modo Demo")]
     [SerializeField, Tooltip("Si está activo, salta toda la secuencia y va directo al puzzle de la puerta")]
@@ -52,13 +57,12 @@ public class IntroSequenceManager : MonoBehaviour
             StartCoroutine(SecuenciaIntro());
     }
 
-    // Salta toda la intro y activa directamente el puzzle de la puerta
     private IEnumerator SecuenciaDemoDirecta()
     {
         SetOverlayAlpha(0f);
-        cameraCullingMask?.SetMode(true);   // asegurar modo MR
+        cameraCullingMask?.SetMode(true);  
         if (portalAscensor != null) portalAscensor.SetActive(false);
-        yield return null;                  // un frame para que todo inicialice
+        yield return null;                 
         if (doorPuzzleManager != null)
             doorPuzzleManager.IniciarPuzzle();
         _secuenciaFinalizada = true;
@@ -67,35 +71,41 @@ public class IntroSequenceManager : MonoBehaviour
 
     private IEnumerator SecuenciaIntro()
     {
-        yield return new WaitForSeconds(delayInicial); //start
+        yield return new WaitForSeconds(delayInicial); 
 
-        yield return StartCoroutine(CoroutineParpadeo()); //lights off
+        yield return StartCoroutine(CoroutineParpadeo()); 
 
         if (arduinoLuz != null)
-            arduinoLuz.habilitado = true; //enable arduino
+            arduinoLuz.habilitado = true; 
 
-        yield return new WaitUntil(() => arduinoLuz == null || arduinoLuz.puzzleCompletado); //wait for puzzle completion
+        yield return new WaitUntil(() => arduinoLuz == null || arduinoLuz.puzzleCompletado); 
 
-        yield return StartCoroutine(CoroutineFadeOverlay(0f, 0.4f)); //fade overlay
+        if (environmentFade != null)
+            environmentFade.FadeSkybox(false);
+
+        yield return StartCoroutine(CoroutineFadeOverlay(0f, 0.4f)); 
 
         if (audioMusica != null)
-            audioMusica.Play(); //play music
+            audioMusica.Play(); 
 
-        yield return new WaitForSeconds(duracionEnVR); //wait for VR duration
+        yield return new WaitForSeconds(duracionEnVR); 
 
-        yield return StartCoroutine(CoroutineFadeOverlay(0.6f, 0.4f)); //fade overlay
+        yield return StartCoroutine(CoroutineFadeOverlay(0.6f, 0.4f));
 
-        cameraCullingMask?.SetMode(true); //enable culling mask
+        if (environmentFade != null)
+            environmentFade.FadeSkybox(true);
+
+        cameraCullingMask?.SetMode(true);
 
         if (portalAscensor != null)
-            portalAscensor.SetActive(true); //enable portal
+            portalAscensor.SetActive(true);
 
-        yield return StartCoroutine(CoroutineFadeOverlay(0f, duracionFadeVuelta)); //fade overlay
+        yield return StartCoroutine(CoroutineFadeOverlay(0f, duracionFadeVuelta));
 
         if (doorPuzzleManager != null)
-            doorPuzzleManager.IniciarPuzzle(); //start door puzzle
+            doorPuzzleManager.IniciarPuzzle();
 
-        _secuenciaFinalizada = true; //end sequence
+        _secuenciaFinalizada = true;
     }
 
     private IEnumerator CoroutineParpadeo()

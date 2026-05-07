@@ -3245,6 +3245,7 @@ MonoBehaviour:
   audioMusica: {fileID: 1457197127}
   portalAscensor: {fileID: 139071901}
   doorPuzzleManager: {fileID: 1505812995}
+  environmentFade: {fileID: 1241364538}
   modoDemo: 0
 --- !u!4 &1892221550
 Transform:
