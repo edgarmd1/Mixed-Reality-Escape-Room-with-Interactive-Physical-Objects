@@ -458,7 +458,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   doorPuzzleManager: {fileID: 1505812995}
-  sonidoRotura: {fileID: 258235039}
+  clipRotura: {fileID: 8300000, guid: 57a7bd4f8e3b1b64fa937b04fcdd16c5, type: 3}
+  volumenRotura: 1
   efectoRotura: {fileID: 0}
 --- !u!65 &232848762
 BoxCollider:
@@ -1053,7 +1054,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   doorPuzzleManager: {fileID: 1505812995}
-  sonidoRotura: {fileID: 258235039}
+  clipRotura: {fileID: 8300000, guid: 57a7bd4f8e3b1b64fa937b04fcdd16c5, type: 3}
+  volumenRotura: 1
   efectoRotura: {fileID: 0}
 --- !u!65 &430031158
 BoxCollider:
@@ -2128,7 +2130,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   doorPuzzleManager: {fileID: 1505812995}
-  sonidoRotura: {fileID: 258235039}
+  clipRotura: {fileID: 8300000, guid: 57a7bd4f8e3b1b64fa937b04fcdd16c5, type: 3}
+  volumenRotura: 1
   efectoRotura: {fileID: 0}
 --- !u!65 &1250748348
 BoxCollider:
@@ -2662,7 +2665,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   doorPuzzleManager: {fileID: 1505812995}
-  sonidoRotura: {fileID: 258235039}
+  clipRotura: {fileID: 8300000, guid: 57a7bd4f8e3b1b64fa937b04fcdd16c5, type: 3}
+  volumenRotura: 1
   efectoRotura: {fileID: 0}
 --- !u!65 &1563631523
 BoxCollider:
@@ -2703,7 +2707,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   doorPuzzleManager: {fileID: 1505812995}
-  sonidoRotura: {fileID: 258235039}
+  clipRotura: {fileID: 8300000, guid: 57a7bd4f8e3b1b64fa937b04fcdd16c5, type: 3}
+  volumenRotura: 1
   efectoRotura: {fileID: 0}
 --- !u!65 &1586565321
 BoxCollider:

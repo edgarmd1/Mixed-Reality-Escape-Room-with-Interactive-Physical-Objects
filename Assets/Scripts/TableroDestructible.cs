@@ -6,9 +6,11 @@ public class TableroDestructible : MonoBehaviour
     [SerializeField, Tooltip("Gestor central del puzzle")]
     private DoorPuzzleManager doorPuzzleManager;
 
+    [SerializeField, Tooltip("Clip de sonido de madera rompiéndose")]
+    private AudioClip clipRotura;
 
-    [SerializeField, Tooltip("AudioSource con el sonido de madera rompiéndose (one-shot)")]
-    private AudioSource sonidoRotura;
+    [SerializeField, Tooltip("Volumen del sonido de rotura"), Range(0f, 1f)]
+    private float volumenRotura = 1f;
 
     [SerializeField, Tooltip("Partículas/debris de madera al romper (puede ser null)")]
     private GameObject efectoRotura;
@@ -25,11 +27,10 @@ public class TableroDestructible : MonoBehaviour
         {
             Instantiate(efectoRotura, transform.position, transform.rotation);
         }
-        if (sonidoRotura != null)
+
+        if (clipRotura != null)
         {
-            sonidoRotura.transform.SetParent(null);
-            sonidoRotura.Play();
-            Destroy(sonidoRotura.gameObject, sonidoRotura.clip != null ? sonidoRotura.clip.length + 0.1f : 2f);
+            AudioSource.PlayClipAtPoint(clipRotura, transform.position, volumenRotura);
         }
 
         Debug.Log($"[Tablero] Roto: {gameObject.name}");
