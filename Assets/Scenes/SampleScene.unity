@@ -3660,6 +3660,8 @@ MonoBehaviour:
   duracionFadeVuelta: 1.5
   intervaloInicialParpadeo: 0.55
   intervaloFinalParpadeo: 0.04
+  intervaloParpadeoRojo: 0.2
+  alphaRojoMaximo: 0.4
   overlayRenderer: {fileID: 711189281}
   arduinoLuz: {fileID: 1924958761}
   cameraCullingMask: {fileID: 530151974729343749}

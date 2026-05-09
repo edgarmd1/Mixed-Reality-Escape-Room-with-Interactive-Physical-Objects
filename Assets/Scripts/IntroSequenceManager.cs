@@ -17,6 +17,10 @@ public class IntroSequenceManager : MonoBehaviour
 
     [SerializeField] private float intervaloFinalParpadeo = 0.04f;
 
+    [Header("Parpadeo Rojo VR")]
+    [SerializeField] private float intervaloParpadeoRojo = 0.2f;
+    [SerializeField, Range(0f, 1f)] private float alphaRojoMaximo = 0.4f;
+
     [SerializeField] private Renderer overlayRenderer;
 
     [SerializeField] private ArduinoLuz arduinoLuz;
@@ -93,7 +97,7 @@ public class IntroSequenceManager : MonoBehaviour
         if (audioMusica != null)
             audioMusica.Play(); 
 
-        yield return new WaitForSeconds(duracionEnVR); 
+        yield return StartCoroutine(CoroutineParpadeoRojo(duracionEnVR)); 
 
         yield return StartCoroutine(CoroutineFadeOverlay(0.6f, 0.4f));
 
@@ -136,6 +140,33 @@ public class IntroSequenceManager : MonoBehaviour
             tiempoAcumulado += intervalo;
         }
         yield return StartCoroutine(CoroutineFadeOverlay(alphaOscuridad, 0.5f));
+    }
+
+    private IEnumerator CoroutineParpadeoRojo(float duracion)
+    {
+        float tiempoAcumulado = 0f;
+        bool flashActivo = false;
+        
+        Color colorOriginal = _overlayMat.color;
+        _overlayMat.color = new Color(1f, 0f, 0f, colorOriginal.a);
+
+        while (tiempoAcumulado < duracion)
+        {
+            flashActivo = !flashActivo;
+            SetOverlayAlpha(flashActivo ? alphaRojoMaximo : 0f);
+            
+            float tiempoEspera = flashActivo ? (intervaloParpadeoRojo * 0.4f) : (intervaloParpadeoRojo * 0.6f);
+            
+            if (tiempoAcumulado + tiempoEspera > duracion)
+            {
+                tiempoEspera = duracion - tiempoAcumulado;
+            }
+
+            yield return new WaitForSeconds(tiempoEspera);
+            tiempoAcumulado += tiempoEspera;
+        }
+
+        _overlayMat.color = new Color(0f, 0f, 0f, 0f);
     }
 
     private IEnumerator CoroutineFadeOverlay(float alphaObjetivo, float duracion)
