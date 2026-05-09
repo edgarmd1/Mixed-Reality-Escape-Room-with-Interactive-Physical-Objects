@@ -30,6 +30,12 @@ public class IntroSequenceManager : MonoBehaviour
     [SerializeField] private AudioSource audioMusica;
     [SerializeField, Tooltip("Efecto de sonido que se reproduce durante el parpadeo")]
     private AudioSource audioDuranteParpadeo;
+
+    [Header("Audios Inspectora")]
+    [SerializeField, Tooltip("Primer audio de contexto de la inspectora")]
+    private AudioSource audioInspector1;
+    [SerializeField, Tooltip("Segundo audio donde menciona la electricidad")]
+    private AudioSource audioInspector2;
     [SerializeField] private GameObject portalAscensor;
     [SerializeField] private DoorPuzzleManager doorPuzzleManager;
 
@@ -78,6 +84,17 @@ public class IntroSequenceManager : MonoBehaviour
     private IEnumerator SecuenciaIntro()
     {
         yield return new WaitForSeconds(delayInicial); 
+
+        if (audioInspector1 != null)
+        {
+            audioInspector1.Play();
+            yield return new WaitWhile(() => audioInspector1.isPlaying);
+        }
+
+        if (audioInspector2 != null)
+        {
+            audioInspector2.Play();
+        }
 
         if (audioDuranteParpadeo != null)
             audioDuranteParpadeo.Play();
