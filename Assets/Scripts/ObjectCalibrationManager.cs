@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.XR;
+using System.Collections;
 using System.Collections.Generic;
+using Unity.XR.CoreUtils;
 
 public class ObjectCalibrationManager : MonoBehaviour
 {
@@ -9,12 +11,25 @@ public class ObjectCalibrationManager : MonoBehaviour
     {
         public string name;
         public Transform objectTransform;
+
+        [Tooltip("Si está activo, la Y del objeto se calcula automáticamente " +
+                 "a partir del suelo detectado por las Quest, en lugar de usar la Y calibrada manualmente.")]
+        public bool anclarAlSuelo = false;
+
+        [Tooltip("Offset en metros sobre el suelo detectado. " +
+                 "Normalmente 0 si el objeto debe tocar el suelo.")]
+        public float offsetYSobreSuelo = 0f;
+
         [HideInInspector] public string prefsPrefix;
     }
 
     [Header("Configuración")]
     [SerializeField, Tooltip("Lista de objetos que se pueden calibrar")]
     private List<CalibratableObject> calibratableObjects = new List<CalibratableObject>();
+
+    [SerializeField, Tooltip("XR Origin de la escena. Necesario para anclar objetos al suelo. " +
+                             "Si se deja vacío se busca automáticamente.")]
+    private XROrigin xrOrigin;
 
     [Header("Velocidades de calibración")]
     [SerializeField, Tooltip("Velocidad de traslación (m/s)")]
@@ -41,6 +56,16 @@ public class ObjectCalibrationManager : MonoBehaviour
     private readonly List<InputDevice> _leftDevices  = new List<InputDevice>();
     private readonly List<InputDevice> _rightDevices = new List<InputDevice>();
 
+    // Altura Y del suelo en coordenadas mundo, calculada a partir del tracking
+    private float _floorWorldY = 0f;
+    private bool  _floorReady  = false;
+
+    void Awake()
+    {
+        if (xrOrigin == null)
+            xrOrigin = FindObjectOfType<XROrigin>();
+    }
+
     void Start()
     {
         for (int i = 0; i < calibratableObjects.Count; i++)
@@ -48,6 +73,57 @@ public class ObjectCalibrationManager : MonoBehaviour
 
         if (calibratableObjects.Count > 0)
             selectedObjectName = calibratableObjects[0].name;
+
+        // Si algún objeto necesita anclaje al suelo, esperamos al tracking
+        bool necesitaSuelo = false;
+        foreach (var obj in calibratableObjects)
+            if (obj.anclarAlSuelo) { necesitaSuelo = true; break; }
+
+        if (necesitaSuelo)
+            StartCoroutine(EsperarSueloYCargar());
+        else
+            LoadAllPositions();
+    }
+
+    /// <summary>
+    /// Espera a que el tracking XR reporte una altura válida de cámara
+    /// para poder calcular dónde está el suelo real, y entonces carga las posiciones.
+    /// </summary>
+    private IEnumerator EsperarSueloYCargar()
+    {
+        if (xrOrigin == null || xrOrigin.Camera == null)
+        {
+            Debug.LogWarning("[ObjectCalibration] No se encontró XROrigin/cámara. " +
+                             "Usando Y=0 como suelo.");
+            _floorWorldY = 0f;
+            _floorReady = true;
+            LoadAllPositions();
+            yield break;
+        }
+
+        Camera cam = xrOrigin.Camera;
+        yield return null; // esperar un frame
+
+        // Esperar hasta que la cámara reporte una altura > 5cm (tracking activo)
+        float timeout = 5f;
+        float elapsed = 0f;
+        while (cam.transform.localPosition.y < 0.05f && elapsed < timeout)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        // La Y del suelo en coordenadas mundo = posición mundo de la cámara - offset local Y
+        // El offset local Y de la cámara es la altura del usuario sobre el suelo del guardian.
+        // Por tanto, sueloMundo = xrOrigin.position.y + 0  (si XROrigin.y no se ha movido)
+        // Más robusto: sueloMundo = posiciónMundoCámara - offsetLocalCámara
+        float cameraWorldY = cam.transform.position.y;
+        float cameraLocalY = cam.transform.localPosition.y;
+        _floorWorldY = cameraWorldY - cameraLocalY;
+
+        _floorReady = true;
+        Debug.Log($"[ObjectCalibration] Suelo detectado en Y={_floorWorldY:F3} " +
+                  $"(cámara mundo={cameraWorldY:F3}, local={cameraLocalY:F3})");
 
         LoadAllPositions();
     }
@@ -186,7 +262,20 @@ public class ObjectCalibrationManager : MonoBehaviour
 
         if (PlayerPrefs.GetInt(prefix + "HasPos", 0) == 0)
         {
-            Debug.Log($"ObjectCalibrationManager: '{obj.name}' no tiene posición guardada.");
+            // Si no hay posición guardada pero tiene anclaje al suelo,
+            // al menos ajustar la Y al suelo
+            if (obj.anclarAlSuelo && _floorReady)
+            {
+                Vector3 p = obj.objectTransform.position;
+                p.y = _floorWorldY + obj.offsetYSobreSuelo;
+                obj.objectTransform.position = p;
+                Debug.Log($"ObjectCalibrationManager: '{obj.name}' sin posición guardada, " +
+                          $"Y anclada al suelo: {p.y:F3}");
+            }
+            else
+            {
+                Debug.Log($"ObjectCalibrationManager: '{obj.name}' no tiene posición guardada.");
+            }
             return;
         }
 
@@ -202,6 +291,16 @@ public class ObjectCalibrationManager : MonoBehaviour
             PlayerPrefs.GetFloat(prefix + "RotZ", 0f),
             PlayerPrefs.GetFloat(prefix + "RotW", 1f)
         );
+
+        // Si el objeto está anclado al suelo, reemplazar la Y guardada
+        // por la del suelo detectado + offset
+        if (obj.anclarAlSuelo && _floorReady)
+        {
+            float yOriginal = pos.y;
+            pos.y = _floorWorldY + obj.offsetYSobreSuelo;
+            Debug.Log($"ObjectCalibrationManager: '{obj.name}' Y anclada al suelo: " +
+                      $"{yOriginal:F3} → {pos.y:F3} (suelo={_floorWorldY:F3}, offset={obj.offsetYSobreSuelo:F3})");
+        }
 
         obj.objectTransform.position = pos;
         obj.objectTransform.rotation = rot;
