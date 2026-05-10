@@ -36,6 +36,8 @@ public class IntroSequenceManager : MonoBehaviour
     private AudioSource audioInspector1;
     [SerializeField, Tooltip("Segundo audio donde menciona la electricidad")]
     private AudioSource audioInspector2;
+    [SerializeField, Tooltip("Objeto que se activa cuando se va la luz por completo")]
+    private GameObject objetoApareceOscuridad;
     [SerializeField] private GameObject portalAscensor;
     [SerializeField] private DoorPuzzleManager doorPuzzleManager;
 
@@ -59,6 +61,9 @@ public class IntroSequenceManager : MonoBehaviour
         }
         if (portalAscensor != null)
             portalAscensor.SetActive(false);
+
+        if (objetoApareceOscuridad != null)
+            objetoApareceOscuridad.SetActive(false);
 
         if (arduinoLuz != null)
             arduinoLuz.habilitado = false;
@@ -91,20 +96,26 @@ public class IntroSequenceManager : MonoBehaviour
             yield return new WaitWhile(() => audioInspector1.isPlaying);
         }
 
-        if (audioInspector2 != null)
-        {
-            audioInspector2.Play();
-        }
-
         if (audioDuranteParpadeo != null)
             audioDuranteParpadeo.Play();
 
         yield return StartCoroutine(CoroutineParpadeo()); 
 
+        if (objetoApareceOscuridad != null)
+            objetoApareceOscuridad.SetActive(true);
+
+        if (audioInspector2 != null)
+        {
+            audioInspector2.Play();
+        }
+
         if (arduinoLuz != null)
             arduinoLuz.habilitado = true; 
 
         yield return new WaitUntil(() => arduinoLuz == null || arduinoLuz.puzzleCompletado); 
+
+        if (objetoApareceOscuridad != null)
+            objetoApareceOscuridad.SetActive(false);
 
         if (environmentFade != null)
             environmentFade.FadeSkybox(false);
