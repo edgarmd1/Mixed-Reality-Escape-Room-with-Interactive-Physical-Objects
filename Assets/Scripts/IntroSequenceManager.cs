@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Templates.MR;
+using UnityEngine.Video;
 
 public class IntroSequenceManager : MonoBehaviour
 {
@@ -31,9 +32,11 @@ public class IntroSequenceManager : MonoBehaviour
     [SerializeField, Tooltip("Efecto de sonido que se reproduce durante el parpadeo")]
     private AudioSource audioDuranteParpadeo;
 
-    [Header("Audios Inspectora")]
-    [SerializeField, Tooltip("Primer audio de contexto de la inspectora")]
-    private AudioSource audioInspector1;
+    [Header("Tutorial e Inspectora")]
+    [SerializeField, Tooltip("Objeto base del Tutorial (el padre que contiene toda la UI)")]
+    private GameObject rootVideoTutorial;
+    [SerializeField, Tooltip("Componente VideoPlayer dentro del tutorial")]
+    private VideoPlayer videoTutorial;
     [SerializeField, Tooltip("Segundo audio donde menciona la electricidad")]
     private AudioSource audioInspector2;
     [SerializeField, Tooltip("Objeto que se activa cuando se va la luz por completo")]
@@ -65,6 +68,11 @@ public class IntroSequenceManager : MonoBehaviour
         if (objetoApareceOscuridad != null)
             objetoApareceOscuridad.SetActive(false);
 
+        if (rootVideoTutorial != null)
+            rootVideoTutorial.SetActive(false);
+        else if (videoTutorial != null)
+            videoTutorial.gameObject.SetActive(false);
+
         if (arduinoLuz != null)
             arduinoLuz.habilitado = false;
 
@@ -88,13 +96,20 @@ public class IntroSequenceManager : MonoBehaviour
 
     private IEnumerator SecuenciaIntro()
     {
-        yield return new WaitForSeconds(delayInicial); 
-
-        if (audioInspector1 != null)
+        if (videoTutorial != null)
         {
-            audioInspector1.Play();
-            yield return new WaitWhile(() => audioInspector1.isPlaying);
+            if (rootVideoTutorial != null) rootVideoTutorial.SetActive(true);
+            else videoTutorial.gameObject.SetActive(true);
+
+            videoTutorial.Play();
+            yield return new WaitForSeconds(0.5f); // Pequeña espera por si tarda en cargar
+            yield return new WaitWhile(() => videoTutorial.isPlaying);
+
+            if (rootVideoTutorial != null) rootVideoTutorial.SetActive(false);
+            else videoTutorial.gameObject.SetActive(false);
         }
+
+        yield return new WaitForSeconds(delayInicial); 
 
         if (audioDuranteParpadeo != null)
             audioDuranteParpadeo.Play();
