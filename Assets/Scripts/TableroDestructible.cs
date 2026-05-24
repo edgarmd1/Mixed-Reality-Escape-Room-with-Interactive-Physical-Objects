@@ -15,6 +15,9 @@ public class TableroDestructible : MonoBehaviour
     [SerializeField, Tooltip("Partículas/debris de madera al romper (puede ser null)")]
     private GameObject efectoRotura;
 
+    /// <summary>Índice de este tablero dentro del array del DoorPuzzleManager. Asignado por el propio manager al inicio.</summary>
+    [HideInInspector] public int indice = -1;
+
     public bool Roto { get; private set; } = false;
 
     public void RecibirImpacto()
@@ -22,6 +25,10 @@ public class TableroDestructible : MonoBehaviour
         if (Roto) return;
 
         Roto = true;
+
+        // Persistir el estado entre recargas de la escena
+        if (indice >= 0)
+            DoorPuzzleState.TablonesRotosIndices.Add(indice);
 
         if (efectoRotura != null)
         {
@@ -33,7 +40,7 @@ public class TableroDestructible : MonoBehaviour
             AudioSource.PlayClipAtPoint(clipRotura, transform.position, volumenRotura);
         }
 
-        Debug.Log($"[Tablero] Roto: {gameObject.name}");
+        Debug.Log($"[Tablero] Roto: {gameObject.name} (índice {indice})");
 
         doorPuzzleManager?.NotificarTablaRota();
 

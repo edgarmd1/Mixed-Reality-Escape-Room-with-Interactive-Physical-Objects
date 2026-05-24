@@ -821,6 +821,7 @@ MonoBehaviour:
   clipRotura: {fileID: 8300000, guid: 57a7bd4f8e3b1b64fa937b04fcdd16c5, type: 3}
   volumenRotura: 1
   efectoRotura: {fileID: 0}
+  indice: -1
 --- !u!65 &232848762
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3110,6 +3111,7 @@ MonoBehaviour:
   clipRotura: {fileID: 8300000, guid: 57a7bd4f8e3b1b64fa937b04fcdd16c5, type: 3}
   volumenRotura: 1
   efectoRotura: {fileID: 0}
+  indice: -1
 --- !u!65 &1250748348
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3519,6 +3521,7 @@ MonoBehaviour:
   arduinoLuz: {fileID: 1924958761}
   cameraCulling: {fileID: 530151974729343749}
   overlayRenderer: {fileID: 711189281}
+  doorPuzzleManager: {fileID: 1505812995}
   nombreEscenaPasillo: Pasillo
   duracionFade: 1.5
   anguloApertura: -90
@@ -3644,6 +3647,7 @@ MonoBehaviour:
   clipRotura: {fileID: 8300000, guid: 57a7bd4f8e3b1b64fa937b04fcdd16c5, type: 3}
   volumenRotura: 1
   efectoRotura: {fileID: 0}
+  indice: -1
 --- !u!65 &1563631523
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3686,6 +3690,7 @@ MonoBehaviour:
   clipRotura: {fileID: 8300000, guid: 57a7bd4f8e3b1b64fa937b04fcdd16c5, type: 3}
   volumenRotura: 1
   efectoRotura: {fileID: 0}
+  indice: -1
 --- !u!65 &1586565321
 BoxCollider:
   m_ObjectHideFlags: 0

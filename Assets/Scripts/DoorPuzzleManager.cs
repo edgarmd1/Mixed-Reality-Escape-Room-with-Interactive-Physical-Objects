@@ -25,17 +25,58 @@ public class DoorPuzzleManager : MonoBehaviour
     {
         if (puertaRoot != null) puertaRoot.SetActive(false);
         if (hachaRoot != null)  hachaRoot.SetActive(false);
+
+        // Asignar índices a cada tablero para que puedan persistir su estado
+        for (int i = 0; i < tablones.Length; i++)
+        {
+            if (tablones[i] != null)
+                tablones[i].indice = i;
+        }
     }
 
     public void IniciarPuzzle()
     {
+        // Si el puzzle ya estaba completado en una carga anterior, no reiniciar
+        if (DoorPuzzleState.PuzzleCompletado)
+        {
+            _puzzleCompletado = true;
+            _tablonesRotos = tablones.Length;
+            // Desactivar todos los tablones (ya destruidos)
+            foreach (var t in tablones)
+                if (t != null) t.gameObject.SetActive(false);
+            Debug.Log("[DoorPuzzle] Puzzle ya completado – restaurando estado destruido.");
+            return;
+        }
+
+        // Restaurar tablones ya rotos en sesiones anteriores de esta carga
         _tablonesRotos = 0;
         _puzzleCompletado = false;
 
         if (puertaRoot != null) puertaRoot.SetActive(true);
         if (hachaRoot  != null) hachaRoot.SetActive(true);
 
-        Debug.Log("[DoorPuzzle] Puzzle iniciado – puerta y hacha activadas.");
+        // Aplicar estado persistido: desactivar tablones que ya fueron rotos
+        for (int i = 0; i < tablones.Length; i++)
+        {
+            if (tablones[i] == null) continue;
+
+            if (DoorPuzzleState.TablonesRotosIndices.Contains(i))
+            {
+                // Este tablero ya fue roto antes – restaurar como destruido
+                tablones[i].gameObject.SetActive(false);
+                _tablonesRotos++;
+                Debug.Log($"[DoorPuzzle] Tablero {i} restaurado como ya roto.");
+            }
+        }
+
+        // Comprobar si ya estaban todos rotos antes de que el jugador hiciera nada
+        if (_tablonesRotos >= tablones.Length)
+        {
+            StartCoroutine(CompletarPuzzle());
+            return;
+        }
+
+        Debug.Log($"[DoorPuzzle] Puzzle iniciado – {_tablonesRotos}/{tablones.Length} tablones ya rotos.");
     }
 
     public void NotificarTablaRota()
@@ -52,6 +93,7 @@ public class DoorPuzzleManager : MonoBehaviour
     private IEnumerator CompletarPuzzle()
     {
         _puzzleCompletado = true;
+        DoorPuzzleState.PuzzleCompletado = true;  // Persistir entre recargas
 
         yield return new WaitForSeconds(0.8f);
 
@@ -65,4 +107,33 @@ public class DoorPuzzleManager : MonoBehaviour
 
     public bool PuzzleCompletado => _puzzleCompletado;
     public int TablonesRotos    => _tablonesRotos;
+
+    /// <summary>
+    /// Re-oculta los tablones que ya fueron rotos.
+    /// Llamar después de que CameraCullingMask haya reactivado todos los objetos Mundo_Real,
+    /// porque ese proceso pone todos los objetos a SetActive(true) indiscriminadamente.
+    /// </summary>
+    public void RestaurarEstadoTablonesRotos()
+    {
+        if (!_puzzleCompletado && DoorPuzzleState.TablonesRotosIndices.Count == 0) return;
+
+        if (_puzzleCompletado || DoorPuzzleState.PuzzleCompletado)
+        {
+            // Puzzle completado: ocultar todos los tablones
+            foreach (var t in tablones)
+                if (t != null) t.gameObject.SetActive(false);
+            Debug.Log("[DoorPuzzle] RestaurarEstado: puzzle completado, todos los tablones ocultos.");
+            return;
+        }
+
+        // Ocultar solo los tablones que fueron rotos
+        foreach (int idx in DoorPuzzleState.TablonesRotosIndices)
+        {
+            if (idx >= 0 && idx < tablones.Length && tablones[idx] != null)
+            {
+                tablones[idx].gameObject.SetActive(false);
+                Debug.Log($"[DoorPuzzle] RestaurarEstado: tablero {idx} re-ocultado.");
+            }
+        }
+    }
 }

@@ -75,6 +75,8 @@ public class KnockPuzzleManager : MonoBehaviour
     [SerializeField] private ArduinoLuz arduinoLuz;
     [SerializeField] private CameraCullingMaskController cameraCulling;
     [SerializeField] private Renderer overlayRenderer;
+    [SerializeField, Tooltip("Gestor del puzzle de tablones (en SampleScene). Necesario para re-ocultar tablones rotos al volver del pasillo.")]
+    private DoorPuzzleManager doorPuzzleManager;
 
     [Header("Escena del Pasillo")]
     [SerializeField, Tooltip("Nombre de la escena del pasillo (debe estar en Build Settings)")]
@@ -171,7 +173,11 @@ public class KnockPuzzleManager : MonoBehaviour
     /// </summary>
     public void OnJugadorEntraPortal()
     {
-        if (estadoActual != EstadoPuzzle.EsperandoPortal) return;
+        // Permite entrar al portal tanto en la primera visita (EsperandoPortal)
+        // como si el jugador quiere volver a escuchar la secuencia (EscuchandoGolpes).
+        if (estadoActual != EstadoPuzzle.EsperandoPortal &&
+            estadoActual != EstadoPuzzle.EscuchandoGolpes) return;
+        StopAllCoroutines();
         StartCoroutine(TransicionMRaVR());
     }
 
@@ -199,6 +205,9 @@ public class KnockPuzzleManager : MonoBehaviour
             Debug.Log($"[KnockPuzzle] OnVolverAMR ignorado – estado actual: {estadoActual}");
             return;
         }
+
+        // Parar audio del pasillo inmediatamente (antes de StopAllCoroutines)
+        PararAudioPasillo();
 
         // Parar coroutines de secuencia si estaban en marcha
         StopAllCoroutines();
@@ -362,12 +371,18 @@ public class KnockPuzzleManager : MonoBehaviour
 
         estadoActual = EstadoPuzzle.EnPasillo;
         Debug.Log("[KnockPuzzle] Jugador en el pasillo VR.");
+
+        // Reproducir la secuencia de golpes automáticamente al entrar al pasillo
+        StartCoroutine(ReproducirSecuenciaGolpes());
     }
 
     private IEnumerator TransicionVRaMR()
     {
         estadoActual = EstadoPuzzle.TransicionAMR;
         Debug.Log("[KnockPuzzle] Transición VR → MR (descargando escena Pasillo).");
+
+        // Parar el audio del pasillo ANTES de descargar la escena para evitar bucles
+        PararAudioPasillo();
 
         // Fade a negro
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
@@ -387,7 +402,15 @@ public class KnockPuzzleManager : MonoBehaviour
         // Volver a MR completo (reactiva objetos MR)
         cameraCulling?.SetMode(true);
 
+        // SetMode(true) hace SetActive(true) en TODOS los objetos Mundo_Real,
+        // incluyendo los tablones que ya fueron rotos → re-ocultarlos.
+        doorPuzzleManager?.RestaurarEstadoTablonesRotos();
+
         yield return new WaitForSeconds(0.2f);
+
+        // Parar también el audio de error/feedback de la escena principal por si quedó activo
+        audioError?.Stop();
+        audioFeedbackGolpe?.Stop();
 
         // Fade in
         yield return StartCoroutine(FadeOverlay(0f, duracionFade * 0.5f));
@@ -395,6 +418,19 @@ public class KnockPuzzleManager : MonoBehaviour
         // Empezar a escuchar golpes
         EmpezarEscucha();
         Debug.Log("[KnockPuzzle] De vuelta en MR – escuchando golpes del jugador.");
+    }
+
+    /// <summary>
+    /// Para todos los AudioSources activos de la escena Pasillo antes de descargarla,
+    /// evitando que el audio quede «colgado» en bucle tras la transición.
+    /// </summary>
+    private void PararAudioPasillo()
+    {
+        if (_pasilloManager == null) return;
+
+        _pasilloManager.AudioGolpe?.Stop();
+        _pasilloManager.AudioPuertaAbriendo?.Stop();
+        Debug.Log("[KnockPuzzle] Audio del pasillo detenido.");
     }
 
     private IEnumerator TransicionExitoAVR()
@@ -456,17 +492,27 @@ public class KnockPuzzleManager : MonoBehaviour
 
     private IEnumerator ReproducirSecuenciaGolpes()
     {
+        // Guard: evita ejecutarse si el estado ya no es EnPasillo
+        // (por ejemplo si se llama dos veces: auto-play + trigger manual).
+        if (estadoActual != EstadoPuzzle.EnPasillo)
+        {
+            Debug.Log($"[KnockPuzzle] ReproducirSecuenciaGolpes ignorado – estado: {estadoActual}");
+            yield break;
+        }
+
         estadoActual = EstadoPuzzle.SecuenciaSonando;
         Debug.Log("[KnockPuzzle] Reproduciendo secuencia de golpes en la puerta...");
 
-        // Usar el AudioSource del pasillo
         AudioSource audioGolpe = _pasilloManager?.AudioGolpe;
 
-        ReproducirGolpeEn(audioGolpe);
-        for (int i = 0; i < patronIntervalos.Length; i++)
+        // El clip de audioGolpe ya contiene la secuencia completa de golpes editada.
+        // Solo hay que reproducirlo UNA vez – no llamar PlayOneShot en bucle.
+        if (audioGolpe != null)
         {
-            yield return new WaitForSeconds(patronIntervalos[i]);
-            ReproducirGolpeEn(audioGolpe);
+            audioGolpe.loop = false;
+            audioGolpe.Play();
+            // Esperar a que el clip termine por sí solo
+            yield return new WaitUntil(() => audioGolpe == null || !audioGolpe.isPlaying);
         }
 
         yield return new WaitForSeconds(1f);
@@ -479,6 +525,8 @@ public class KnockPuzzleManager : MonoBehaviour
         Debug.Log("[KnockPuzzle] Inscripción visible. Jugador puede volver al MR.");
     }
 
+    // ReproducirGolpeEn ya no se usa para la secuencia principal (el clip tiene todos los golpes),
+    // pero se mantiene por si se necesita en el futuro para otros efectos de audio.
     private void ReproducirGolpeEn(AudioSource source)
     {
         if (source != null && clipGolpePuerta != null)

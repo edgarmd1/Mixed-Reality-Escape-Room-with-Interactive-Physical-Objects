@@ -1,13 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Script que vive en la escena "Pasillo".
-/// Expone todas las referencias locales de la escena para que
-/// KnockPuzzleManager (en la escena principal) pueda acceder a ellas
-/// tras cargar la escena aditivamente.
-///
-/// Se registra automáticamente como singleton estático al activarse.
-/// </summary>
 public class PasilloManager : MonoBehaviour
 {
     public static PasilloManager Instance { get; private set; }
@@ -34,7 +26,7 @@ public class PasilloManager : MonoBehaviour
     [SerializeField, Tooltip("AudioSource para el sonido de puerta abriéndose")]
     private AudioSource audioPuertaAbriendo;
 
-    // ── Propiedades públicas ─────────────────────────────────────────────
+
     public Transform SpawnInicio => spawnInicio;
     public Transform Puerta217 => puerta217;
     public Collider PuertaInteractable => puertaInteractable;
@@ -46,7 +38,6 @@ public class PasilloManager : MonoBehaviour
     {
         Instance = this;
 
-        // Inscripción oculta al inicio
         if (inscripcion != null) inscripcion.SetActive(false);
     }
 
