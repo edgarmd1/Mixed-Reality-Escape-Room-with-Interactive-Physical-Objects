@@ -6,56 +6,35 @@ using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
 #endif
 
-/// <summary>
-/// Gestiona el puzzle de la habitación 217: secuencia de golpes en la puerta,
-/// transiciones MR↔VR mediante carga aditiva de escena, validación del patrón
-/// con acelerómetro y apertura de puerta.
-///
-/// Vive en la escena PRINCIPAL (SampleScene). La escena "Pasillo" se carga
-/// y descarga aditivamente, preservando todo el estado MR.
-/// </summary>
 public class KnockPuzzleManager : MonoBehaviour
 {
-    // ═══════════════════════════════════════════════════════════════════════
-    //  ESTADOS DEL PUZZLE
-    // ═══════════════════════════════════════════════════════════════════════
-
     public enum EstadoPuzzle
     {
-        Inactivo,           // Esperando a ser activado por TelefonoManager
-        EsperandoPortal,    // Portal activo, esperando que el jugador entre
-        TransicionAVR,      // Fade a negro → cargando escena Pasillo
-        EnPasillo,          // Jugador en el pasillo VR
-        SecuenciaSonando,   // Reproduciendo la secuencia de golpes de la puerta
-        EsperandoLectura,   // Inscripción visible, jugador leyendo instrucciones
-        TransicionAMR,      // Fade a negro → descargando escena Pasillo
-        EscuchandoGolpes,   // En MR, esperando golpes del jugador en la mesa
-        ValidandoExito,     // Patrón correcto → cargando escena Pasillo de nuevo
-        PuertaAbierta       // Puerta abierta, puzzle completado
+        Inactivo,
+        EsperandoPortal,
+        TransicionAVR,
+        EnPasillo,
+        SecuenciaSonando,
+        EsperandoLectura,
+        TransicionAMR,
+        EscuchandoGolpes,
+        ValidandoExito,
+        PuertaAbierta
     }
 
     [Header("Estado actual")]
     [SerializeField] private EstadoPuzzle estadoActual = EstadoPuzzle.Inactivo;
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  SECUENCIA DE GOLPES (Patrón fútbol: TUN-TUN-TUN-TUN-TUN... TUN-TUN!)
-    // ═══════════════════════════════════════════════════════════════════════
-
     [Header("Secuencia de golpes")]
     [SerializeField, Tooltip("Intervalos entre golpes en segundos.\n" +
-        "Patrón fútbol: 5 rápidos, pausa, 2 rápidos.\n" +
-        "Golpes totales = intervalos + 1")]
-    private float[] patronIntervalos = { 0.3f, 0.3f, 0.3f, 0.3f, 0.7f, 0.3f };
-
-    [SerializeField, Range(0.1f, 0.5f), Tooltip("Tolerancia de timing (±%). 0.3 = ±30%")]
-    private float tolerancia = 0.3f;
+        "Golpes totales = intervalos + 1\n" +
+        "Patrón actual: 2 golpes (pum pum)")]
+    private float[] patronIntervalos = { 0.5f };   
+    [SerializeField, Range(0.1f, 0.9f), Tooltip("Tolerancia de timing (±%). 0.5 = ±50%")]
+    private float tolerancia = 0.5f;
 
     [SerializeField, Tooltip("Tiempo máximo (s) para completar toda la secuencia antes de resetear")]
-    private float timeoutSecuencia = 8f;
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  AUDIO (en escena principal, para que suene en MR también)
-    // ═══════════════════════════════════════════════════════════════════════
+    private float timeoutSecuencia = 3f;
 
     [Header("Audio (escena principal)")]
     [SerializeField, Tooltip("Clip del golpe en la puerta")]
@@ -66,10 +45,6 @@ public class KnockPuzzleManager : MonoBehaviour
 
     [SerializeField, Tooltip("AudioSource genérico para feedback de golpes en MR")]
     private AudioSource audioFeedbackGolpe;
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  REFERENCIAS (escena principal)
-    // ═══════════════════════════════════════════════════════════════════════
 
     [Header("Referencias")]
     [SerializeField] private ArduinoLuz arduinoLuz;
@@ -82,36 +57,20 @@ public class KnockPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Nombre de la escena del pasillo (debe estar en Build Settings)")]
     private string nombreEscenaPasillo = "Pasillo";
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  TRANSICIÓN (FADE)
-    // ═══════════════════════════════════════════════════════════════════════
-
     [Header("Transición")]
     [SerializeField] private float duracionFade = 1.5f;
 
     private Material _overlayMat;
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  ESTADO INTERNO
-    // ═══════════════════════════════════════════════════════════════════════
-
     private readonly List<float> _timestampsGolpes = new List<float>();
     private float _tiempoInicioEscucha;
     private int _totalGolpesEsperados;
 
-    // Guardar posición MR del XR Origin para restaurar al volver
     private Vector3 _posicionMRGuardada;
     private Quaternion _rotacionMRGuardada;
 
-    // Control de intentos
     private int _intentos = 0;
 
-    // Referencia al PasilloManager (tras cargar la escena)
     private PasilloManager _pasilloManager;
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  INICIALIZACIÓN
-    // ═══════════════════════════════════════════════════════════════════════
 
     void Awake()
     {
@@ -155,47 +114,26 @@ public class KnockPuzzleManager : MonoBehaviour
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  API PÚBLICA
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Llamado por TelefonoManager cuando el audio de la voz termina.
-    /// </summary>
     public void IniciarPuzzleGolpes()
     {
         estadoActual = EstadoPuzzle.EsperandoPortal;
         Debug.Log("[KnockPuzzle] Puzzle activado – esperando que el jugador entre al portal.");
     }
 
-    /// <summary>
-    /// Llamado por PortalKnockTrigger cuando el jugador entra en el portal.
-    /// </summary>
     public void OnJugadorEntraPortal()
     {
-        // Permite entrar al portal tanto en la primera visita (EsperandoPortal)
-        // como si el jugador quiere volver a escuchar la secuencia (EscuchandoGolpes).
         if (estadoActual != EstadoPuzzle.EsperandoPortal &&
             estadoActual != EstadoPuzzle.EscuchandoGolpes) return;
         StopAllCoroutines();
         StartCoroutine(TransicionMRaVR());
     }
 
-    /// <summary>
-    /// Llamado cuando el jugador interactúa con la puerta 217 en la escena Pasillo.
-    /// Conectar en el Inspector de la escena Pasillo (Interactable → OnActivate).
-    /// O llamar desde PasilloManager.
-    /// </summary>
     public void OnIntentarAbrirPuerta()
     {
         if (estadoActual != EstadoPuzzle.EnPasillo) return;
         StartCoroutine(ReproducirSecuenciaGolpes());
     }
 
-    /// <summary>
-    /// Llamado por ReturnToMRTrigger cuando el jugador quiere volver al MR.
-    /// Funciona en cualquier estado mientras el jugador esté en el pasillo.
-    /// </summary>
     public void OnVolverAMR()
     {
         if (estadoActual != EstadoPuzzle.EnPasillo &&
@@ -206,10 +144,8 @@ public class KnockPuzzleManager : MonoBehaviour
             return;
         }
 
-        // Parar audio del pasillo inmediatamente (antes de StopAllCoroutines)
         PararAudioPasillo();
 
-        // Parar coroutines de secuencia si estaban en marcha
         StopAllCoroutines();
         StartCoroutine(TransicionVRaMR());
     }
@@ -217,13 +153,8 @@ public class KnockPuzzleManager : MonoBehaviour
     public EstadoPuzzle Estado => estadoActual;
     public bool PuzzleCompletado => estadoActual == EstadoPuzzle.PuertaAbierta;
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  CARGA / DESCARGA DE ESCENA
-    // ═══════════════════════════════════════════════════════════════════════
-
     private IEnumerator CargarEscenaPasillo()
     {
-        // Comprobar si ya está cargada
         Scene escena = SceneManager.GetSceneByName(nombreEscenaPasillo);
         if (!escena.isLoaded)
         {
@@ -233,19 +164,14 @@ public class KnockPuzzleManager : MonoBehaviour
             Debug.Log($"[KnockPuzzle] Escena '{nombreEscenaPasillo}' cargada.");
         }
 
-        // Esperar un frame para que Awake/Start se ejecuten
         yield return null;
-
-        // ── Limpiar componentes XR duplicados de la escena cargada ────────
-        // Si la escena se creó desde un template, puede traer su propio
-        // OVRManager, Camera Rig, XR Origin, etc. que conflictuarían.
         Scene escenaCargada = SceneManager.GetSceneByName(nombreEscenaPasillo);
         if (escenaCargada.isLoaded)
         {
             LimpiarXRDuplicados(escenaCargada);
         }
 
-        yield return null; // Otro frame tras la limpieza
+        yield return null;
 
         _pasilloManager = PasilloManager.Instance;
         if (_pasilloManager == null)
@@ -255,22 +181,15 @@ public class KnockPuzzleManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Busca y destruye componentes XR duplicados en la escena cargada
-    /// (OVRManager, OVRCameraRig, XROrigin, cámaras extra, EventSystem, etc.)
-    /// para evitar conflictos con los de la escena principal.
-    /// </summary>
     private void LimpiarXRDuplicados(Scene escena)
     {
         int destruidos = 0;
 
         foreach (GameObject root in escena.GetRootGameObjects())
         {
-            // Destruir GameObjects con componentes XR/OVR problemáticos
             bool destruir = false;
             string razon = "";
 
-            // OVRManager / OVRCameraRig
             foreach (var comp in root.GetComponentsInChildren<MonoBehaviour>(true))
             {
                 string tipo = comp.GetType().Name;
@@ -283,21 +202,18 @@ public class KnockPuzzleManager : MonoBehaviour
                 }
             }
 
-            // XR Origin
             if (!destruir && root.GetComponentInChildren<Unity.XR.CoreUtils.XROrigin>(true) != null)
             {
                 destruir = true;
                 razon = "XROrigin";
             }
 
-            // EventSystem duplicado
             if (!destruir && root.GetComponentInChildren<UnityEngine.EventSystems.EventSystem>(true) != null)
             {
                 destruir = true;
                 razon = "EventSystem";
             }
 
-            // Cámara suelta (no parte de PasilloManager)
             if (!destruir && root.GetComponentInChildren<Camera>(true) != null &&
                 root.GetComponent<PasilloManager>() == null)
             {
@@ -333,16 +249,10 @@ public class KnockPuzzleManager : MonoBehaviour
         _pasilloManager = null;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  TRANSICIONES
-    // ═══════════════════════════════════════════════════════════════════════
-
     private IEnumerator TransicionMRaVR()
     {
         estadoActual = EstadoPuzzle.TransicionAVR;
         Debug.Log("[KnockPuzzle] Transición MR → VR (cargando escena Pasillo).");
-
-        // Guardar posición del XR Origin en MR
         var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
         if (xrOrigin != null)
         {
@@ -350,29 +260,20 @@ public class KnockPuzzleManager : MonoBehaviour
             _rotacionMRGuardada = xrOrigin.transform.rotation;
         }
 
-        // Fade a negro
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
-
-        // Cargar la escena del pasillo
         yield return StartCoroutine(CargarEscenaPasillo());
 
-        // Cambiar solo el culling mask (no activa objetos de Mundo_Virtual)
         cameraCulling?.SetModeSoloVisual(false);
 
-        // Teleportar al spawn del pasillo
         yield return null;
         TeleportarASpawn(xrOrigin, _pasilloManager?.SpawnInicio);
 
-        // Pausa en negro
         yield return new WaitForSeconds(0.2f);
-
-        // Fade in
         yield return StartCoroutine(FadeOverlay(0f, duracionFade * 0.5f));
 
         estadoActual = EstadoPuzzle.EnPasillo;
         Debug.Log("[KnockPuzzle] Jugador en el pasillo VR.");
 
-        // Reproducir la secuencia de golpes automáticamente al entrar al pasillo
         StartCoroutine(ReproducirSecuenciaGolpes());
     }
 
@@ -381,16 +282,12 @@ public class KnockPuzzleManager : MonoBehaviour
         estadoActual = EstadoPuzzle.TransicionAMR;
         Debug.Log("[KnockPuzzle] Transición VR → MR (descargando escena Pasillo).");
 
-        // Parar el audio del pasillo ANTES de descargar la escena para evitar bucles
         PararAudioPasillo();
 
-        // Fade a negro
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
 
-        // Descargar la escena del pasillo
         yield return StartCoroutine(DescargarEscenaPasillo());
 
-        // Restaurar posición MR del XR Origin
         var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
         if (xrOrigin != null)
         {
@@ -399,31 +296,21 @@ public class KnockPuzzleManager : MonoBehaviour
             Debug.Log($"[KnockPuzzle] Posición MR restaurada: {_posicionMRGuardada}");
         }
 
-        // Volver a MR completo (reactiva objetos MR)
         cameraCulling?.SetMode(true);
 
-        // SetMode(true) hace SetActive(true) en TODOS los objetos Mundo_Real,
-        // incluyendo los tablones que ya fueron rotos → re-ocultarlos.
         doorPuzzleManager?.RestaurarEstadoTablonesRotos();
 
         yield return new WaitForSeconds(0.2f);
 
-        // Parar también el audio de error/feedback de la escena principal por si quedó activo
         audioError?.Stop();
         audioFeedbackGolpe?.Stop();
 
-        // Fade in
         yield return StartCoroutine(FadeOverlay(0f, duracionFade * 0.5f));
 
-        // Empezar a escuchar golpes
         EmpezarEscucha();
         Debug.Log("[KnockPuzzle] De vuelta en MR – escuchando golpes del jugador.");
     }
 
-    /// <summary>
-    /// Para todos los AudioSources activos de la escena Pasillo antes de descargarla,
-    /// evitando que el audio quede «colgado» en bucle tras la transición.
-    /// </summary>
     private void PararAudioPasillo()
     {
         if (_pasilloManager == null) return;
@@ -438,35 +325,25 @@ public class KnockPuzzleManager : MonoBehaviour
         estadoActual = EstadoPuzzle.ValidandoExito;
         Debug.Log("[KnockPuzzle] ¡Patrón correcto! Volviendo al pasillo para abrir la puerta.");
 
-        // Fade a negro
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
 
-        // Cargar la escena del pasillo de nuevo
         yield return StartCoroutine(CargarEscenaPasillo());
 
-        // Modo visual VR
         cameraCulling?.SetModeSoloVisual(false);
 
-        // Teleportar al spawn
         var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
         yield return null;
         TeleportarASpawn(xrOrigin, _pasilloManager?.SpawnInicio);
 
         yield return new WaitForSeconds(0.2f);
 
-        // Fade in
         yield return StartCoroutine(FadeOverlay(0f, duracionFade * 0.5f));
 
-        // Abrir la puerta
         yield return StartCoroutine(AnimarAperturaPuerta());
 
         estadoActual = EstadoPuzzle.PuertaAbierta;
         Debug.Log("[KnockPuzzle] ¡Puerta 217 abierta! Puzzle completado.");
     }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  TELEPORT HELPER
-    // ═══════════════════════════════════════════════════════════════════════
 
     private void TeleportarASpawn(Unity.XR.CoreUtils.XROrigin xrOrigin, Transform spawn)
     {
@@ -486,14 +363,8 @@ public class KnockPuzzleManager : MonoBehaviour
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  SECUENCIA DE GOLPES (REPRODUCCIÓN)
-    // ═══════════════════════════════════════════════════════════════════════
-
     private IEnumerator ReproducirSecuenciaGolpes()
     {
-        // Guard: evita ejecutarse si el estado ya no es EnPasillo
-        // (por ejemplo si se llama dos veces: auto-play + trigger manual).
         if (estadoActual != EstadoPuzzle.EnPasillo)
         {
             Debug.Log($"[KnockPuzzle] ReproducirSecuenciaGolpes ignorado – estado: {estadoActual}");
@@ -505,19 +376,15 @@ public class KnockPuzzleManager : MonoBehaviour
 
         AudioSource audioGolpe = _pasilloManager?.AudioGolpe;
 
-        // El clip de audioGolpe ya contiene la secuencia completa de golpes editada.
-        // Solo hay que reproducirlo UNA vez – no llamar PlayOneShot en bucle.
         if (audioGolpe != null)
         {
             audioGolpe.loop = false;
             audioGolpe.Play();
-            // Esperar a que el clip termine por sí solo
             yield return new WaitUntil(() => audioGolpe == null || !audioGolpe.isPlaying);
         }
 
         yield return new WaitForSeconds(1f);
 
-        // Mostrar inscripción
         if (_pasilloManager?.Inscripcion != null)
             _pasilloManager.Inscripcion.SetActive(true);
 
@@ -525,17 +392,11 @@ public class KnockPuzzleManager : MonoBehaviour
         Debug.Log("[KnockPuzzle] Inscripción visible. Jugador puede volver al MR.");
     }
 
-    // ReproducirGolpeEn ya no se usa para la secuencia principal (el clip tiene todos los golpes),
-    // pero se mantiene por si se necesita en el futuro para otros efectos de audio.
     private void ReproducirGolpeEn(AudioSource source)
     {
         if (source != null && clipGolpePuerta != null)
             source.PlayOneShot(clipGolpePuerta);
     }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  DETECCIÓN Y VALIDACIÓN DE GOLPES
-    // ═══════════════════════════════════════════════════════════════════════
 
     private void EmpezarEscucha()
     {
@@ -554,9 +415,8 @@ public class KnockPuzzleManager : MonoBehaviour
         _timestampsGolpes.Add(Time.time);
         Debug.Log($"[KnockPuzzle] Golpe #{_timestampsGolpes.Count}/{_totalGolpesEsperados} detectado.");
 
-        // Feedback sonoro en MR
-        if (audioFeedbackGolpe != null && clipGolpePuerta != null)
-            audioFeedbackGolpe.PlayOneShot(clipGolpePuerta);
+        if (audioFeedbackGolpe != null && audioFeedbackGolpe.clip != null)
+            audioFeedbackGolpe.PlayOneShot(audioFeedbackGolpe.clip);
 
         if (_timestampsGolpes.Count >= _totalGolpesEsperados)
             ValidarPatron();
@@ -607,10 +467,6 @@ public class KnockPuzzleManager : MonoBehaviour
         Debug.Log($"[KnockPuzzle] Escucha reiniciada (intento #{_intentos}).");
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  ANIMACIÓN PUERTA
-    // ═══════════════════════════════════════════════════════════════════════
-
     [Header("Puerta 217")]
     [SerializeField] private float anguloApertura = -90f;
     [SerializeField] private float duracionApertura = 1.5f;
@@ -641,10 +497,6 @@ public class KnockPuzzleManager : MonoBehaviour
 
         Debug.Log("[KnockPuzzle] Animación de apertura completada.");
     }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  FADE OVERLAY
-    // ═══════════════════════════════════════════════════════════════════════
 
     private IEnumerator FadeOverlay(float alphaObjetivo, float duracion)
     {
