@@ -36,6 +36,10 @@ public class KnockPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Tiempo máximo (s) para completar toda la secuencia antes de resetear")]
     private float timeoutSecuencia = 3f;
 
+    [SerializeField, Tooltip("Segundos de espera al iniciar la escucha antes de aceptar cualquier golpe. " +
+        "Evita falsos positivos por vibraciones de la transición.")]
+    private float retardoInicialEscucha = 2f;
+
     [Header("Audio (escena principal)")]
     [SerializeField, Tooltip("Clip del golpe en la puerta")]
     private AudioClip clipGolpePuerta;
@@ -75,6 +79,10 @@ public class KnockPuzzleManager : MonoBehaviour
     void Awake()
     {
         _totalGolpesEsperados = patronIntervalos.Length + 1;
+
+        Debug.Log($"[KnockPuzzle] Patrón cargado: {patronIntervalos.Length} intervalo(s), " +
+                  $"{_totalGolpesEsperados} golpe(s) esperados. " +
+                  $"Intervalos: [{string.Join(", ", patronIntervalos)}]");
 
         if (overlayRenderer != null)
             _overlayMat = overlayRenderer.material;
@@ -284,6 +292,9 @@ public class KnockPuzzleManager : MonoBehaviour
 
         PararAudioPasillo();
 
+        audioError?.Stop();
+        audioFeedbackGolpe?.Stop();
+
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
 
         yield return StartCoroutine(DescargarEscenaPasillo());
@@ -412,6 +423,13 @@ public class KnockPuzzleManager : MonoBehaviour
     {
         if (estadoActual != EstadoPuzzle.EscuchandoGolpes) return;
 
+        float tiempoEscuchando = Time.time - _tiempoInicioEscucha;
+        if (tiempoEscuchando < retardoInicialEscucha)
+        {
+            Debug.Log($"[KnockPuzzle] Golpe ignorado (retardo inicial: {tiempoEscuchando:F2}s < {retardoInicialEscucha}s).");
+            return;
+        }
+
         _timestampsGolpes.Add(Time.time);
         Debug.Log($"[KnockPuzzle] Golpe #{_timestampsGolpes.Count}/{_totalGolpesEsperados} detectado.");
 
@@ -462,9 +480,11 @@ public class KnockPuzzleManager : MonoBehaviour
 
     private void ResetearIntento()
     {
+        estadoActual = EstadoPuzzle.Inactivo;
         _timestampsGolpes.Clear();
         _intentos++;
         Debug.Log($"[KnockPuzzle] Escucha reiniciada (intento #{_intentos}).");
+        estadoActual = EstadoPuzzle.EscuchandoGolpes;
     }
 
     [Header("Puerta 217")]

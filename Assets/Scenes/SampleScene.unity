@@ -3508,13 +3508,9 @@ MonoBehaviour:
   estadoActual: 0
   patronIntervalos:
   - 0.3
-  - 0.3
-  - 0.3
-  - 0.3
-  - 0.7
-  - 0.3
   tolerancia: 0.3
   timeoutSecuencia: 8
+  retardoInicialEscucha: 2
   clipGolpePuerta: {fileID: 8300000, guid: fbb8a9d7ecd0b7d478b5b0e72153b049, type: 3}
   audioError: {fileID: 1673101603}
   audioFeedbackGolpe: {fileID: 20452097}
@@ -4814,6 +4810,7 @@ MonoBehaviour:
   puzzleCompletado: 0
   habilitado: 0
   cameraCullingMaskController: {fileID: 0}
+  debounceKnock: 0.2
 --- !u!4 &1924958762
 Transform:
   m_ObjectHideFlags: 0

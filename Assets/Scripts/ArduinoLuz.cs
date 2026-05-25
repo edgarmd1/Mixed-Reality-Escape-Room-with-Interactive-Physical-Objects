@@ -13,26 +13,22 @@ public class ArduinoLuz : MonoBehaviour
 
     public CameraCullingMaskController cameraCullingMaskController;
 
-    // ── Tilt Switch (teléfono) ───────────────────────────────────────────
-    // El Arduino envía "PHONE\n" cuando el Tilt Switch se cierra (auricular inclinado).
     private bool _telefonoHabilitado = false;
     private volatile bool _senalTelefono = false;
     private bool _telefonoDescolgado = false;
 
-    /// <summary>True cuando el Tilt Switch ha enviado "PHONE" y el puzzle está habilitado.</summary>
     public bool TelefonoDescolgado => _telefonoDescolgado;
 
-    /// <summary>Llamado por TelefonoManager para empezar a escuchar el Tilt Switch.</summary>
     public void HabilitarTelefono() => _telefonoHabilitado = true;
 
-    // ── Acelerómetro (golpes en mesa) ────────────────────────────────────
-    // El Arduino envía "KNOCK\n" cuando detecta un golpe en la mesa.
     private volatile bool _senalKnock = false;
 
-    /// <summary>Evento disparado en el hilo principal cada vez que se detecta un golpe.</summary>
+    [Tooltip("Tiempo mínimo entre golpes (segundos). Evita rebotes del acelerómetro.")]
+    public float debounceKnock = 0.2f;
+    private float _ultimoKnockTime = -999f;
+
     public System.Action OnKnockDetected;
 
-    // ── Serial ───────────────────────────────────────────────────────────
     private volatile bool luzDetectada = false;
     private Thread hiloSerie;
 
@@ -53,8 +49,6 @@ public class ArduinoLuz : MonoBehaviour
 
     void LeerSerie()
     {
-        // El bucle ya NO termina al completarse puzzleCompletado:
-        // el puerto sigue abierto para leer la señal del Tilt Switch.
         while (puerto.IsOpen)
         {
             try
@@ -63,12 +57,10 @@ public class ArduinoLuz : MonoBehaviour
 
                 if (valor == "PHONE")
                 {
-                    // Señal del Tilt Switch: auricular inclinado (descolgado)
                     _senalTelefono = true;
                 }
                 else if (valor == "KNOCK")
                 {
-                    // Señal del acelerómetro: golpe en la mesa
                     _senalKnock = true;
                 }
                 else if (int.TryParse(valor, out int luz))
@@ -85,23 +77,28 @@ public class ArduinoLuz : MonoBehaviour
 
     void Update()
     {
-        // ── Puzzle de luz ────────────────────────────────────────────────
         if (habilitado && luzDetectada && !puzzleCompletado)
             ActivarTransicion();
 
-        // ── Tilt Switch (teléfono) ───────────────────────────────────────
         if (_telefonoHabilitado && _senalTelefono && !_telefonoDescolgado)
         {
             _telefonoDescolgado = true;
             Debug.Log("[ArduinoLuz] Señal PHONE recibida – teléfono descolgado.");
         }
 
-        // ── Acelerómetro (golpes) ────────────────────────────────────────
         if (_senalKnock)
         {
             _senalKnock = false;
-            OnKnockDetected?.Invoke();
-            Debug.Log("[ArduinoLuz] Señal KNOCK recibida – golpe detectado.");
+            if (Time.time - _ultimoKnockTime >= debounceKnock)
+            {
+                _ultimoKnockTime = Time.time;
+                Debug.Log("[ArduinoLuz] Señal KNOCK recibida – golpe detectado.");
+                OnKnockDetected?.Invoke();
+            }
+            else
+            {
+                Debug.Log($"[ArduinoLuz] KNOCK ignorado (debounce: {Time.time - _ultimoKnockTime:F3}s < {debounceKnock}s).");
+            }
         }
     }
 
@@ -111,9 +108,6 @@ public class ArduinoLuz : MonoBehaviour
         luzDetectada = false;
 
         cameraCullingMaskController?.SetMode(false);
-
-        // NOTA: NO cerramos el puerto aquí.
-        // El hilo sigue leyendo para detectar la señal del Tilt Switch del teléfono.
     }
 
     void OnDestroy()
