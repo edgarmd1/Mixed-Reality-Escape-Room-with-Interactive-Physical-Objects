@@ -508,6 +508,13 @@ public class KnockPuzzleManager : MonoBehaviour
         Collider col = _pasilloManager.PuertaInteractable;
         if (col != null) col.enabled = false;
 
+        // Activar el trigger de entrada a la habitación 217
+        if (_pasilloManager.Trigger217Entrada != null)
+        {
+            _pasilloManager.Trigger217Entrada.enabled = true;
+            Debug.Log("[KnockPuzzle] Trigger de entrada a habitación 217 activado.");
+        }
+
         Debug.Log("[KnockPuzzle] Puerta abierta: cerrada desactivada, abierta activada.");
     }
 

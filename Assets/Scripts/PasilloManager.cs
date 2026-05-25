@@ -18,6 +18,9 @@ public class PasilloManager : MonoBehaviour
     [SerializeField, Tooltip("Collider/Interactable de la puerta para detectar interacción")]
     private Collider puertaInteractable;
 
+    [SerializeField, Tooltip("Trigger de entrada a la habitación 217 (desactivado hasta que la puerta esté abierta)")]
+    private Trigger217 trigger217;
+
     [Header("Inscripción")]
     [SerializeField, Tooltip("GameObject con la inscripción en la pared (desactivado por defecto)")]
     private GameObject inscripcion;
@@ -34,6 +37,7 @@ public class PasilloManager : MonoBehaviour
     public Transform Puerta217 => puerta217;
     public GameObject PuertaAbierta => puertaAbierta;
     public Collider PuertaInteractable => puertaInteractable;
+    public Trigger217 Trigger217Entrada => trigger217;
     public GameObject Inscripcion => inscripcion;
     public AudioSource AudioGolpe => audioGolpe;
     public AudioSource AudioPuertaAbriendo => audioPuertaAbriendo;
@@ -44,6 +48,7 @@ public class PasilloManager : MonoBehaviour
 
         if (inscripcion != null) inscripcion.SetActive(false);
         if (puertaAbierta != null) puertaAbierta.SetActive(false);
+        if (trigger217 != null) trigger217.enabled = false;
     }
 
     void OnDestroy()
