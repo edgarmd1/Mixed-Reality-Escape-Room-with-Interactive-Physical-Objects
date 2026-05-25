@@ -488,34 +488,27 @@ public class KnockPuzzleManager : MonoBehaviour
     }
 
     [Header("Puerta 217")]
-    [SerializeField] private float anguloApertura = -90f;
     [SerializeField] private float duracionApertura = 1.5f;
 
     private IEnumerator AnimarAperturaPuerta()
     {
-        Transform puerta = _pasilloManager?.Puerta217;
-        if (puerta == null) yield break;
-
         _pasilloManager.AudioPuertaAbriendo?.Play();
 
-        Quaternion rotInicial = puerta.localRotation;
-        Quaternion rotFinal = rotInicial * Quaternion.Euler(0f, anguloApertura, 0f);
+        // Esperar la duración del sonido/animación antes del swap
+        yield return new WaitForSeconds(duracionApertura);
 
-        float t = 0f;
-        while (t < duracionApertura)
-        {
-            t += Time.deltaTime;
-            float progreso = Mathf.SmoothStep(0f, 1f, t / duracionApertura);
-            puerta.localRotation = Quaternion.Slerp(rotInicial, rotFinal, progreso);
-            yield return null;
-        }
+        // Desactivar puerta cerrada y activar puerta abierta
+        if (_pasilloManager.Puerta217 != null)
+            _pasilloManager.Puerta217.gameObject.SetActive(false);
 
-        puerta.localRotation = rotFinal;
+        if (_pasilloManager.PuertaAbierta != null)
+            _pasilloManager.PuertaAbierta.SetActive(true);
 
+        // Desactivar el collider interactable
         Collider col = _pasilloManager.PuertaInteractable;
         if (col != null) col.enabled = false;
 
-        Debug.Log("[KnockPuzzle] Animación de apertura completada.");
+        Debug.Log("[KnockPuzzle] Puerta abierta: cerrada desactivada, abierta activada.");
     }
 
     private IEnumerator FadeOverlay(float alphaObjetivo, float duracion)

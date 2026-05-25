@@ -9,8 +9,11 @@ public class PasilloManager : MonoBehaviour
     private Transform spawnInicio;
 
     [Header("Puerta 217")]
-    [SerializeField, Tooltip("Transform de la puerta que rota al abrirse (Sketchfab_HN3_Door)")]
+    [SerializeField, Tooltip("Transform de la puerta cerrada (se desactiva al abrir)")]
     private Transform puerta217;
+
+    [SerializeField, Tooltip("GameObject de la puerta abierta (debe estar desactivado por defecto).")]
+    private GameObject puertaAbierta;
 
     [SerializeField, Tooltip("Collider/Interactable de la puerta para detectar interacción")]
     private Collider puertaInteractable;
@@ -29,6 +32,7 @@ public class PasilloManager : MonoBehaviour
 
     public Transform SpawnInicio => spawnInicio;
     public Transform Puerta217 => puerta217;
+    public GameObject PuertaAbierta => puertaAbierta;
     public Collider PuertaInteractable => puertaInteractable;
     public GameObject Inscripcion => inscripcion;
     public AudioSource AudioGolpe => audioGolpe;
@@ -39,6 +43,7 @@ public class PasilloManager : MonoBehaviour
         Instance = this;
 
         if (inscripcion != null) inscripcion.SetActive(false);
+        if (puertaAbierta != null) puertaAbierta.SetActive(false);
     }
 
     void OnDestroy()
