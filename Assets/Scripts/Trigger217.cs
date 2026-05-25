@@ -1,18 +1,11 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Coloca este script en un GameObject con un BoxCollider justo tras la puerta 217
-/// (en la escena Pasillo). Se activa solo cuando KnockPuzzleManager lo habilita.
-///
-/// Usa comprobación por proximidad en Update (igual que ReturnToMRTrigger),
-/// porque el XR Origin de SampleScene no tiene Rigidbody y OnTriggerEnter
-/// no se dispara de forma fiable en XR.
-/// </summary>
 [RequireComponent(typeof(BoxCollider))]
 public class Trigger217 : MonoBehaviour
 {
-    [SerializeField, Tooltip("Nombre exacto de la escena a cargar (debe estar en Build Settings)")]
+    [SerializeField, Tooltip("escena")]
     private string nombreEscena217 = "217";
 
     private BoxCollider _zona;
@@ -35,14 +28,46 @@ public class Trigger217 : MonoBehaviour
         {
             _activado = true;
             Debug.Log($"[Trigger217] Jugador dentro de la zona – cargando escena '{nombreEscena217}'.");
-            SceneManager.LoadScene(nombreEscena217, LoadSceneMode.Single);
+            StartCoroutine(CargarHabitacion217());
         }
     }
 
-    /// <summary>
-    /// Comprueba si un punto del mundo está dentro del BoxCollider,
-    /// teniendo en cuenta posición, rotación y escala del GameObject.
-    /// </summary>
+    private IEnumerator CargarHabitacion217()
+    {
+        Scene escena = SceneManager.GetSceneByName(nombreEscena217);
+        if (!escena.isLoaded)
+        {
+            AsyncOperation op = SceneManager.LoadSceneAsync(nombreEscena217, LoadSceneMode.Additive);
+            yield return op;
+        }
+
+        yield return null;
+
+        Habitacion217Manager manager = Habitacion217Manager.Instance;
+        if (manager == null)
+        {
+            Debug.LogError("[Trigger217] No se encontró Habitacion217Manager en la escena 217.");
+            yield break;
+        }
+
+        var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+        if (xrOrigin != null && manager.SpawnInicio != null)
+        {
+            Camera camXR = xrOrigin.Camera;
+            if (camXR != null)
+            {
+                Vector3 camOffset = camXR.transform.localPosition;
+                xrOrigin.transform.position = new Vector3(
+                    manager.SpawnInicio.position.x - camOffset.x,
+                    manager.SpawnInicio.position.y - camOffset.y,
+                    manager.SpawnInicio.position.z - camOffset.z
+                );
+                xrOrigin.transform.rotation = Quaternion.Euler(0f, manager.SpawnInicio.eulerAngles.y, 0f);
+                Debug.Log($"[Trigger217] Jugador teleportado a {xrOrigin.transform.position}.");
+            }
+        }
+    }
+
     private bool PuntoEnBox(Vector3 worldPoint)
     {
         Vector3 localPoint = transform.InverseTransformPoint(worldPoint);

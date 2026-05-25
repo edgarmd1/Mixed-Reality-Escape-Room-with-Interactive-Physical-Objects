@@ -5,7 +5,7 @@ const int pinTilt = 2;   // El cilindro negro (conectado al Pin 2 y a GND)
 // --- Acelerómetro ---
 const int pinAccelZ = A3;
 int reposoZ = 512;
-const int umbralGolpe = 15;
+const int umbralGolpe = 50;
 const unsigned long debounceKnock = 200; // ms entre golpes
 unsigned long ultimoKnock = 0;
 
