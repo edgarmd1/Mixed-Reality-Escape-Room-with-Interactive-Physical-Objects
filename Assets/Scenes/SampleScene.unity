@@ -1221,7 +1221,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rotationOffset: {x: 230, y: 180, z: -90}
-  gripLocalPosition: {x: 0, y: 0, z: 0}
+  gripLocalPosition: {x: 0, y: 0, z: -0.15}
   puntoImpacto: {fileID: 1085208364}
   ejeHoja: {fileID: 802373524}
   umbralVelocidad: 1.2
