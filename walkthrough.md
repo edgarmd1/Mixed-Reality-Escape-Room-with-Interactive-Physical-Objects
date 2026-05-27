@@ -1,203 +1,115 @@
-# Fase 2: Puerta con Tablones, Hacha y Teléfono — Guía de Setup en Unity
+# Fase 3: Hand Tracking + Hacha con Mando Derecho
 
-## Scripts creados / modificados
+## Cambio de paradigma
 
-| Archivo | Estado |
+El EscapeRoom ahora usa **hand tracking** como modo principal de interacción.
+El **mando derecho** es el hacha: cuando el jugador lo coge de la mesa (donde hay una prop física del hacha pegada), la hacha virtual sigue automáticamente al mando. Al dejarlo, vuelve a la mesa.
+
+El Meta Quest gestiona el cambio automáticamente:
+- Mando en mesa → hand tracking activo
+- Mando en mano → controller mode activo → hacha sigue al mando
+
+---
+
+## Scripts modificados
+
+| Archivo | Cambio |
 |---|---|
-| `DoorPuzzleManager.cs` | ✅ Nuevo |
-| `TableroDestructible.cs` | ✅ Nuevo |
-| `AxeGrabController.cs` | ✅ Nuevo |
-| `TelefonoManager.cs` | ✅ Nuevo |
-| `ArduinoLuz.cs` | ✅ Modificado (Tilt Switch) |
-| `IntroSequenceManager.cs` | ✅ Modificado (conecta DoorPuzzleManager) |
+| `AxeGrabController.cs` | ✅ Reescrito — ya no usa `XRGrabInteractable` |
 
 ---
 
-## Flujo completo
+## Flujo de la hacha
 
 ```
-IntroSequenceManager termina la secuencia VR
-  → doorPuzzleManager.IniciarPuzzle()
-     → Aparece Frame Door + hacha en el mundo MR
-     → Jugador agarra el hacha (XRGrabInteractable)
-     → Swings válidos (velocidad + inclinación) → TableroDestructible.RecibirImpacto()
-        → Tablón desaparece + sonido de madera
-        → DoorPuzzleManager.NotificarTablaRota()
-     → 5/5 tablones rotos → TelefonoManager.IniciarTelefono()
-        → Teléfono suena en bucle
-        → Arduino recibe señal "PHONE" del Tilt Switch (auricular inclinado)
-           → TelefonoManager para teléfono + reproduce voz
-```
-
----
-
-## Paso 1 — Layer "Tableros"
-
-> [!IMPORTANT]
-> Antes de hacer nada en escena, crea una nueva Layer llamada **"Tableros"** en Edit → Project Settings → Tags and Layers. Los tablones deben estar en esta capa para que el AxeGrabController los detecte.
-
----
-
-## Paso 2 — Jerarquía de GameObjects
-
-Monta esta jerarquía en la escena:
-
-```
-Scene
-├── DoorPuzzleManager          (vacío) → Script: DoorPuzzleManager
-│
-├── FrameDoor                  (Frame Door FBX instanciado, inicialmente Inactive)
-│   ├── Marco                  (MeshRenderer principal de la puerta)
-│   └── Tablones               (GameObject padre vacío)
-│       ├── Tablon_01          → Layer: Tableros, BoxCollider, Script: TableroDestructible
-│       ├── Tablon_02          → Layer: Tableros, BoxCollider, Script: TableroDestructible
-│       ├── Tablon_03          → Layer: Tableros, BoxCollider, Script: TableroDestructible
-│       ├── Tablon_04          → Layer: Tableros, BoxCollider, Script: TableroDestructible
-│       └── Tablon_05          → Layer: Tableros, BoxCollider, Script: TableroDestructible
-│           (asset: Woods)
-│
-├── Hacha                      (axeLP.fbx instanciado, inicialmente Inactive)
-│   ├── [Root]
-│   │   ├── XRGrabInteractable
-│   │   ├── Rigidbody          (Use Gravity: true, Interpolate: Interpolate)
-│   │   ├── Collider           (para físicas, NOT trigger)
-│   │   └── Script: AxeGrabController
-│   ├── PuntoImpacto           (Transform vacío, posicionarlo en la hoja del hacha)
-│   └── EjeHoja                (Transform vacío, su flecha azul FORWARD → de mango a hoja)
-│
-└── TelefonoManager            (vacío) → Script: TelefonoManager
-    ├── AudioSource: TelefonoSonando  (Loop: ✓, clip = sonido teléfono)
-    └── AudioSource: VozAudio         (Loop: ✗, clip = "El Hotel Overlook te ha atrapado...")
+Puzzle de puerta iniciado
+  → Hacha visible en la mesa (en puntoReposo)
+  → Jugador coge el mando físico
+     → Quest detecta mando → controller mode
+     → AxeGrabController detecta el controller con isTracked = true
+     → Hacha sigue al mando (positionOffset + rotationOffset)
+     → Detección de impacto habilitada
+  → Golpes válidos (velocidad + ángulo) → TableroDestructible.RecibirImpacto()
+  → Jugador deja el mando en la mesa
+     → Quest cambia a hand tracking
+     → AxeGrabController: isTracked = false
+     → Hacha vuelve a puntoReposo
 ```
 
 ---
 
-## Paso 3 — Configurar DoorPuzzleManager
+## Setup en Unity Editor
 
-En el Inspector del GameObject **DoorPuzzleManager**:
-
-| Campo | Valor |
-|---|---|
-| Puerta Root | FrameDoor (el GameObject raíz de la puerta) |
-| Hacha Root | Hacha (el GameObject raíz del hacha) |
-| Tablones (array) | Asignar los 5 `TableroDestructible` en orden |
-| Telefono Manager | TelefonoManager |
-| Sonido Portal Abierto | AudioSource con sonido de puerta abriéndose (opcional) |
-
----
-
-## Paso 4 — Configurar cada TableroDestructible
-
-En el Inspector de **cada Tablon_0X**:
-
-| Campo | Valor |
-|---|---|
-| Door Puzzle Manager | DoorPuzzleManager |
-| Sonido Rotura | AudioSource en el mismo GameObject (clip = crack de madera) |
-| Efecto Rotura | Prefab de partículas (opcional, puede estar vacío) |
-| Layer | **Tableros** |
-| BoxCollider | Ajustar al tamaño visual del tablón |
-
----
-
-## Paso 5 — Configurar AxeGrabController
-
-En el Inspector de **Hacha** (root):
-
-| Campo | Valor |
-|---|---|
-| Punto Impacto | Transform hijo "PuntoImpacto" (en la hoja) |
-| Eje Hoja | Transform hijo "EjeHoja" (forward = mango→hoja) |
-| Umbral Velocidad | 1.2 (ajustar a gusto, prueba en Quest) |
-| Umbral Angulo Hoja | 65° (el hacha debe apuntar ~hacia abajo al golpear) |
-| Radio Impacto | 0.18 |
-| Cooldown Entre Golpes | 0.55 |
-| Layer Tableros | Layer "Tableros" (seleccionar en el dropdown) |
-
-> [!TIP]
-> Los **Gizmos** del AxeGrabController se muestran en escena: esfera roja (radio de impacto) y rayo amarillo (dirección del eje). Úsalos para ajustar el PuntoImpacto y EjeHoja visualmente.
-
----
-
-## Paso 6 — Configurar TelefonoManager
-
-| Campo | Valor |
-|---|---|
-| Arduino Luz | El GameObject que tiene el script ArduinoLuz |
-| Telefono Sonando | AudioSource (Loop: ✓) |
-| Voz Audio | AudioSource con el clip de voz |
-| Retraso Primer Sonido | 1.2s |
-| Fade Salida Telefono | 0.4s |
+### Concepto clave
 
 > [!NOTE]
-> En el Editor de Unity puedes pulsar la tecla **T** para simular que el jugador descuelga el teléfono (sin necesitar el Arduino).
+> El mando físico es lo único que hay en la mesa. Al ponerse las gafas, el jugador ve el hacha virtual superpuesta sobre el mando físico.
+> El hacha virtual sigue al mando **siempre** — en la mesa y en la mano — sin ningún punto de reposo adicional.
 
 ---
 
-## Paso 7 — Conectar IntroSequenceManager
-
-En el Inspector de **IntroSequenceManager**, aparece ahora un nuevo campo:
-
-| Campo | Valor |
-|---|---|
-| Door Puzzle Manager | DoorPuzzleManager |
-
----
-
-## Paso 8 — Código Arduino (Tilt Switch + Sensor de luz)
-
-El **mismo Arduino** gestiona ahora dos sensores. Añade el Tilt Switch en el pin digital 2:
-
-```arduino
-const int PIN_TILT   = 2;   // Tilt Switch en el auricular del teléfono
-const int PIN_LUZ    = A0;  // Sensor de luz (LDR)
-const int DEBOUNCE   = 150; // ms de debounce para el tilt
-unsigned long ultimaSenal = 0;
-
-void setup() {
-  Serial.begin(9600);
-  pinMode(PIN_TILT, INPUT_PULLUP);  // Pullup interno: closed = LOW
-}
-
-void loop() {
-  // ── Sensor de luz ──────────────────────────────────────────
-  int luz = analogRead(PIN_LUZ);
-  Serial.println(luz);  // Unity lee esto como integer
-
-  // ── Tilt Switch ─────────────────────────────────────────────
-  // El switch cierra el circuito al inclinar el auricular (descolgarlo).
-  // Con INPUT_PULLUP: LOW = cerrado (descolgado).
-  if (digitalRead(PIN_TILT) == LOW) {
-    unsigned long ahora = millis();
-    if (ahora - ultimaSenal > DEBOUNCE) {
-      Serial.println("PHONE");  // Unity detecta esta cadena
-      ultimaSenal = ahora;
-    }
-  }
-
-  delay(100);
-}
-```
+### Paso 1 — Hacha GameObject
 
 > [!IMPORTANT]
-> El Tilt Switch debe conectarse entre el **Pin 2** y **GND**. Con `INPUT_PULLUP`, el pin está en HIGH en reposo. Cuando el auricular se inclina y las bolitas cierran el circuito, pasa a LOW y se envía `"PHONE\n"`.
+> Elimina los siguientes componentes del GameObject del hacha, ya **no son necesarios**:
+> - `XRGrabInteractable`
+> - `Rigidbody` (o ponlo en **Is Kinematic = true**)
+
+El script `AxeGrabController` es el único componente necesario en la raíz del hacha.
 
 ---
 
-## Testing en Editor (sin Arduino)
+### Paso 2 — Configurar AxeGrabController
 
-- **Puzzle de luz**: ya funciona como antes (espera `puzzleCompletado` desde `ArduinoLuz`)
-- **Tablones**: durante PlayMode, ve al Inspector → `TableroDestructible` → llama `RecibirImpacto()` desde el menú contextual del script, o añade un botón de debug temporalmente
-- **Teléfono**: pulsa **T** en el teclado para simular el auricular descolgado
+| Campo | Valor recomendado |
+|---|---|
+| **Position Offset** | `(0, 0, 0)` como punto de partida — ajustar en Quest |
+| **Rotation Offset** | `(0, 0, -90)` como punto de partida — ajustar en Quest |
+| **Smooth Speed** | `0` (instantáneo) |
+| **Punto Impacto** | Transform en la hoja del hacha |
+| **Eje Hoja** | Transform con forward = mango→hoja |
+| **Umbral Velocidad** | `1.2` |
+| **Umbral Angulo Hoja** | `65°` |
+| **Radio Impacto** | `0.18` |
+| **Cooldown Entre Golpes** | `0.55s` |
+| **Layer Tableros** | Layer "Tableros" |
+| **Haptic Intensidad** | `0.6` |
+| **Haptic Duración** | `0.25s` |
 
 ---
 
-## Ajuste de parámetros del hacha (recomendado)
+### Paso 3 — Ajustar el offset en Quest
 
-Hacer primero una build de test:
+El `Position Offset` y `Rotation Offset` sirven para que la empuñadura del hacha virtual coincida visualmente con el mando físico.
 
-1. **Umbral Velocidad muy alto** → el hacha nunca impacta. Bajar a 0.8
-2. **Umbral Velocidad muy bajo** → el hacha impacta al mover el mando suavemente. Subir a 1.5
-3. **Umbral Ángulo Hoja muy bajo** → solo golpea si apuntas perfectamente hacia abajo. Subir a 70°
-4. **Radio Impacto muy pequeño** → hay que ser muy preciso. Subir a 0.25
+Proceso:
+1. Hacer build en Quest y ponerse las gafas
+2. Mirar el mando en la mesa: ¿el hacha virtual está bien colocada encima?
+3. Ajustar los offsets en el Inspector (en Link mode se pueden cambiar en tiempo real)
+4. Repetir hasta que la alineación sea correcta tanto en reposo como al blandir
 
+> [!TIP]
+> Los **Gizmos** del AxeGrabController muestran:
+> - 🔴 Esfera roja → radio de impacto en `PuntoImpacto`
+> - 🟡 Rayo amarillo → dirección `EjeHoja.forward`
+
+---
+
+## Compatibilidad con el resto del puzzle
+
+`DoorPuzzleManager`, `TableroDestructible` y el sistema de haptics funcionan igual.
+Solo cambia cómo se activa la hacha (por detección de hardware en vez de grab).
+
+---
+
+## Testing en Editor
+
+Sin Quest conectado, el mando no se detectará → el hacha permanece en `puntoReposo`.
+Para testear los impactos en el Editor, añade temporalmente en `AxeGrabController.Update()`:
+
+```csharp
+#if UNITY_EDITOR
+if (UnityEngine.InputSystem.Keyboard.current.spaceKey.wasPressedThisFrame)
+    _mandoActivo = !_mandoActivo; // Toggle manual para testear
+#endif
+```

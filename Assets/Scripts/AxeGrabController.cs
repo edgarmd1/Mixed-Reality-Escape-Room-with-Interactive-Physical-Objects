@@ -1,105 +1,71 @@
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR;
 
-[RequireComponent(typeof(XRGrabInteractable))]
-[RequireComponent(typeof(Rigidbody))]
 public class AxeGrabController : MonoBehaviour
 {
-    [Header("── Detección de impacto ──")]
-    [SerializeField] private Transform puntoImpacto;
-
-    [SerializeField] private Transform ejeHoja;
-
-    [SerializeField] private float umbralVelocidad = 1.2f;
-    [SerializeField] private float umbralAnguloHoja = 65f;
-
-    [SerializeField] private float radioImpacto = 0.18f;
-
-    [SerializeField] private float cooldownEntreGolpes = 0.55f;
-
-    [SerializeField] private LayerMask layerTableros;
-
-    [Header("── Configuración del agarre ──")]
-    [SerializeField, Tooltip("Punto de agarre personalizado (crear un hijo vacío en el mango).\n" +
-        "Si está asignado, se usará como attachTransform del XRGrabInteractable.")]
+    // ── Agarre ────────────────────────────────────────────────────────────
+    [Header("── Agarre ──")]
+    [SerializeField, Tooltip(
+        "Punto del hacha donde el jugador la agarra.")]
     private Transform puntoAgarre;
 
-    [SerializeField, Tooltip("Offset de rotación del agarre (grados Euler).\n" +
-        "Ajusta cómo se orienta el hacha respecto al mando.\n" +
-        "(-90, 0, 0) = mango vertical con mando recto.")]
-    private Vector3 rotacionAgarre = new Vector3(0f, 0f, -90f);
+    [SerializeField, Tooltip(
+        "Rotación del hacha respecto al mando (grados Euler).")]
+    private Vector3 rotationOffset = Vector3.zero;
 
-    [SerializeField, Tooltip("Usar Velocity tracking en vez de Instantaneous.\n" +
-        "Velocity da un movimiento más suave y natural al balancear.")]
-    private bool usarVelocityTracking = true;
+    // ── Detección de impacto ───────────────────────────────────────────────
+    [Header("── Detección de impacto ──")]
+    [SerializeField] private Transform puntoImpacto;
+    [SerializeField] private Transform ejeHoja;
+    [SerializeField] private float umbralVelocidad     = 1.2f;
+    [SerializeField] private float umbralAnguloHoja    = 65f;
+    [SerializeField] private float radioImpacto        = 0.18f;
+    [SerializeField] private float cooldownEntreGolpes = 0.55f;
+    [SerializeField] private LayerMask layerTableros;
 
-    [SerializeField, Tooltip("Permitir que el hacha siga la rotación del mando.")]
-    private bool seguirRotacionMando = true;
+    // ── Haptic ─────────────────────────────────────────────────────────────
+    [Header("── Haptic feedback ──")]
+    [SerializeField, Range(0f, 1f)] private float hapticIntensidad = 0.6f;
+    [SerializeField, Range(0.05f, 1f)] private float hapticDuracion = 0.25f;
 
-    [Header("── Haptic feedback (vibración) ──")]
-    [SerializeField, Tooltip("Intensidad de vibración al golpear madera (0 = nada, 1 = máximo)")]
-    [Range(0f, 1f)]
-    private float hapticIntensidad = 0.6f;
+    // ── Auto-calibración ───────────────────────────────────────────────────
+    // Clave para PlayerPrefs
+    private const string PREFS_KEY = "Hacha_PosicionReposo";
 
-    [SerializeField, Tooltip("Duración de la vibración en segundos")]
-    [Range(0.05f, 1f)]
-    private float hapticDuracion = 0.25f;
+    // Posición y rotación de reposo (guardada/cargada de PlayerPrefs)
+    private Vector3    _posReposo;
+    private Quaternion _rotReposo;
+    private bool       _tienePosReposo = false;
 
-    private XRGrabInteractable _grab;
-    private bool  _agarrada          = false;
-    private float _tiempoUltimoGolpe = -999f;
+    // ── Estado interno ─────────────────────────────────────────────────────
+    private InputDevice _mando;
+    private bool        _mandoEnMano;
+    private float       _tiempoUltimoGolpe = -999f;
+    private Vector3     _posAnterior;
+    private float       _velocidadActual;
 
-    // Referencia al interactor activo (mando que agarra el hacha)
-    private IXRSelectInteractor _interactorActivo;
+    private Unity.XR.CoreUtils.XROrigin _xrOrigin;
 
-    private Vector3 _posAnterior;
-    private float   _velocidadActual;
+    // ─────────────────────────────────────────────────────────────────────
 
     void Awake()
     {
-        _grab = GetComponent<XRGrabInteractable>();
-
-        // ── Configurar attach point para un agarre natural ──────────────
-        // Si no hay punto de agarre asignado, crear uno automáticamente
-        if (puntoAgarre == null)
-        {
-            GameObject attachGO = new GameObject("_AutoAttachPoint");
-            attachGO.transform.SetParent(transform);
-            attachGO.transform.localPosition = Vector3.zero;
-            attachGO.transform.localRotation = Quaternion.Euler(rotacionAgarre);
-            puntoAgarre = attachGO.transform;
-            Debug.Log($"[Hacha] Creado attach point automático con rotación {rotacionAgarre}");
-        }
-        else
-        {
-            // Aplicar el offset de rotación al punto de agarre existente
-            puntoAgarre.localRotation = Quaternion.Euler(rotacionAgarre);
-            Debug.Log("[Hacha] Usando punto de agarre personalizado con rotación aplicada.");
-        }
-        _grab.attachTransform = puntoAgarre;
-
-        // ── Configurar movement type ────────────────────────────────────
-        if (usarVelocityTracking)
-        {
-            _grab.movementType = XRBaseInteractable.MovementType.VelocityTracking;
-        }
-
-        // ── Rotación ────────────────────────────────────────────────────
-        _grab.trackRotation = seguirRotacionMando;
-
-        // ── Throw: ajustar para que no salga volando al soltar ──────────
-        _grab.throwOnDetach = false;
-
-        // ── Registrar listeners ─────────────────────────────────────────
-        _grab.selectEntered.AddListener(OnAgarrada);
-        _grab.selectExited.AddListener(OnSoltada);
+        _xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+        CargarPosicionReposo();
+        _posAnterior = transform.position;
     }
 
-    void Start()
+    void OnEnable()
     {
-        _posAnterior = transform.position;
+        InputDevices.deviceConnected    += OnDeviceConnected;
+        InputDevices.deviceDisconnected += OnDeviceDisconnected;
+        BuscarMandoDerecho();
+    }
+
+    void OnDisable()
+    {
+        InputDevices.deviceConnected    -= OnDeviceConnected;
+        InputDevices.deviceDisconnected -= OnDeviceDisconnected;
     }
 
     void Update()
@@ -107,98 +73,232 @@ public class AxeGrabController : MonoBehaviour
         _velocidadActual = (transform.position - _posAnterior).magnitude / Time.deltaTime;
         _posAnterior = transform.position;
 
-        if (!_agarrada)                                           return;
+        if (!_mandoEnMano)                                         return;
         if (Time.time - _tiempoUltimoGolpe < cooldownEntreGolpes) return;
-        if (_velocidadActual < umbralVelocidad)                   return;
-        if (!InclinacionCorrecta())                               return;
+        if (_velocidadActual < umbralVelocidad)                    return;
+        if (!InclinacionCorrecta())                                 return;
 
         ComprobarImpacto();
     }
 
-    void OnDestroy()
+    void LateUpdate()
     {
-        if (_grab != null)
+        ActualizarEstadoMando();
+
+        if (_mandoEnMano)
+            ColocarEnMando();
+        else
+            AplicarPosicionReposo();
+    }
+
+    // ── Auto-calibración ───────────────────────────────────────────────────
+    private void GuardarPosicionReposo()
+    {
+        _posReposo      = transform.position;
+        _rotReposo      = transform.rotation;
+        _tienePosReposo = true;
+
+        PlayerPrefs.SetFloat(PREFS_KEY + "_PosX", _posReposo.x);
+        PlayerPrefs.SetFloat(PREFS_KEY + "_PosY", _posReposo.y);
+        PlayerPrefs.SetFloat(PREFS_KEY + "_PosZ", _posReposo.z);
+        PlayerPrefs.SetFloat(PREFS_KEY + "_RotX", _rotReposo.x);
+        PlayerPrefs.SetFloat(PREFS_KEY + "_RotY", _rotReposo.y);
+        PlayerPrefs.SetFloat(PREFS_KEY + "_RotZ", _rotReposo.z);
+        PlayerPrefs.SetFloat(PREFS_KEY + "_RotW", _rotReposo.w);
+        PlayerPrefs.SetInt  (PREFS_KEY + "_OK",   1);
+        PlayerPrefs.Save();
+
+        Debug.Log($"[Hacha] Posición de reposo auto-guardada: {_posReposo}");
+    }
+
+    private void CargarPosicionReposo()
+    {
+        if (PlayerPrefs.GetInt(PREFS_KEY + "_OK", 0) == 0)
         {
-            _grab.selectEntered.RemoveListener(OnAgarrada);
-            _grab.selectExited.RemoveListener(OnSoltada);
+            Debug.Log("[Hacha] Sin posición de reposo guardada — usando posición de escena.");
+            return;
+        }
+
+        _posReposo = new Vector3(
+            PlayerPrefs.GetFloat(PREFS_KEY + "_PosX"),
+            PlayerPrefs.GetFloat(PREFS_KEY + "_PosY"),
+            PlayerPrefs.GetFloat(PREFS_KEY + "_PosZ")
+        );
+        _rotReposo = new Quaternion(
+            PlayerPrefs.GetFloat(PREFS_KEY + "_RotX"),
+            PlayerPrefs.GetFloat(PREFS_KEY + "_RotY"),
+            PlayerPrefs.GetFloat(PREFS_KEY + "_RotZ"),
+            PlayerPrefs.GetFloat(PREFS_KEY + "_RotW")
+        );
+        _tienePosReposo = true;
+
+        // Aplicar inmediatamente
+        transform.position = _posReposo;
+        transform.rotation = _rotReposo;
+
+        Debug.Log($"[Hacha] Posición de reposo cargada: {_posReposo}");
+    }
+
+    private void AplicarPosicionReposo()
+    {
+        if (!_tienePosReposo) return;
+        transform.position = _posReposo;
+        transform.rotation = _rotReposo;
+    }
+
+    [ContextMenu("Borrar posición de reposo guardada")]
+    public void BorrarPosicionReposo()
+    {
+        PlayerPrefs.DeleteKey(PREFS_KEY + "_PosX");
+        PlayerPrefs.DeleteKey(PREFS_KEY + "_PosY");
+        PlayerPrefs.DeleteKey(PREFS_KEY + "_PosZ");
+        PlayerPrefs.DeleteKey(PREFS_KEY + "_RotX");
+        PlayerPrefs.DeleteKey(PREFS_KEY + "_RotY");
+        PlayerPrefs.DeleteKey(PREFS_KEY + "_RotZ");
+        PlayerPrefs.DeleteKey(PREFS_KEY + "_RotW");
+        PlayerPrefs.DeleteKey(PREFS_KEY + "_OK");
+        PlayerPrefs.Save();
+        _tienePosReposo = false;
+        Debug.Log("[Hacha] Posición de reposo borrada.");
+    }
+
+    // ── Dispositivo ────────────────────────────────────────────────────────
+
+    private void OnDeviceConnected(InputDevice device)
+    {
+        if (EsControllerDerecho(device))
+        {
+            _mando = device;
+            Debug.Log($"[Hacha] Mando derecho conectado: {device.name}");
         }
     }
 
-    private void OnAgarrada(SelectEnterEventArgs args)
+    private void OnDeviceDisconnected(InputDevice device)
     {
-        _agarrada        = true;
-        _posAnterior     = transform.position;
-        _interactorActivo = args.interactorObject;
-        Debug.Log("[Hacha] Agarrada por el jugador.");
+        if (EsControllerDerecho(device))
+        {
+            _mando = default;
+            _mandoEnMano = false;
+            Debug.Log("[Hacha] Mando derecho desconectado.");
+        }
     }
 
-    private void OnSoltada(SelectExitEventArgs args)
+    private void BuscarMandoDerecho()
     {
-        _agarrada         = false;
-        _interactorActivo = null;
-        Debug.Log("[Hacha] Soltada.");
+        var lista = new System.Collections.Generic.List<InputDevice>();
+        InputDevices.GetDevices(lista);
+        foreach (var d in lista)
+        {
+            if (EsControllerDerecho(d))
+            {
+                _mando = d;
+                Debug.Log($"[Hacha] Mando derecho encontrado: {d.name}");
+                return;
+            }
+        }
     }
 
-   
+    private bool EsControllerDerecho(InputDevice device)
+    {
+        return (device.characteristics & InputDeviceCharacteristics.Right)      != 0
+            && (device.characteristics & InputDeviceCharacteristics.Controller) != 0;
+    }
+
+    private void ActualizarEstadoMando()
+    {
+        if (!_mando.isValid)
+        {
+            BuscarMandoDerecho();
+            if (_mandoEnMano) { _mandoEnMano = false; Debug.Log("[Hacha] Mando perdido."); }
+            return;
+        }
+
+        bool tracked = _mando.TryGetFeatureValue(CommonUsages.isTracked, out bool t) && t;
+        if (tracked == _mandoEnMano) return;
+
+        bool estabaMandoEnMano = _mandoEnMano;
+        _mandoEnMano = tracked;
+
+        if (!tracked && estabaMandoEnMano)
+        {
+            GuardarPosicionReposo();
+            Debug.Log("[Hacha] Mando dejado en mesa → posición de reposo auto-guardada.");
+        }
+        else if (tracked)
+        {
+            Debug.Log("[Hacha] Mando cogido → detección de impacto activa.");
+        }
+    }
+
+    private void ColocarEnMando()
+    {
+        if (!_mando.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 localPos)) return;
+        if (!_mando.TryGetFeatureValue(CommonUsages.deviceRotation, out Quaternion localRot)) return;
+
+        Vector3    mandoPos;
+        Quaternion mandoRot;
+
+        if (_xrOrigin != null)
+        {
+            mandoPos = _xrOrigin.transform.TransformPoint(localPos);
+            mandoRot = _xrOrigin.transform.rotation * localRot;
+        }
+        else
+        {
+            mandoPos = localPos;
+            mandoRot = localRot;
+        }
+
+        Quaternion targetRot = mandoRot * Quaternion.Euler(rotationOffset);
+
+        Vector3 targetPos = puntoAgarre != null
+            ? mandoPos - targetRot * puntoAgarre.localPosition
+            : mandoPos;
+
+        transform.position = targetPos;
+        transform.rotation = targetRot;
+    }
+
+    // ── Detección de impacto ───────────────────────────────────────────────
+
     private bool InclinacionCorrecta()
     {
         if (ejeHoja == null)
-        {
-            float angHandleVertical = Vector3.Angle(transform.up, Vector3.up);
-            return angHandleVertical > 25f;
-        }
-        float anguloBajoHoja = Vector3.Angle(ejeHoja.forward, Vector3.down);
-        return anguloBajoHoja < umbralAnguloHoja;
+            return Vector3.Angle(transform.up, Vector3.up) > 25f;
+
+        return Vector3.Angle(ejeHoja.forward, Vector3.down) < umbralAnguloHoja;
     }
 
     private void ComprobarImpacto()
     {
         if (puntoImpacto == null)
         {
-            Debug.LogWarning("[Hacha] 'PuntoImpacto' no asignado en el Inspector.");
+            Debug.LogWarning("[Hacha] 'PuntoImpacto' no asignado.");
             return;
         }
 
-        Collider[] colisiones = Physics.OverlapSphere(puntoImpacto.position, radioImpacto, layerTableros);
-
-        foreach (Collider col in colisiones)
+        Collider[] cols = Physics.OverlapSphere(puntoImpacto.position, radioImpacto, layerTableros);
+        foreach (Collider col in cols)
         {
             if (col.TryGetComponent<TableroDestructible>(out var tablero) && !tablero.Roto)
             {
-                Debug.Log($"[Hacha] ¡Impacto válido en {tablero.gameObject.name}! " +
-                          $"Vel: {_velocidadActual:F2} m/s");
+                Debug.Log($"[Hacha] Impacto en {tablero.gameObject.name} — vel: {_velocidadActual:F2} m/s");
                 tablero.RecibirImpacto();
                 _tiempoUltimoGolpe = Time.time;
-
-                // ── Vibrar el mando al impactar ─────────────────────────
                 EnviarHapticFeedback();
-
-                break; // Un impacto por swing
+                break;
             }
         }
     }
 
-    /// <summary>
-    /// Envía una vibración (haptic impulse) al mando que tiene agarrada el hacha.
-    /// </summary>
     private void EnviarHapticFeedback()
     {
-        if (_interactorActivo == null) return;
-        if (hapticIntensidad <= 0f) return;
-
-        // En XRI 3.x el interactor implementa IXRHapticImpulseProvider
-        // a través de su XRBaseController, pero la forma más directa
-        // es buscar el XRBaseInputInteractor que expone SendHapticImpulse.
-        if (_interactorActivo is XRBaseInputInteractor inputInteractor)
-        {
-            inputInteractor.SendHapticImpulse(hapticIntensidad, hapticDuracion);
-            Debug.Log($"[Hacha] Haptic enviado – intensidad: {hapticIntensidad}, duración: {hapticDuracion}s");
-        }
-        else
-        {
-            Debug.LogWarning("[Hacha] El interactor no soporta haptics.");
-        }
+        if (!_mando.isValid || hapticIntensidad <= 0f) return;
+        if (_mando.TryGetHapticCapabilities(out HapticCapabilities caps) && caps.supportsImpulse)
+            _mando.SendHapticImpulse(0, hapticIntensidad, hapticDuracion);
     }
+
+    // ── Gizmos ─────────────────────────────────────────────────────────────
 
     void OnDrawGizmosSelected()
     {
@@ -207,11 +307,15 @@ public class AxeGrabController : MonoBehaviour
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(puntoImpacto.position, radioImpacto);
         }
-
         if (ejeHoja != null)
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawRay(ejeHoja.position, ejeHoja.forward * 0.3f);
+        }
+        if (puntoAgarre != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(puntoAgarre.position, 0.03f);
         }
     }
 }
