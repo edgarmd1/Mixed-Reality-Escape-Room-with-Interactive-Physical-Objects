@@ -1220,8 +1220,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f1e0a9fe1107c54fbbe2d13f6ee4a2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  puntoAgarre: {fileID: 1716161166}
-  rotationOffset: {x: 0, y: 0, z: -90}
+  rotationOffset: {x: 230, y: 180, z: -90}
+  gripLocalPosition: {x: 0, y: 0, z: 0}
   puntoImpacto: {fileID: 1085208364}
   ejeHoja: {fileID: 802373524}
   umbralVelocidad: 1.2

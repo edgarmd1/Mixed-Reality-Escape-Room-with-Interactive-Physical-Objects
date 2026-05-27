@@ -5,13 +5,29 @@ public class AxeGrabController : MonoBehaviour
 {
     // ── Agarre ────────────────────────────────────────────────────────────
     [Header("── Agarre ──")]
-    [SerializeField, Tooltip(
-        "Punto del hacha donde el jugador la agarra.")]
-    private Transform puntoAgarre;
 
     [SerializeField, Tooltip(
-        "Rotación del hacha respecto al mando (grados Euler).")]
-    private Vector3 rotationOffset = Vector3.zero;
+        "Rotación del hacha respecto al mando (grados Euler).\n" +
+        "El mando tiene estos ejes cuando se sujeta naturalmente:\n" +
+        "  +Y = arriba (hacia el techo)\n" +
+        "  +Z = hacia delante (la dirección del rayo)\n" +
+        "  +X = a la derecha\n\n" +
+        "Para que el mango quede VERTICAL (correcto para hacha):\n" +
+        "  Prueba (90, 0, 0) → mango queda a lo largo del brazo\n" +
+        "  Prueba (-90, 0, 0) → mango queda al revés\n" +
+        "  Añade 180 en Y si la hoja apunta hacia ti")]
+    private Vector3 rotationOffset = new Vector3(90f, 180f, 0f);
+
+    [SerializeField, Tooltip(
+        "Posición del punto de agarre en el espacio LOCAL del hacha (después de aplicar la rotación).\n\n" +
+        "Indica cuál es el punto del mango donde el jugador agarra,\n" +
+        "respecto al origen del hacha.\n\n" +
+        "Ejemplo: si el mango mide 0.5m y el origen del hacha está en la hoja,\n" +
+        "el punto de agarre estaría en (0, -0.5, 0) o (0, 0.5, 0)\n" +
+        "dependiendo de hacia dónde apunta el mango.\n\n" +
+        "USA el ContextMenu 'Mostrar ejes del hacha' para ver cuáles son tus ejes.")]
+    private Vector3 gripLocalPosition = Vector3.zero;
+
 
     // ── Detección de impacto ───────────────────────────────────────────────
     [Header("── Detección de impacto ──")]
@@ -53,6 +69,8 @@ public class AxeGrabController : MonoBehaviour
         _xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
         CargarPosicionReposo();
         _posAnterior = transform.position;
+
+        MostrarEjesHacha();
     }
 
     void OnEnable()
@@ -144,6 +162,16 @@ public class AxeGrabController : MonoBehaviour
         if (!_tienePosReposo) return;
         transform.position = _posReposo;
         transform.rotation = _rotReposo;
+    }
+
+    [ContextMenu("Mostrar ejes del hacha (para configurar gripLocalPosition)")]
+    private void MostrarEjesHacha()
+    {
+        Debug.Log($"[Hacha] Ejes en mundo → " +
+                  $"Derecha: {transform.right:F2} | " +
+                  $"Arriba: {transform.up:F2} | " +
+                  $"Adelante: {transform.forward:F2}");
+        Debug.Log("[Hacha] Para encontrar el eje del mango, mira cuál de los tres apunta a lo largo del palo del hacha.");
     }
 
     [ContextMenu("Borrar posición de reposo guardada")]
@@ -251,9 +279,11 @@ public class AxeGrabController : MonoBehaviour
 
         Quaternion targetRot = mandoRot * Quaternion.Euler(rotationOffset);
 
-        Vector3 targetPos = puntoAgarre != null
-            ? mandoPos - targetRot * puntoAgarre.localPosition
-            : mandoPos;
+        // El gripLocalPosition indica dónde está el punto de agarre
+        // en el espacio local del hacha (después de aplicar la rotación).
+        // La hacha se posiciona para que ese punto coincida con el mando.
+        // Fórmula: hachaPos = mandoPos - targetRot * gripLocalPosition
+        Vector3 targetPos = mandoPos - targetRot * gripLocalPosition;
 
         transform.position = targetPos;
         transform.rotation = targetRot;
@@ -302,6 +332,13 @@ public class AxeGrabController : MonoBehaviour
 
     void OnDrawGizmosSelected()
     {
+        // Punto de agarre en espacio mundo (después de aplicar rotation offset)
+        Quaternion gizmoRot = transform.rotation;
+        Vector3 gripWorldPos = transform.position + gizmoRot * gripLocalPosition;
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(gripWorldPos, 0.04f);
+        Gizmos.DrawLine(transform.position, gripWorldPos);
+
         if (puntoImpacto != null)
         {
             Gizmos.color = Color.red;
@@ -311,11 +348,6 @@ public class AxeGrabController : MonoBehaviour
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawRay(ejeHoja.position, ejeHoja.forward * 0.3f);
-        }
-        if (puntoAgarre != null)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(puntoAgarre.position, 0.03f);
         }
     }
 }
