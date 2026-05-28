@@ -1613,6 +1613,16 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!64 &540779620 stripped
+MeshCollider:
+  m_CorrespondingSourceObject: {fileID: 1384299799115710169, guid: 195bfae27e81e7941a720bd031ef8bf1, type: 3}
+  m_PrefabInstance: {fileID: 1561360393}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &548964684 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7039697405146537434, guid: 195bfae27e81e7941a720bd031ef8bf1, type: 3}
+  m_PrefabInstance: {fileID: 1561360393}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &582161122
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3385,7 +3395,8 @@ MonoBehaviour:
   cameraCulling: {fileID: 530151974729343749}
   overlayRenderer: {fileID: 711189281}
   doorPuzzleManager: {fileID: 1505812995}
-  nombreEscenaPasillo: Pasillo
+  pasilloRoot: {fileID: 1561360395}
+  pasilloManager: {fileID: 0}
   duracionFade: 1.5
   duracionApertura: 1.5
 --- !u!1 &1505812994
@@ -3543,11 +3554,49 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2750649217280572612, guid: 195bfae27e81e7941a720bd031ef8bf1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1561360397}
   m_SourcePrefab: {fileID: 100100000, guid: 195bfae27e81e7941a720bd031ef8bf1, type: 3}
 --- !u!4 &1561360394 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3988838254419355465, guid: 195bfae27e81e7941a720bd031ef8bf1, type: 3}
+  m_PrefabInstance: {fileID: 1561360393}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1561360395 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3315529421210826657, guid: 195bfae27e81e7941a720bd031ef8bf1, type: 3}
+  m_PrefabInstance: {fileID: 1561360393}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1561360396 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2750649217280572612, guid: 195bfae27e81e7941a720bd031ef8bf1, type: 3}
+  m_PrefabInstance: {fileID: 1561360393}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1561360397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1561360396}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b188007db80f3ca4995416c447d8eacd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spawnInicio: {fileID: 0}
+  puerta217: {fileID: 1561360398}
+  puertaAbierta: {fileID: 548964684}
+  puertaInteractable: {fileID: 540779620}
+  trigger217: {fileID: 0}
+  inscripcion: {fileID: 0}
+  audioGolpe: {fileID: 0}
+  audioPuertaAbriendo: {fileID: 0}
+--- !u!4 &1561360398 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7315900453354750354, guid: 195bfae27e81e7941a720bd031ef8bf1, type: 3}
   m_PrefabInstance: {fileID: 1561360393}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1563631518 stripped

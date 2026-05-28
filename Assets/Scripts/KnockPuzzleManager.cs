@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 #if UNITY_EDITOR
 using UnityEngine.InputSystem;
 #endif
@@ -29,7 +28,7 @@ public class KnockPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Intervalos entre golpes en segundos.\n" +
         "Golpes totales = intervalos + 1\n" +
         "Patrón actual: 2 golpes (pum pum)")]
-    private float[] patronIntervalos = { 0.5f };   
+    private float[] patronIntervalos = { 0.5f };
     [SerializeField, Range(0.1f, 0.9f), Tooltip("Tolerancia de timing (±%). 0.5 = ±50%")]
     private float tolerancia = 0.5f;
 
@@ -57,9 +56,11 @@ public class KnockPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Gestor del puzzle de tablones (en SampleScene). Necesario para re-ocultar tablones rotos al volver del pasillo.")]
     private DoorPuzzleManager doorPuzzleManager;
 
-    [Header("Escena del Pasillo")]
-    [SerializeField, Tooltip("Nombre de la escena del pasillo (debe estar en Build Settings)")]
-    private string nombreEscenaPasillo = "Pasillo";
+    [Header("Pasillo (en escena)")]
+    [SerializeField, Tooltip("GameObject raíz del pasillo. Debe estar desactivado al inicio y es hijo de FrameRoot para calibración.")]
+    private GameObject pasilloRoot;
+    [SerializeField, Tooltip("Referencia directa al PasilloManager dentro del pasillo.")]
+    private PasilloManager pasilloManager;
 
     [Header("Transición")]
     [SerializeField] private float duracionFade = 1.5f;
@@ -74,8 +75,6 @@ public class KnockPuzzleManager : MonoBehaviour
 
     private int _intentos = 0;
 
-    private PasilloManager _pasilloManager;
-
     void Awake()
     {
         _totalGolpesEsperados = patronIntervalos.Length + 1;
@@ -86,6 +85,9 @@ public class KnockPuzzleManager : MonoBehaviour
 
         if (overlayRenderer != null)
             _overlayMat = overlayRenderer.material;
+
+        if (pasilloRoot != null)
+            pasilloRoot.SetActive(false);
     }
 
     void OnEnable()
@@ -161,106 +163,37 @@ public class KnockPuzzleManager : MonoBehaviour
     public EstadoPuzzle Estado => estadoActual;
     public bool PuzzleCompletado => estadoActual == EstadoPuzzle.PuertaAbierta;
 
-    private IEnumerator CargarEscenaPasillo()
+    // ─── Activación / desactivación del pasillo ───────────────────────────────
+
+    private void ActivarPasillo()
     {
-        Scene escena = SceneManager.GetSceneByName(nombreEscenaPasillo);
-        if (!escena.isLoaded)
+        if (pasilloRoot != null)
         {
-            Debug.Log($"[KnockPuzzle] Cargando escena '{nombreEscenaPasillo}' aditivamente...");
-            AsyncOperation op = SceneManager.LoadSceneAsync(nombreEscenaPasillo, LoadSceneMode.Additive);
-            yield return op;
-            Debug.Log($"[KnockPuzzle] Escena '{nombreEscenaPasillo}' cargada.");
+            pasilloRoot.SetActive(true);
+            Debug.Log("[KnockPuzzle] Pasillo activado.");
         }
-
-        yield return null;
-        Scene escenaCargada = SceneManager.GetSceneByName(nombreEscenaPasillo);
-        if (escenaCargada.isLoaded)
-        {
-            LimpiarXRDuplicados(escenaCargada);
-        }
-
-        yield return null;
-
-        _pasilloManager = PasilloManager.Instance;
-        if (_pasilloManager == null)
-        {
-            Debug.LogError("[KnockPuzzle] No se encontró PasilloManager en la escena cargada. " +
-                           "Asegúrate de que la escena tiene un GameObject con PasilloManager.");
-        }
-    }
-
-    private void LimpiarXRDuplicados(Scene escena)
-    {
-        int destruidos = 0;
-
-        foreach (GameObject root in escena.GetRootGameObjects())
-        {
-            bool destruir = false;
-            string razon = "";
-
-            foreach (var comp in root.GetComponentsInChildren<MonoBehaviour>(true))
-            {
-                string tipo = comp.GetType().Name;
-                if (tipo.Contains("OVRManager") || tipo.Contains("OVRCameraRig") ||
-                    tipo.Contains("OVRHeadsetEmulator"))
-                {
-                    destruir = true;
-                    razon = tipo;
-                    break;
-                }
-            }
-
-            if (!destruir && root.GetComponentInChildren<Unity.XR.CoreUtils.XROrigin>(true) != null)
-            {
-                destruir = true;
-                razon = "XROrigin";
-            }
-
-            if (!destruir && root.GetComponentInChildren<UnityEngine.EventSystems.EventSystem>(true) != null)
-            {
-                destruir = true;
-                razon = "EventSystem";
-            }
-
-            if (!destruir && root.GetComponentInChildren<Camera>(true) != null &&
-                root.GetComponent<PasilloManager>() == null)
-            {
-                destruir = true;
-                razon = "Camera";
-            }
-
-            if (destruir)
-            {
-                Debug.Log($"[KnockPuzzle] Destruyendo '{root.name}' de escena Pasillo (contiene {razon}).");
-                Destroy(root);
-                destruidos++;
-            }
-        }
-
-        if (destruidos > 0)
-            Debug.Log($"[KnockPuzzle] Limpieza: {destruidos} objeto(s) XR duplicados eliminados de la escena Pasillo.");
         else
-            Debug.Log("[KnockPuzzle] Limpieza: escena Pasillo limpia, sin duplicados XR.");
-    }
-
-    private IEnumerator DescargarEscenaPasillo()
-    {
-        Scene escena = SceneManager.GetSceneByName(nombreEscenaPasillo);
-        if (escena.isLoaded)
         {
-            Debug.Log($"[KnockPuzzle] Descargando escena '{nombreEscenaPasillo}'...");
-            AsyncOperation op = SceneManager.UnloadSceneAsync(escena);
-            yield return op;
-            Debug.Log($"[KnockPuzzle] Escena '{nombreEscenaPasillo}' descargada.");
+            Debug.LogWarning("[KnockPuzzle] pasilloRoot no asignado – el pasillo no se activará.");
         }
-
-        _pasilloManager = null;
     }
+
+    private void DesactivarPasillo()
+    {
+        if (pasilloRoot != null)
+        {
+            pasilloRoot.SetActive(false);
+            Debug.Log("[KnockPuzzle] Pasillo desactivado.");
+        }
+    }
+
+    // ─── Transiciones ─────────────────────────────────────────────────────────
 
     private IEnumerator TransicionMRaVR()
     {
         estadoActual = EstadoPuzzle.TransicionAVR;
-        Debug.Log("[KnockPuzzle] Transición MR → VR (cargando escena Pasillo).");
+        Debug.Log("[KnockPuzzle] Transición MR → VR (activando pasillo en escena).");
+
         var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
         if (xrOrigin != null)
         {
@@ -269,12 +202,13 @@ public class KnockPuzzleManager : MonoBehaviour
         }
 
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
-        yield return StartCoroutine(CargarEscenaPasillo());
+
+        ActivarPasillo();
 
         cameraCulling?.SetModeSoloVisual(false);
 
         yield return null;
-        TeleportarASpawn(xrOrigin, _pasilloManager?.SpawnInicio);
+        TeleportarASpawn(xrOrigin, pasilloManager?.SpawnInicio);
 
         yield return new WaitForSeconds(0.2f);
         yield return StartCoroutine(FadeOverlay(0f, duracionFade * 0.5f));
@@ -288,7 +222,7 @@ public class KnockPuzzleManager : MonoBehaviour
     private IEnumerator TransicionVRaMR()
     {
         estadoActual = EstadoPuzzle.TransicionAMR;
-        Debug.Log("[KnockPuzzle] Transición VR → MR (descargando escena Pasillo).");
+        Debug.Log("[KnockPuzzle] Transición VR → MR (desactivando pasillo).");
 
         PararAudioPasillo();
 
@@ -297,7 +231,7 @@ public class KnockPuzzleManager : MonoBehaviour
 
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
 
-        yield return StartCoroutine(DescargarEscenaPasillo());
+        DesactivarPasillo();
 
         var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
         if (xrOrigin != null)
@@ -322,15 +256,6 @@ public class KnockPuzzleManager : MonoBehaviour
         Debug.Log("[KnockPuzzle] De vuelta en MR – escuchando golpes del jugador.");
     }
 
-    private void PararAudioPasillo()
-    {
-        if (_pasilloManager == null) return;
-
-        _pasilloManager.AudioGolpe?.Stop();
-        _pasilloManager.AudioPuertaAbriendo?.Stop();
-        Debug.Log("[KnockPuzzle] Audio del pasillo detenido.");
-    }
-
     private IEnumerator TransicionExitoAVR()
     {
         estadoActual = EstadoPuzzle.ValidandoExito;
@@ -338,13 +263,13 @@ public class KnockPuzzleManager : MonoBehaviour
 
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
 
-        yield return StartCoroutine(CargarEscenaPasillo());
+        ActivarPasillo();
 
         cameraCulling?.SetModeSoloVisual(false);
 
         var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
         yield return null;
-        TeleportarASpawn(xrOrigin, _pasilloManager?.SpawnInicio);
+        TeleportarASpawn(xrOrigin, pasilloManager?.SpawnInicio);
 
         yield return new WaitForSeconds(0.2f);
 
@@ -355,6 +280,8 @@ public class KnockPuzzleManager : MonoBehaviour
         estadoActual = EstadoPuzzle.PuertaAbierta;
         Debug.Log("[KnockPuzzle] ¡Puerta 217 abierta! Puzzle completado.");
     }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private void TeleportarASpawn(Unity.XR.CoreUtils.XROrigin xrOrigin, Transform spawn)
     {
@@ -385,7 +312,7 @@ public class KnockPuzzleManager : MonoBehaviour
         estadoActual = EstadoPuzzle.SecuenciaSonando;
         Debug.Log("[KnockPuzzle] Reproduciendo secuencia de golpes en la puerta...");
 
-        AudioSource audioGolpe = _pasilloManager?.AudioGolpe;
+        AudioSource audioGolpe = pasilloManager?.AudioGolpe;
 
         if (audioGolpe != null)
         {
@@ -396,17 +323,20 @@ public class KnockPuzzleManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
 
-        if (_pasilloManager?.Inscripcion != null)
-            _pasilloManager.Inscripcion.SetActive(true);
+        if (pasilloManager?.Inscripcion != null)
+            pasilloManager.Inscripcion.SetActive(true);
 
         estadoActual = EstadoPuzzle.EsperandoLectura;
         Debug.Log("[KnockPuzzle] Inscripción visible. Jugador puede volver al MR.");
     }
 
-    private void ReproducirGolpeEn(AudioSource source)
+    private void PararAudioPasillo()
     {
-        if (source != null && clipGolpePuerta != null)
-            source.PlayOneShot(clipGolpePuerta);
+        if (pasilloManager == null) return;
+
+        pasilloManager.AudioGolpe?.Stop();
+        pasilloManager.AudioPuertaAbriendo?.Stop();
+        Debug.Log("[KnockPuzzle] Audio del pasillo detenido.");
     }
 
     private void EmpezarEscucha()
@@ -492,26 +422,26 @@ public class KnockPuzzleManager : MonoBehaviour
 
     private IEnumerator AnimarAperturaPuerta()
     {
-        _pasilloManager.AudioPuertaAbriendo?.Play();
+        pasilloManager.AudioPuertaAbriendo?.Play();
 
         // Esperar la duración del sonido/animación antes del swap
         yield return new WaitForSeconds(duracionApertura);
 
         // Desactivar puerta cerrada y activar puerta abierta
-        if (_pasilloManager.Puerta217 != null)
-            _pasilloManager.Puerta217.gameObject.SetActive(false);
+        if (pasilloManager.Puerta217 != null)
+            pasilloManager.Puerta217.gameObject.SetActive(false);
 
-        if (_pasilloManager.PuertaAbierta != null)
-            _pasilloManager.PuertaAbierta.SetActive(true);
+        if (pasilloManager.PuertaAbierta != null)
+            pasilloManager.PuertaAbierta.SetActive(true);
 
         // Desactivar el collider interactable
-        Collider col = _pasilloManager.PuertaInteractable;
+        Collider col = pasilloManager.PuertaInteractable;
         if (col != null) col.enabled = false;
 
         // Activar el trigger de entrada a la habitación 217
-        if (_pasilloManager.Trigger217Entrada != null)
+        if (pasilloManager.Trigger217Entrada != null)
         {
-            _pasilloManager.Trigger217Entrada.enabled = true;
+            pasilloManager.Trigger217Entrada.enabled = true;
             Debug.Log("[KnockPuzzle] Trigger de entrada a habitación 217 activado.");
         }
 
