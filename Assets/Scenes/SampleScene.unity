@@ -1221,7 +1221,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rotationOffset: {x: 230, y: 180, z: -90}
-  gripLocalPosition: {x: 0, y: 0, z: -0.15}
+  gripLocalPosition: {x: 0.3, y: 0, z: -0.05}
   puntoImpacto: {fileID: 1085208364}
   ejeHoja: {fileID: 802373524}
   umbralVelocidad: 1.2
@@ -4064,6 +4064,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: ce103f327783b5f4890f19d55759ddac, type: 3}
       propertyPath: m_Name
       value: TableBar
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ce103f327783b5f4890f19d55759ddac, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

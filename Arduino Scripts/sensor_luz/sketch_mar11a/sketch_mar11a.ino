@@ -51,7 +51,7 @@ void loop() {
   if (magnitud > umbralGolpe) {
     unsigned long ahora = millis();
     if (ahora - ultimoKnock > debounceKnock) {
-      Serial.println("KNOCK");
+      //Serial.println("KNOCK");
       ultimoKnock = ahora;
     }
   }
