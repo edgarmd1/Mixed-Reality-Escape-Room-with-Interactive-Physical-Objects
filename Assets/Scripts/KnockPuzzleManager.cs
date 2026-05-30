@@ -127,7 +127,8 @@ public class KnockPuzzleManager : MonoBehaviour
     public void IniciarPuzzleGolpes()
     {
         estadoActual = EstadoPuzzle.EsperandoPortal;
-        Debug.Log("[KnockPuzzle] Puzzle activado – esperando que el jugador entre al portal.");
+        ActivarPasillo();
+        Debug.Log("[KnockPuzzle] Puzzle activado – pasillo visible. Esperando que el jugador entre al portal.");
     }
 
     public void OnJugadorEntraPortal()
@@ -424,21 +425,17 @@ public class KnockPuzzleManager : MonoBehaviour
     {
         pasilloManager.AudioPuertaAbriendo?.Play();
 
-        // Esperar la duración del sonido/animación antes del swap
         yield return new WaitForSeconds(duracionApertura);
 
-        // Desactivar puerta cerrada y activar puerta abierta
         if (pasilloManager.Puerta217 != null)
             pasilloManager.Puerta217.gameObject.SetActive(false);
 
         if (pasilloManager.PuertaAbierta != null)
             pasilloManager.PuertaAbierta.SetActive(true);
 
-        // Desactivar el collider interactable
         Collider col = pasilloManager.PuertaInteractable;
         if (col != null) col.enabled = false;
 
-        // Activar el trigger de entrada a la habitación 217
         if (pasilloManager.Trigger217Entrada != null)
         {
             pasilloManager.Trigger217Entrada.enabled = true;

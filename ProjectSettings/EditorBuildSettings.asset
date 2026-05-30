@@ -8,10 +8,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 55daccc09a3b69647bbab145b54a3ab3
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/217.unity
     guid: 20539d02a4a16714c8cadef78bf58993
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Pasillo.unity
     guid: c4dae214a9507004e99b2c7520a8f07a
   m_configObjects:
