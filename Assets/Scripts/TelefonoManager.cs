@@ -14,8 +14,8 @@ public class TelefonoManager : MonoBehaviour
     [SerializeField] private float fadeSalidaTelefono = 0.4f;
 
     [Header("Puzzle siguiente")]
-    [SerializeField, Tooltip("Gestor del puzzle de golpes que se activa al terminar la voz")]
-    private KnockPuzzleManager knockPuzzleManager;
+    [SerializeField, Tooltip("Gestor del nuevo puzzle de teclado matricial que se activa al terminar la voz")]
+    private KeypadPuzzleManager keypadPuzzleManager;
 
     private bool _telefonoActivo  = false;
     private bool _vozActivada     = false;
@@ -87,11 +87,11 @@ public class TelefonoManager : MonoBehaviour
         // Esperar a que termine el audio de la voz
         yield return new WaitUntil(() => vozAudio == null || !vozAudio.isPlaying);
 
-        Debug.Log("[Telefono] Voz terminada – activando puzzle de golpes.");
+        Debug.Log("[Telefono] Voz terminada – activando puzzle de teclado matricial.");
 
-        // Activar el puzzle de golpes
-        if (knockPuzzleManager != null)
-            knockPuzzleManager.IniciarPuzzleGolpes();
+        // Activar el puzzle de teclado matricial
+        if (keypadPuzzleManager != null)
+            keypadPuzzleManager.IniciarPuzzle();
     }
 }
 

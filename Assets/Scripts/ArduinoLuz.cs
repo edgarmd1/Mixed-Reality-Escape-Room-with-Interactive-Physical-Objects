@@ -29,6 +29,10 @@ public class ArduinoLuz : MonoBehaviour
 
     public System.Action OnKnockDetected;
 
+    public System.Action<string> OnComboRecibido;
+
+    private volatile string _comboRecibido = null;
+
     private volatile bool luzDetectada = false;
     private Thread hiloSerie;
 
@@ -63,9 +67,12 @@ public class ArduinoLuz : MonoBehaviour
                 {
                     _senalKnock = true;
                 }
+                else if (valor.StartsWith("COMBO:"))
+                {
+                    _comboRecibido = valor.Substring(6).Trim();
+                }
                 else if (int.TryParse(valor, out int luz))
                 {
-                    // Valor del sensor de luz
                     if (luz >= umbralActivacion)
                         luzDetectada = true;
                 }
@@ -99,6 +106,14 @@ public class ArduinoLuz : MonoBehaviour
             {
                 Debug.Log($"[ArduinoLuz] KNOCK ignorado (debounce: {Time.time - _ultimoKnockTime:F3}s < {debounceKnock}s).");
             }
+        }
+
+        if (_comboRecibido != null)
+        {
+            string combo = _comboRecibido;
+            _comboRecibido = null;
+            Debug.Log($"[ArduinoLuz] Combo recibido del keypad: '{combo}'");
+            OnComboRecibido?.Invoke(combo);
         }
     }
 
