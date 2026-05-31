@@ -341,7 +341,7 @@ GameObject:
   - component: {fileID: 29391741}
   - component: {fileID: 29391740}
   m_Layer: 0
-  m_Name: Frase
+  m_Name: PhoneCall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -358,7 +358,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 4ce6d620e4b8b9e4b81e0775212be054, type: 3}
+  m_Resource: {fileID: 8300000, guid: 4953fb22f8eec4a46ac745152928d787, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -619,7 +619,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: d33c12b788fed6547aa64ed7a1e1dd26, type: 3}
+  m_Resource: {fileID: 8300000, guid: 444754445cbeb314e8761df7fbdf0faf, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -1365,7 +1365,7 @@ PrefabInstance:
     - target: {fileID: 4415745982179208543, guid: dc067c577ec1b854684d789b6e727cc0, type: 3}
       propertyPath: m_VideoClip
       value: 
-      objectReference: {fileID: 32900000, guid: 120c8c8a95baf3d4fbefc18feca99429, type: 3}
+      objectReference: {fileID: 32900000, guid: ab63febaf3989ca41b5ab4b3ae0af406, type: 3}
     - target: {fileID: 4415745982179208543, guid: dc067c577ec1b854684d789b6e727cc0, type: 3}
       propertyPath: m_AudioOutputMode
       value: 1
