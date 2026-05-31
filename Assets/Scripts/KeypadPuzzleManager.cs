@@ -158,6 +158,7 @@ public class KeypadPuzzleManager : MonoBehaviour
             knockPuzzleManager.IniciarPuzzleGolpes();
     }
 
+
     public EstadoKeypad Estado => estadoActual;
 
     // ─── Recepción de combo ───────────────────────────────────────────────────
