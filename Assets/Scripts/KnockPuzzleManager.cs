@@ -127,8 +127,8 @@ public class KnockPuzzleManager : MonoBehaviour
     public void IniciarPuzzleGolpes()
     {
         estadoActual = EstadoPuzzle.EsperandoPortal;
-        ActivarPasillo();
-        Debug.Log("[KnockPuzzle] Puzzle activado – pasillo visible. Esperando que el jugador entre al portal.");
+        // El pasillo ya fue activado por KeypadPuzzleManager al detectar el giro de 180°
+        Debug.Log("[KnockPuzzle] Puzzle activado – pasillo ya visible. Esperando que el jugador entre al portal.");
     }
 
     public void OnJugadorEntraPortal()

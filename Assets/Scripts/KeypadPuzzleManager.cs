@@ -54,16 +54,20 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Cámara principal del XR Origin (o MainCamera si queda null)")]
     private Camera camaraPrincipal;
 
-    [SerializeField, Tooltip("Ángulo yaw (global) hacia el que debe mirar el usuario para detectar el giro (ej: 180 = detrás)")]
-    private float anguloObjetivoYaw = 180f;
-
-    [SerializeField, Tooltip("Tolerancia en grados para considerar que el usuario ha girado la cabeza")]
+    [SerializeField, Tooltip("Tolerancia en grados sobre el giro de 180\u00b0 para considerar que el usuario ha girado (ej: 40 = acepta desde 140\u00b0 hasta 180\u00b0+)")]
     private float toleranciaGiro = 40f;
 
     [SerializeField, Tooltip("Segundos que el usuario debe mantener la mirada hacia la sala para activar la secuencia")]
     private float tiempoMantenerMirada = 0.5f;
 
+    private float _yawInicialGiro = 0f;   // yaw de la cámara cuando se acertó la combo
     private float _tiempoMirandoHaciaAtras = 0f;
+
+    // ─── Pasillo ──────────────────────────────────────────────────────────────
+
+    [Header("Pasillo")]
+    [SerializeField, Tooltip("GameObject raíz del pasillo. Se activa cuando el jugador gira 180\u00b0 tras acertar la combo.")]
+    private GameObject pasilloRoot;
 
     // ─── Gemelas ──────────────────────────────────────────────────────────────
 
@@ -191,9 +195,12 @@ public class KeypadPuzzleManager : MonoBehaviour
 
         yield return new WaitForSeconds(1.0f);
 
-        estadoActual = EstadoKeypad.EsperandoGiro;
+        if (camaraPrincipal != null)
+            _yawInicialGiro = camaraPrincipal.transform.eulerAngles.y;
+
         _tiempoMirandoHaciaAtras = 0f;
-        Debug.Log("[KeypadPuzzle] Combinación correcta – esperando que el usuario gire la cabeza hacia la sala trasera.");
+        estadoActual = EstadoKeypad.EsperandoGiro;
+        Debug.Log($"[KeypadPuzzle] Esperando giro de 180° (yaw inicial: {_yawInicialGiro:F1}°).");
     }
 
     // ─── Detección de giro de cabeza ──────────────────────────────────────────
@@ -202,17 +209,27 @@ public class KeypadPuzzleManager : MonoBehaviour
     {
         if (camaraPrincipal == null) return;
 
-        float yawCamara = camaraPrincipal.transform.eulerAngles.y;
-        float diferencia = Mathf.Abs(Mathf.DeltaAngle(yawCamara, anguloObjetivoYaw));
+        float yawActual = camaraPrincipal.transform.eulerAngles.y;
+        
+        float girado = Mathf.Abs(Mathf.DeltaAngle(yawActual, _yawInicialGiro));
 
-        if (diferencia <= toleranciaGiro)
+        bool haGirado = girado >= (180f - toleranciaGiro);
+
+        if (haGirado)
         {
             _tiempoMirandoHaciaAtras += Time.deltaTime;
 
             if (_tiempoMirandoHaciaAtras >= tiempoMantenerMirada)
             {
-                Debug.Log("[KeypadPuzzle] ¡Usuario giró hacia la sala trasera! Activando gemelas.");
+                Debug.Log($"[KeypadPuzzle] Giro detectado ({girado:F1}°). Activando pasillo y gemelas.");
                 estadoActual = EstadoKeypad.GemelasMoviendose;
+
+                if (pasilloRoot != null)
+                {
+                    pasilloRoot.SetActive(true);
+                    Debug.Log("[KeypadPuzzle] Pasillo activado.");
+                }
+
                 StartCoroutine(SecuenciaGemelas());
             }
         }
@@ -338,6 +355,14 @@ public class KeypadPuzzleManager : MonoBehaviour
         {
             Debug.Log("[KeypadPuzzle] (Editor) F7 → Simulando coger la llave.");
             OnLlaveCogida();
+        }
+
+        if (kb.f8Key.wasPressedThisFrame && estadoActual == EstadoKeypad.EsperandoGiro)
+        {
+            Debug.Log("[KeypadPuzzle] (Editor) F8 → Simulando giro de 180°.");
+            estadoActual = EstadoKeypad.GemelasMoviendose;
+            if (pasilloRoot != null) pasilloRoot.SetActive(true);
+            StartCoroutine(SecuenciaGemelas());
         }
     }
 #endif

@@ -1594,9 +1594,9 @@ MonoBehaviour:
   llaveEnDestino: {fileID: 1224456594}
   llavePortada: {fileID: 0}
   camaraPrincipal: {fileID: 2750714134435826617}
-  anguloObjetivoYaw: 180
   toleranciaGiro: 40
   tiempoMantenerMirada: 0.5
+  pasilloRoot: {fileID: 1561360395}
   gemelasRoot: {fileID: 1536452098}
   velocidadGemelas: 1.2
   waypointsGemelas:
