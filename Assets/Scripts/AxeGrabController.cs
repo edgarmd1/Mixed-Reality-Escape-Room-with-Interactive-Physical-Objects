@@ -48,7 +48,6 @@ public class AxeGrabController : MonoBehaviour
     // Clave para PlayerPrefs
     private const string PREFS_KEY = "Hacha_PosicionReposo";
 
-    // Posición y rotación de reposo (guardada/cargada de PlayerPrefs)
     private Vector3    _posReposo;
     private Quaternion _rotReposo;
     private bool       _tienePosReposo = false;
@@ -116,6 +115,16 @@ public class AxeGrabController : MonoBehaviour
         _rotReposo      = transform.rotation;
         _tienePosReposo = true;
 
+        // Guardar la posición local del controller
+        if (_mando.isValid && _mando.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 ctrlLocal))
+        {
+            _controllerRestLocalPos  = ctrlLocal;
+            _tieneControllerRestPos  = true;
+            PlayerPrefs.SetFloat(PREFS_KEY + "_CtrlX", ctrlLocal.x);
+            PlayerPrefs.SetFloat(PREFS_KEY + "_CtrlY", ctrlLocal.y);
+            PlayerPrefs.SetFloat(PREFS_KEY + "_CtrlZ", ctrlLocal.z);
+        }
+
         PlayerPrefs.SetFloat(PREFS_KEY + "_PosX", _posReposo.x);
         PlayerPrefs.SetFloat(PREFS_KEY + "_PosY", _posReposo.y);
         PlayerPrefs.SetFloat(PREFS_KEY + "_PosZ", _posReposo.z);
@@ -126,7 +135,7 @@ public class AxeGrabController : MonoBehaviour
         PlayerPrefs.SetInt  (PREFS_KEY + "_OK",   1);
         PlayerPrefs.Save();
 
-        Debug.Log($"[Hacha] Posición de reposo auto-guardada: {_posReposo}");
+        Debug.Log($"[Hacha] Posición de reposo guardada: hacha={_posReposo}, ctrl_local={_controllerRestLocalPos}");
     }
 
     private void CargarPosicionReposo()
@@ -150,7 +159,17 @@ public class AxeGrabController : MonoBehaviour
         );
         _tienePosReposo = true;
 
-        // Aplicar inmediatamente
+        if (PlayerPrefs.HasKey(PREFS_KEY + "_CtrlX"))
+        {
+            _controllerRestLocalPos = new Vector3(
+                PlayerPrefs.GetFloat(PREFS_KEY + "_CtrlX"),
+                PlayerPrefs.GetFloat(PREFS_KEY + "_CtrlY"),
+                PlayerPrefs.GetFloat(PREFS_KEY + "_CtrlZ")
+            );
+            _tieneControllerRestPos = true;
+        }
+
+        // Aplicar posición de reposo inmediatamente
         transform.position = _posReposo;
         transform.rotation = _rotReposo;
 
@@ -237,25 +256,60 @@ public class AxeGrabController : MonoBehaviour
         if (!_mando.isValid)
         {
             BuscarMandoDerecho();
-            if (_mandoEnMano) { _mandoEnMano = false; Debug.Log("[Hacha] Mando perdido."); }
+            if (_mandoEnMano) OnMandoSoltado();
             return;
         }
 
         bool tracked = _mando.TryGetFeatureValue(CommonUsages.isTracked, out bool t) && t;
-        if (tracked == _mandoEnMano) return;
 
-        bool estabaMandoEnMano = _mandoEnMano;
-        _mandoEnMano = tracked;
-
-        if (!tracked && estabaMandoEnMano)
+        _mando.TryGetFeatureValue(CommonUsages.grip, out float grip);
+        bool griping = grip > 0.3f;
+        if (_estabaGripando && !griping && _mandoEnMano)
         {
             GuardarPosicionReposo();
-            Debug.Log("[Hacha] Mando dejado en mesa → posición de reposo auto-guardada.");
+            Debug.Log("[Hacha] Grip soltado → posición de calibración guardada.");
         }
-        else if (tracked)
+        _estabaGripando = griping;
+
+        // ── Estado "mando en mano" ────────────────────────────────────────────
+        if (!tracked)
         {
-            Debug.Log("[Hacha] Mando cogido → detección de impacto activa.");
+            if (_mandoEnMano) OnMandoSoltado();
+            return;
         }
+
+        if (!_mandoEnMano)
+        {
+            if (ControllerHaMovidoDeReposo())
+            {
+                _mandoEnMano = true;
+                Debug.Log("[Hacha] Mando cogido (movimiento detectado) → hacha activa.");
+            }
+        }
+    }
+
+    private const float UMBRAL_DISTANCIA_AGARRE = 0.12f;
+    private Vector3 _controllerRestLocalPos;
+    private bool    _tieneControllerRestPos = false;
+    private bool    _estabaGripando         = false;
+
+    private bool ControllerHaMovidoDeReposo()
+    {
+        // Sin posición de reposo guardada: cualquier tracking = cogido
+        if (!_tieneControllerRestPos) return true;
+
+        if (!_mando.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 localPos))
+            return false;
+
+        return Vector3.Distance(localPos, _controllerRestLocalPos) > UMBRAL_DISTANCIA_AGARRE;
+    }
+
+    private void OnMandoSoltado()
+    {
+        if (!_mandoEnMano) return;
+        _mandoEnMano = false;
+        GuardarPosicionReposo();
+        Debug.Log("[Hacha] Mando soltado → posición de reposo guardada.");
     }
 
     private void ColocarEnMando()
@@ -279,10 +333,6 @@ public class AxeGrabController : MonoBehaviour
 
         Quaternion targetRot = mandoRot * Quaternion.Euler(rotationOffset);
 
-        // El gripLocalPosition indica dónde está el punto de agarre
-        // en el espacio local del hacha (después de aplicar la rotación).
-        // La hacha se posiciona para que ese punto coincida con el mando.
-        // Fórmula: hachaPos = mandoPos - targetRot * gripLocalPosition
         Vector3 targetPos = mandoPos - targetRot * gripLocalPosition;
 
         transform.position = targetPos;
