@@ -37,17 +37,16 @@ public class KeypadPuzzleManager : MonoBehaviour
     // ─── Cofre y Llave ────────────────────────────────────────────────────────
 
     [Header("Cofre y Llave")]
-    [SerializeField, Tooltip("GameObject raíz del cofre (opcional, para animación de apertura)")]
-    private GameObject cofreRoot;
-
-    [SerializeField, Tooltip("Animator del cofre. Se dispara el trigger 'Abrir' al acertar la combo")]
-    private Animator cofreAnimator;
-
-    [SerializeField, Tooltip("GameObject de la llave dentro del cofre (se desactiva cuando las gemelas la cogen)")]
+    [SerializeField, Tooltip("GameObject de la llave dentro del cofre (se activa al acertar la combo; se desactiva cuando las gemelas la cogen)")]
     private GameObject llaveEnCofre;
 
     [SerializeField, Tooltip("GameObject de la llave en el punto destino (interactable; empieza desactivado)")]
     private GameObject llaveEnDestino;
+
+    [SerializeField, Tooltip("GameObject de la llave que las gemelas llevan consigo mientras se mueven " +
+        "(hijo de gemelasRoot o Transform independiente que se mueve junto a ellas). " +
+        "Empieza desactivado.")]
+    private GameObject llavePortada;
 
     // ─── Giro de cabeza ───────────────────────────────────────────────────────
 
@@ -100,8 +99,10 @@ public class KeypadPuzzleManager : MonoBehaviour
 
     void Awake()
     {
+        if (llaveEnCofre  != null) llaveEnCofre.SetActive(false);
         if (llaveEnDestino != null) llaveEnDestino.SetActive(false);
-        if (gemelasRoot != null)    gemelasRoot.SetActive(false);
+        if (llavePortada   != null) llavePortada.SetActive(false);
+        if (gemelasRoot    != null) gemelasRoot.SetActive(false);
     }
 
     void Start()
@@ -182,20 +183,17 @@ public class KeypadPuzzleManager : MonoBehaviour
     {
         estadoActual = EstadoKeypad.ComboExito;
 
-        if (cofreAnimator != null)
-            cofreAnimator.SetTrigger("Abrir");
-
-        if (cofreRoot != null)
-            Debug.Log("[KeypadPuzzle] Cofre abierto.");
-
         if (llaveEnCofre != null)
+        {
             llaveEnCofre.SetActive(true);
+            Debug.Log("[KeypadPuzzle] Llave visible en el cofre.");
+        }
 
         yield return new WaitForSeconds(1.0f);
 
         estadoActual = EstadoKeypad.EsperandoGiro;
         _tiempoMirandoHaciaAtras = 0f;
-        Debug.Log("[KeypadPuzzle] Cofre abierto – esperando que el usuario gire la cabeza hacia la sala trasera.");
+        Debug.Log("[KeypadPuzzle] Combinación correcta – esperando que el usuario gire la cabeza hacia la sala trasera.");
     }
 
     // ─── Detección de giro de cabeza ──────────────────────────────────────────
@@ -237,8 +235,8 @@ public class KeypadPuzzleManager : MonoBehaviour
 
         gemelasRoot.transform.position = waypointsGemelas[0].position;
         gemelasRoot.SetActive(true);
-
         Debug.Log("[KeypadPuzzle] Gemelas aparecidas junto al cofre.");
+
         yield return new WaitForSeconds(pausaGemelasEnCofre);
 
         if (llaveEnCofre != null)
@@ -246,6 +244,8 @@ public class KeypadPuzzleManager : MonoBehaviour
             llaveEnCofre.SetActive(false);
             Debug.Log("[KeypadPuzzle] Llave recogida por las gemelas.");
         }
+        if (llavePortada != null)
+            llavePortada.SetActive(true);
 
         for (int i = 1; i < waypointsGemelas.Count; i++)
         {
@@ -260,12 +260,15 @@ public class KeypadPuzzleManager : MonoBehaviour
                     velocidadGemelas * Time.deltaTime
                 );
 
+                if (llavePortada != null && llavePortada.transform.parent != gemelasRoot.transform)
+                    llavePortada.transform.position = gemelasRoot.transform.position;
+
                 if (camaraPrincipal != null)
                 {
-                    Vector3 direccionACamara = camaraPrincipal.transform.position - gemelasRoot.transform.position;
-                    direccionACamara.y = 0f;
-                    if (direccionACamara != Vector3.zero)
-                        gemelasRoot.transform.rotation = Quaternion.LookRotation(-direccionACamara);
+                    Vector3 dir = camaraPrincipal.transform.position - gemelasRoot.transform.position;
+                    dir.y = 0f;
+                    if (dir != Vector3.zero)
+                        gemelasRoot.transform.rotation = Quaternion.LookRotation(-dir);
                 }
 
                 yield return null;
@@ -282,6 +285,8 @@ public class KeypadPuzzleManager : MonoBehaviour
     {
         if (gemelasRoot != null)
             gemelasRoot.SetActive(false);
+        if (llavePortada != null)
+            llavePortada.SetActive(false);
 
         if (llaveEnDestino != null)
             llaveEnDestino.SetActive(true);
@@ -298,21 +303,40 @@ public class KeypadPuzzleManager : MonoBehaviour
         var kb = Keyboard.current;
         if (kb == null) return;
 
-        if (kb.f5Key.wasPressedThisFrame && estadoActual == EstadoKeypad.EsperandoCombo)
+        if (kb.f4Key.wasPressedThisFrame)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) Simulando combo correcto con F5.");
-            OnComboArduino(combinacionCorrecta);
+            Debug.Log("[KeypadPuzzle] (Editor) F4 → IniciarPuzzle().");
+            IniciarPuzzle();
+        }
+
+        if (kb.f5Key.wasPressedThisFrame)
+        {
+            if (estadoActual == EstadoKeypad.Inactivo)
+            {
+                Debug.Log("[KeypadPuzzle] (Editor) F5 → puzzle estaba Inactivo, llamando IniciarPuzzle() primero.");
+                IniciarPuzzle();
+            }
+
+            if (estadoActual == EstadoKeypad.EsperandoCombo)
+            {
+                Debug.Log("[KeypadPuzzle] (Editor) F5 → Simulando combo correcto.");
+                OnComboArduino(combinacionCorrecta);
+            }
+            else
+            {
+                Debug.Log($"[KeypadPuzzle] (Editor) F5 ignorado – estado actual: {estadoActual}");
+            }
         }
 
         if (kb.f6Key.wasPressedThisFrame && estadoActual == EstadoKeypad.EsperandoCombo)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) Simulando combo incorrecto con F6.");
+            Debug.Log("[KeypadPuzzle] (Editor) F6 → Simulando combo incorrecto.");
             OnComboArduino("0000");
         }
 
         if (kb.f7Key.wasPressedThisFrame && estadoActual == EstadoKeypad.LlaveDisponible)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) Simulando coger la llave con F7.");
+            Debug.Log("[KeypadPuzzle] (Editor) F7 → Simulando coger la llave.");
             OnLlaveCogida();
         }
     }
