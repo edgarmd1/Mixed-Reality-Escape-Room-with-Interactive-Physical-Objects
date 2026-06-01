@@ -152,8 +152,9 @@ public class KeypadPuzzleManager : MonoBehaviour
         if (estadoActual != EstadoKeypad.LlaveDisponible) return;
 
         estadoActual = EstadoKeypad.PuzzleCompletado;
-        Debug.Log("[KeypadPuzzle] ¡Llave cogida! Iniciando KnockPuzzle.");
+        Debug.Log("[KeypadPuzzle] ¡Llave cogida! Puzzle de llave iniciado.");
 
+        // El KnockPuzzle se activará más adelante; de momento es opcional
         if (knockPuzzleManager != null)
             knockPuzzleManager.IniciarPuzzleGolpes();
     }
@@ -356,6 +357,16 @@ public class KeypadPuzzleManager : MonoBehaviour
         {
             Debug.Log("[KeypadPuzzle] (Editor) F7 → Simulando coger la llave.");
             OnLlaveCogida();
+        }
+
+        if (kb.f9Key.wasPressedThisFrame)
+        {
+            Debug.Log("[KeypadPuzzle] (Editor) F9 → Simulando inserción de llave (KeyInserter).");
+            var inserter = FindObjectOfType<KeyInserter>();
+            if (inserter != null)
+                inserter.SimularInsercion();
+            else
+                Debug.LogWarning("[KeypadPuzzle] F9: No se encontró KeyInserter en la escena.");
         }
 
         if (kb.f8Key.wasPressedThisFrame && estadoActual == EstadoKeypad.EsperandoGiro)
