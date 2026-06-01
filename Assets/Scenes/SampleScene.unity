@@ -5175,6 +5175,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: photo
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: fd96f0297d2cf21429270ba2cc2b9e1a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
