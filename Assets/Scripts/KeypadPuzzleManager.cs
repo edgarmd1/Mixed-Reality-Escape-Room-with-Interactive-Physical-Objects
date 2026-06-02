@@ -48,20 +48,14 @@ public class KeypadPuzzleManager : MonoBehaviour
         "Empieza desactivado.")]
     private GameObject llavePortada;
 
-    // ─── Giro de cabeza ───────────────────────────────────────────────────────
+    // ─── Proximidad al jugador ────────────────────────────────────────────────
 
-    [Header("Detección de giro")]
+    [Header("Detección de proximidad")]
     [SerializeField, Tooltip("Cámara principal del XR Origin (o MainCamera si queda null)")]
     private Camera camaraPrincipal;
 
-    [SerializeField, Tooltip("Tolerancia en grados sobre el giro de 180\u00b0 para considerar que el usuario ha girado (ej: 40 = acepta desde 140\u00b0 hasta 180\u00b0+)")]
-    private float toleranciaGiro = 40f;
-
-    [SerializeField, Tooltip("Segundos que el usuario debe mantener la mirada hacia la sala para activar la secuencia")]
-    private float tiempoMantenerMirada = 0.5f;
-
-    private float _yawInicialGiro = 0f;   // yaw de la cámara cuando se acertó la combo
-    private float _tiempoMirandoHaciaAtras = 0f;
+    [SerializeField, Tooltip("Distancia (metros) entre la cámara del jugador y la llave para activar la secuencia de las gemelas")]
+    private float distanciaActivacion = 1.5f;
 
     // ─── Pasillo ──────────────────────────────────────────────────────────────
 
@@ -136,7 +130,7 @@ public class KeypadPuzzleManager : MonoBehaviour
 #endif
 
         if (estadoActual == EstadoKeypad.EsperandoGiro)
-            ComprobarGiroCabeza();
+            ComprobarProximidadLlave();
     }
 
     public void IniciarPuzzle()
@@ -197,47 +191,31 @@ public class KeypadPuzzleManager : MonoBehaviour
 
         yield return new WaitForSeconds(1.0f);
 
-        if (camaraPrincipal != null)
-            _yawInicialGiro = camaraPrincipal.transform.eulerAngles.y;
-
-        _tiempoMirandoHaciaAtras = 0f;
         estadoActual = EstadoKeypad.EsperandoGiro;
-        Debug.Log($"[KeypadPuzzle] Esperando giro de 180° (yaw inicial: {_yawInicialGiro:F1}°).");
+        Debug.Log($"[KeypadPuzzle] Esperando proximidad del jugador a la llave (≤ {distanciaActivacion:F1} m).");
     }
 
-    // ─── Detección de giro de cabeza ──────────────────────────────────────────
+    // ─── Detección de proximidad jugador–llave ────────────────────────────────
 
-    private void ComprobarGiroCabeza()
+    private void ComprobarProximidadLlave()
     {
         if (camaraPrincipal == null) return;
+        if (llaveEnCofre == null || !llaveEnCofre.activeInHierarchy) return;
 
-        float yawActual = camaraPrincipal.transform.eulerAngles.y;
-        
-        float girado = Mathf.Abs(Mathf.DeltaAngle(yawActual, _yawInicialGiro));
+        float dist = Vector3.Distance(camaraPrincipal.transform.position, llaveEnCofre.transform.position);
 
-        bool haGirado = girado >= (180f - toleranciaGiro);
-
-        if (haGirado)
+        if (dist <= distanciaActivacion)
         {
-            _tiempoMirandoHaciaAtras += Time.deltaTime;
+            Debug.Log($"[KeypadPuzzle] Jugador a {dist:F2} m de la llave. Activando pasillo y gemelas.");
+            estadoActual = EstadoKeypad.GemelasMoviendose;
 
-            if (_tiempoMirandoHaciaAtras >= tiempoMantenerMirada)
+            if (pasilloRoot != null)
             {
-                Debug.Log($"[KeypadPuzzle] Giro detectado ({girado:F1}°). Activando pasillo y gemelas.");
-                estadoActual = EstadoKeypad.GemelasMoviendose;
-
-                if (pasilloRoot != null)
-                {
-                    pasilloRoot.SetActive(true);
-                    Debug.Log("[KeypadPuzzle] Pasillo activado.");
-                }
-
-                StartCoroutine(SecuenciaGemelas());
+                pasilloRoot.SetActive(true);
+                Debug.Log("[KeypadPuzzle] Pasillo activado.");
             }
-        }
-        else
-        {
-            _tiempoMirandoHaciaAtras = 0f;
+
+            StartCoroutine(SecuenciaGemelas());
         }
     }
 
@@ -371,7 +349,7 @@ public class KeypadPuzzleManager : MonoBehaviour
 
         if (kb.f8Key.wasPressedThisFrame && estadoActual == EstadoKeypad.EsperandoGiro)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) F8 → Simulando giro de 180°.");
+            Debug.Log("[KeypadPuzzle] (Editor) F8 → Simulando proximidad a la llave.");
             estadoActual = EstadoKeypad.GemelasMoviendose;
             if (pasilloRoot != null) pasilloRoot.SetActive(true);
             StartCoroutine(SecuenciaGemelas());
