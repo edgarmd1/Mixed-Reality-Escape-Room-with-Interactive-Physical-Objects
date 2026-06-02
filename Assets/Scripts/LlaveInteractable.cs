@@ -45,7 +45,18 @@ public class LlaveInteractable : MonoBehaviour
         if (puertaTraseraRoot != null)
         {
             puertaTraseraRoot.SetActive(true);
-            Debug.Log("[LlaveInteractable] Puerta trasera activada.");
+
+            Transform par = puertaTraseraRoot.transform.parent;
+            string parentInfo = par != null
+                ? par.name + " (activeInHierarchy=" + par.gameObject.activeInHierarchy + ")"
+                : "(sin padre)";
+
+            Debug.Log("[LlaveInteractable] Puerta trasera SetActive(true) llamado.");
+            Debug.Log("[LlaveInteractable] activeSelf=" + puertaTraseraRoot.activeSelf
+                      + "  activeInHierarchy=" + puertaTraseraRoot.activeInHierarchy);
+            Debug.Log("[LlaveInteractable] layer=" + LayerMask.LayerToName(puertaTraseraRoot.layer));
+            Debug.Log("[LlaveInteractable] parent=" + parentInfo);
+            Debug.Log("[LlaveInteractable] posicion=" + puertaTraseraRoot.transform.position);
         }
         else
         {
