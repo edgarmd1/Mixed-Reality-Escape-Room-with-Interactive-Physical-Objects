@@ -93,6 +93,9 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Sonido de éxito al introducir la combinación correcta")]
     private AudioSource audioExito;
 
+    [SerializeField, Tooltip("Sonido cuando las gemelas cogen la llave")]
+    private AudioSource audioGemelasCogenLlave;
+
     // ─────────────────────────────────────────────────────────────────────────
 
     void Awake()
@@ -243,6 +246,12 @@ public class KeypadPuzzleManager : MonoBehaviour
         }
         if (llavePortada != null)
             llavePortada.SetActive(true);
+
+        if (audioGemelasCogenLlave != null)
+        {
+            audioGemelasCogenLlave.Play();
+            Debug.Log("[KeypadPuzzle] Reproduciendo audio de gemelas cogiendo la llave.");
+        }
 
         for (int i = 1; i < waypointsGemelas.Count; i++)
         {
