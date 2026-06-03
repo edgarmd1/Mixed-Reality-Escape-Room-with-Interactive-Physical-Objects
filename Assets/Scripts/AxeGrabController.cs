@@ -59,6 +59,9 @@ public class AxeGrabController : MonoBehaviour
     private Vector3     _posAnterior;
     private float       _velocidadActual;
 
+    /// <summary>True mientras el jugador está sosteniendo el mando con el hacha activa.</summary>
+    public bool EstaEnMano => _mandoEnMano;
+
     private Unity.XR.CoreUtils.XROrigin _xrOrigin;
 
     // ─────────────────────────────────────────────────────────────────────

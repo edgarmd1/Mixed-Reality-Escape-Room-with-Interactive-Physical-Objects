@@ -18,6 +18,12 @@ public class DoorPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Sonido al abrir el portal (todos los tablones rotos)")]
     private AudioSource sonidoPortalAbierto;
 
+    [SerializeField, Tooltip("Audio que le indica al jugador que debe devolver el hacha a la bandeja")]
+    private AudioSource audioDevuelveHacha;
+
+    [SerializeField, Tooltip("Bandeja virtual donde el jugador debe depositar el hacha antes de que suene el teléfono")]
+    private BandejaHacha bandejaHacha;
+
     private int _tablonesRotos = 0;
     private bool _puzzleCompletado = false;
 
@@ -99,7 +105,21 @@ public class DoorPuzzleManager : MonoBehaviour
 
         sonidoPortalAbierto?.Play();
 
-        Debug.Log("[DoorPuzzle] ¡Portal abierto! Activando teléfono...");
+        // Pedir al jugador que devuelva el hacha
+        audioDevuelveHacha?.Play();
+        Debug.Log("[DoorPuzzle] ¡Tablones rotos! Pidiendo al jugador que devuelva el hacha.");
+
+        if (bandejaHacha != null)
+        {
+            bandejaHacha.Activar();
+            Debug.Log("[DoorPuzzle] Esperando a que el jugador deposite el hacha en la bandeja...");
+            yield return new WaitUntil(() => bandejaHacha.HachaDepositada);
+            Debug.Log("[DoorPuzzle] Hacha depositada. Activando teléfono...");
+        }
+        else
+        {
+            Debug.LogWarning("[DoorPuzzle] No hay BandejaHacha asignada – activando teléfono directamente.");
+        }
 
         if (telefonoManager != null)
             telefonoManager.IniciarTelefono();
