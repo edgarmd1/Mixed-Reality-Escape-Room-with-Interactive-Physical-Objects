@@ -50,7 +50,7 @@ public class KnockPuzzleManager : MonoBehaviour
     private AudioSource audioFeedbackGolpe;
 
     [Header("Referencias")]
-    [SerializeField] private ArduinoLuz arduinoLuz;
+    [SerializeField] private MicKnockDetector micKnockDetector;
     [SerializeField] private CameraCullingMaskController cameraCulling;
     [SerializeField] private Renderer overlayRenderer;
     [SerializeField, Tooltip("Gestor del puzzle de tablones (en SampleScene). Necesario para re-ocultar tablones rotos al volver del pasillo.")]
@@ -92,14 +92,14 @@ public class KnockPuzzleManager : MonoBehaviour
 
     void OnEnable()
     {
-        if (arduinoLuz != null)
-            arduinoLuz.OnKnockDetected += OnGolpeDetectado;
+        if (micKnockDetector != null)
+            micKnockDetector.OnKnockDetected += OnGolpeDetectado;
     }
 
     void OnDisable()
     {
-        if (arduinoLuz != null)
-            arduinoLuz.OnKnockDetected -= OnGolpeDetectado;
+        if (micKnockDetector != null)
+            micKnockDetector.OnKnockDetected -= OnGolpeDetectado;
     }
 
     void Update()
