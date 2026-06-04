@@ -40,6 +40,11 @@ public class DoorPuzzleManager : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        
+    }
+
     public void IniciarPuzzle()
     {
         // Si el puzzle ya estaba completado en una carga anterior, no reiniciar
@@ -105,34 +110,47 @@ public class DoorPuzzleManager : MonoBehaviour
 
         sonidoPortalAbierto?.Play();
 
+        // Esperar a que el clip del portal no tape al de voz
+        float esperaPortal = (sonidoPortalAbierto != null && sonidoPortalAbierto.clip != null)
+            ? sonidoPortalAbierto.clip.length
+            : 0f;
+        if (esperaPortal > 0f)
+            yield return new WaitForSeconds(esperaPortal);
+
         // Pedir al jugador que devuelva el hacha
-        audioDevuelveHacha?.Play();
+        if (audioDevuelveHacha != null)
+        {
+            Debug.Log($"[DoorPuzzle] Reproduciendo audio 'devuelve hacha': {audioDevuelveHacha.clip?.name}");
+            audioDevuelveHacha.Play();
+        }
+        else
+        {
+            Debug.LogWarning("[DoorPuzzle] audioDevuelveHacha es null – no se reproducirá el audio de instrucción.");
+        }
+
         Debug.Log("[DoorPuzzle] ¡Tablones rotos! Pidiendo al jugador que devuelva el hacha.");
 
         if (bandejaHacha != null)
         {
             bandejaHacha.Activar();
-            Debug.Log("[DoorPuzzle] Esperando a que el jugador deposite el hacha en la bandeja...");
+            Debug.Log("[DoorPuzzle] Bandeja activada. Esperando depósito del hacha...");
             yield return new WaitUntil(() => bandejaHacha.HachaDepositada);
             Debug.Log("[DoorPuzzle] Hacha depositada. Activando teléfono...");
         }
         else
         {
-            Debug.LogWarning("[DoorPuzzle] No hay BandejaHacha asignada – activando teléfono directamente.");
+            Debug.LogWarning("[DoorPuzzle] bandejaHacha es null – activando teléfono directamente.");
         }
 
         if (telefonoManager != null)
             telefonoManager.IniciarTelefono();
+        else
+            Debug.LogWarning("[DoorPuzzle] telefonoManager es null – el teléfono no se activará.");
     }
 
     public bool PuzzleCompletado => _puzzleCompletado;
     public int TablonesRotos    => _tablonesRotos;
 
-    /// <summary>
-    /// Re-oculta los tablones que ya fueron rotos.
-    /// Llamar después de que CameraCullingMask haya reactivado todos los objetos Mundo_Real,
-    /// porque ese proceso pone todos los objetos a SetActive(true) indiscriminadamente.
-    /// </summary>
     public void RestaurarEstadoTablonesRotos()
     {
         if (!_puzzleCompletado && DoorPuzzleState.TablonesRotosIndices.Count == 0) return;

@@ -5,20 +5,35 @@ using UnityEngine.InputSystem;
 
 public class BandejaHacha : MonoBehaviour
 {
-    // ── Detección ─────────────────────────────────────────────────────────
-    [Header("Detección")]
-    [SerializeField, Tooltip(
-        "Collider trigger (BoxCollider con Is Trigger = true) que cubre la superficie " +
-        "de la bandeja. Añádelo como componente adicional en este mismo GameObject o en " +
-        "un hijo vacío, ya que el MeshCollider del FBX no puede ser trigger si es cóncavo.")]
-    private Collider triggerZona;
+    // ── Referencia directa al hacha ────────────────────────────────────────
+    [Header("Hacha")]
+    [SerializeField, Tooltip("El AxeGrabController del hacha (arrástralo desde la jerarquía)")]
+    private AxeGrabController hachaController;
 
-    // ── Audio ─────────────────────────────────────────────────────────────
+    [SerializeField, Tooltip(
+        "Distancia máxima (metros) entre el centro de la bandeja y el hacha " +
+        "para considerar que ha sido depositada.")]
+    private float radioDeposito = 0.35f;
+
+    // ── Punto central de detección ─────────────────────────────────────────
+    [Header("Zona")]
+    [SerializeField, Tooltip(
+        "Transform que marca el centro de la zona de depósito. " +
+        "Si se deja vacío se usa el transform de este GameObject.")]
+    private Transform centroZona;
+
+    // ── Audio ──────────────────────────────────────────────────────────────
     [Header("Audio")]
     [SerializeField, Tooltip("Sonido de confirmación al depositar el hacha en la bandeja")]
     private AudioSource audioDeposito;
 
+    // ── Visual (opcional) ──────────────────────────────────────────────────
+    [Header("Visual (opcional)")]
+    [SerializeField, Tooltip("GameObject de highlight que se muestra mientras espera la hacha")]
+    private GameObject efectoHighlight;
+
     // ── Estado ────────────────────────────────────────────────────────────
+    /// <summary>True en cuanto el hacha ha sido depositada (y suelta) correctamente.</summary>
     public bool HachaDepositada { get; private set; } = false;
 
     private bool _activa = false;
@@ -27,12 +42,26 @@ public class BandejaHacha : MonoBehaviour
 
     void Awake()
     {
-        // La bandeja empieza inactiva
-        if (triggerZona    != null) triggerZona.enabled = false;
+        if (efectoHighlight != null) efectoHighlight.SetActive(false);
+
+        // Diagnóstico
+        if (hachaController == null)
+            Debug.LogWarning("[BandejaHacha] ¡CAMPO NULO! 'Hacha Controller' no asignado en Inspector.");
+        else
+            Debug.Log($"[BandejaHacha] hachaController OK → {hachaController.name}");
+
+        if (centroZona == null)
+        {
+            centroZona = transform;
+            Debug.Log("[BandejaHacha] centroZona no asignado – usando transform de este GameObject.");
+        }
     }
 
     void Update()
     {
+        if (_activa && !HachaDepositada)
+            ComprobarDepositoPorDistancia();
+
 #if UNITY_EDITOR
         SimularDepositoEditor();
 #endif
@@ -43,45 +72,38 @@ public class BandejaHacha : MonoBehaviour
         if (_activa) return;
         _activa = true;
 
-        if (triggerZona    != null) triggerZona.enabled = true;
+        if (efectoHighlight != null) efectoHighlight.SetActive(true);
 
         Debug.Log("[BandejaHacha] Bandeja activada – esperando que el jugador deposite el hacha.");
     }
 
-    // ── Detección de depósito ─────────────────────────────────────────────
+    // ── Detección por distancia ───────────────────────────────────────────
 
-    void OnTriggerEnter(Collider other)
+    private void ComprobarDepositoPorDistancia()
     {
-        ComprobarDeposito(other);
-    }
+        if (hachaController == null) return;
 
-    void OnTriggerStay(Collider other)
-    {
-        ComprobarDeposito(other);
-    }
+        float dist = Vector3.Distance(centroZona.position, hachaController.transform.position);
 
-    private void ComprobarDeposito(Collider other)
-    {
-        if (!_activa || HachaDepositada) return;
-
-        var hacha = other.GetComponent<AxeGrabController>()
-                 ?? other.GetComponentInParent<AxeGrabController>();
-
-        if (hacha == null) return;
-        if (hacha.EstaEnMano)
+        if (dist <= radioDeposito)
         {
-            Debug.Log("[BandejaHacha] Hacha detectada en la bandeja, pero el jugador aún la sostiene.");
-            return;
-        }
+            if (hachaController.EstaEnMano)
+            {
+                // El jugador todavía lleva el hacha – esperar a que la suelte
+                return;
+            }
 
-        ConfirmarDeposito();
+            Debug.Log($"[BandejaHacha] Hacha a {dist:F3}m del centro → ¡Depositada!");
+            ConfirmarDeposito();
+        }
     }
 
     private void ConfirmarDeposito()
     {
         HachaDepositada = true;
+        _activa = false;
 
-        if (triggerZona    != null) triggerZona.enabled = false;
+        if (efectoHighlight != null) efectoHighlight.SetActive(false);
 
         audioDeposito?.Play();
 
@@ -104,18 +126,17 @@ public class BandejaHacha : MonoBehaviour
     }
 #endif
 
-    void OnDrawGizmos()
+    // ── Gizmos ────────────────────────────────────────────────────────────
+
+    void OnDrawGizmosSelected()
     {
-        if (triggerZona == null) return;
+        Vector3 centro = (centroZona != null) ? centroZona.position : transform.position;
 
         Gizmos.color = HachaDepositada
-            ? new Color(0f, 1f, 0f, 0.3f)
-            : (_activa ? new Color(1f, 0.8f, 0f, 0.4f) : new Color(1f, 1f, 1f, 0.15f));
+            ? new Color(0f, 1f, 0f, 0.5f)
+            : (_activa ? new Color(1f, 0.8f, 0f, 0.5f) : new Color(0.8f, 0.8f, 0.8f, 0.3f));
 
-        if (triggerZona is BoxCollider bc)
-        {
-            Gizmos.matrix = triggerZona.transform.localToWorldMatrix;
-            Gizmos.DrawCube(bc.center, bc.size);
-        }
+        Gizmos.DrawWireSphere(centro, radioDeposito);
+        Gizmos.DrawSphere(centro, 0.03f);
     }
 }

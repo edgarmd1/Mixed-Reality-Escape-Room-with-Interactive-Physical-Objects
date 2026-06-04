@@ -2721,7 +2721,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -6909,8 +6909,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffd9114d5f23a074e801c29b089a1792, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  triggerZona: {fileID: 816407437}
+  hachaController: {fileID: 351648257}
+  radioDeposito: 0.35
+  centroZona: {fileID: 816407436}
   audioDeposito: {fileID: 1065241460}
+  efectoHighlight: {fileID: 0}
 --- !u!1 &2032525473 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ce103f327783b5f4890f19d55759ddac, type: 3}
