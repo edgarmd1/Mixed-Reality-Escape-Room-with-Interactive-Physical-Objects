@@ -110,12 +110,11 @@ public class DoorPuzzleManager : MonoBehaviour
 
         sonidoPortalAbierto?.Play();
 
-        // Esperar a que el clip del portal no tape al de voz
-        float esperaPortal = (sonidoPortalAbierto != null && sonidoPortalAbierto.clip != null)
-            ? sonidoPortalAbierto.clip.length
-            : 0f;
-        if (esperaPortal > 0f)
-            yield return new WaitForSeconds(esperaPortal);
+        if (sonidoPortalAbierto != null)
+        {
+            yield return new WaitUntil(() => !sonidoPortalAbierto.isPlaying);
+            yield return new WaitForSeconds(0.3f);  // pequeño margen de silencio
+        }
 
         // Pedir al jugador que devuelva el hacha
         if (audioDevuelveHacha != null)
@@ -125,7 +124,7 @@ public class DoorPuzzleManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[DoorPuzzle] audioDevuelveHacha es null – no se reproducirá el audio de instrucción.");
+            Debug.LogWarning("[DoorPuzzle] audioDevuelveHacha");
         }
 
         Debug.Log("[DoorPuzzle] ¡Tablones rotos! Pidiendo al jugador que devuelva el hacha.");
@@ -149,6 +148,7 @@ public class DoorPuzzleManager : MonoBehaviour
     }
 
     public bool PuzzleCompletado => _puzzleCompletado;
+
     public int TablonesRotos    => _tablonesRotos;
 
     public void RestaurarEstadoTablonesRotos()
