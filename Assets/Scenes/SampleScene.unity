@@ -1798,7 +1798,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   estadoActual: 0
-  combinacionCorrecta: 2026
+  combinacionCorrecta: 1981
   arduinoLuz: {fileID: 1924958761}
   llaveEnCofre: {fileID: 270424990}
   llaveEnDestino: {fileID: 1224456594}

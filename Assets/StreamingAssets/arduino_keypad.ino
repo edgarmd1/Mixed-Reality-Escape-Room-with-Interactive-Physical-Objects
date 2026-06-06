@@ -25,7 +25,6 @@ char teclas[FILAS][COLS] = {
 byte pinesFila[FILAS] = {  7,  8,  9, 10 };   // ← filas
 byte pinesCol[COLS]   = {  3,  4,  5,  6 };   // ← columnas
 
-
 Keypad keypad = Keypad(makeKeymap(teclas), pinesFila, pinesCol, FILAS, COLS);
 
 const int  MAX_DIGITOS  = 10;
@@ -90,7 +89,6 @@ void loop() {
 // --- Keypad ---
 
 void leerKeypad() {
-  // ── Teclado físico ──────────────────────────────────────────────────────
   char tecla = keypad.getKey();
 
   if (tecla == NO_KEY && Serial.available() > 0) {
