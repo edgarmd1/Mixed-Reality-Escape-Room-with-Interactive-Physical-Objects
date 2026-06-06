@@ -8,6 +8,8 @@ public class TelefonoManager : MonoBehaviour
     [Header("Audio")]
     [SerializeField] private AudioSource telefonoSonando;
     [SerializeField] private AudioSource vozAudio;
+    [SerializeField, Tooltip("Audio relfexion despues llamads")]
+    private AudioSource audioReflexion;
 
     [Header("Timings")]
     [SerializeField] private float retrasoPrimeroSonido = 1.2f;
@@ -87,7 +89,13 @@ public class TelefonoManager : MonoBehaviour
         // Esperar a que termine el audio de la voz
         yield return new WaitUntil(() => vozAudio == null || !vozAudio.isPlaying);
 
-        Debug.Log("[Telefono] Voz terminada – activando puzzle de teclado matricial.");
+        if (audioReflexion != null)
+        {
+            audioReflexion.Play();
+            yield return new WaitUntil(() => !audioReflexion.isPlaying);
+        }
+
+        Debug.Log("[Telefono] Activando puzzle de teclado matricial.");
 
         // Activar el puzzle de teclado matricial
         if (keypadPuzzleManager != null)
