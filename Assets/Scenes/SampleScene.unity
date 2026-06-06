@@ -2286,6 +2286,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -6265352344893233660, guid: 7683c10d197208e4da0f062d6ae92f3b, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 12.795
+      objectReference: {fileID: 0}
+    - target: {fileID: -3634774417604167093, guid: 7683c10d197208e4da0f062d6ae92f3b, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 12.795
+      objectReference: {fileID: 0}
+    - target: {fileID: -2370677197733343386, guid: 7683c10d197208e4da0f062d6ae92f3b, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 12.795
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 7683c10d197208e4da0f062d6ae92f3b, type: 3}
       propertyPath: m_Name
       value: Puerta217Cerrada
@@ -4450,7 +4462,7 @@ Transform:
   m_GameObject: {fileID: 1406314626}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
-  m_LocalPosition: {x: -0.41711542, y: 1.0305307, z: 0}
+  m_LocalPosition: {x: -0.434, y: 1.289, z: 0}
   m_LocalScale: {x: 1.1218036, y: 1.0897015, z: 1.2413878}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5869,7 +5881,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7683c10d197208e4da0f062d6ae92f3b, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.91768247
+      value: 1.1674756
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7683c10d197208e4da0f062d6ae92f3b, type: 3}
       propertyPath: m_LocalScale.z
