@@ -43,6 +43,8 @@ public class IntroSequenceManager : MonoBehaviour
     private GameObject objetoApareceOscuridad;
     [SerializeField] private GameObject portalAscensor;
     [SerializeField] private DoorPuzzleManager doorPuzzleManager;
+    [SerializeField, Tooltip("Controller de la polaroid – activa el quemado al volver al mundo real")]
+    private PolaroidJumpscareController polaroidJumpscare;
 
     [Header("Environment VR")]
     [SerializeField, Tooltip("FadeMaterial del Environment para hacerlo visible en la escena VR")]
@@ -148,6 +150,9 @@ public class IntroSequenceManager : MonoBehaviour
             environmentFade.FadeSkybox(true);
 
         cameraCullingMask?.SetMode(true);
+
+        // Al volver al mundo real, disparar el efecto de quemado de la polaroid
+        polaroidJumpscare?.IniciarQuemado();
 
         if (portalAscensor != null)
             portalAscensor.SetActive(true);

@@ -2072,7 +2072,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 291309d2825db6e45b8e3d70cd25a498, type: 3}
+  m_Resource: {fileID: 8300000, guid: 7a25b8bb920e2234aa121718c85a8db6, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -7074,6 +7074,7 @@ MonoBehaviour:
   objetoApareceOscuridad: {fileID: 950626083}
   portalAscensor: {fileID: 139071901}
   doorPuzzleManager: {fileID: 1505812995}
+  polaroidJumpscare: {fileID: 1099065864}
   environmentFade: {fileID: 1241364538}
   modoDemo: 0
 --- !u!4 &1892221550
