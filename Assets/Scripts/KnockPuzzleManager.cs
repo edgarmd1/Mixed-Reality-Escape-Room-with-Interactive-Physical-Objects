@@ -25,18 +25,15 @@ public class KnockPuzzleManager : MonoBehaviour
     [SerializeField] private EstadoPuzzle estadoActual = EstadoPuzzle.Inactivo;
 
     [Header("Secuencia de golpes")]
-    [SerializeField, Tooltip("Intervalos entre golpes en segundos.\n" +
-        "Golpes totales = intervalos + 1\n" +
-        "Patrón actual: 2 golpes (pum pum)")]
+    [SerializeField, Tooltip("Intervalos entre golpes en segundos.")]
     private float[] patronIntervalos = { 0.5f };
-    [SerializeField, Range(0.1f, 0.9f), Tooltip("Tolerancia de timing (±%). 0.5 = ±50%")]
+    [SerializeField, Range(0.1f, 0.9f), Tooltip("Tolerancia de timing")]
     private float tolerancia = 0.5f;
 
-    [SerializeField, Tooltip("Tiempo máximo (s) para completar toda la secuencia antes de resetear")]
+    [SerializeField, Tooltip("Tiempo máximo para completar la secuencia antes de resetear")]
     private float timeoutSecuencia = 3f;
 
-    [SerializeField, Tooltip("Segundos de espera al iniciar la escucha antes de aceptar cualquier golpe. " +
-        "Evita falsos positivos por vibraciones de la transición.")]
+    [SerializeField, Tooltip("Segundos de espera al iniciar la escucha antes de aceptar cualquier golpe.")]
     private float retardoInicialEscucha = 2f;
 
     [Header("Audio (escena principal)")]
@@ -53,11 +50,11 @@ public class KnockPuzzleManager : MonoBehaviour
     [SerializeField] private MicKnockDetector micKnockDetector;
     [SerializeField] private CameraCullingMaskController cameraCulling;
     [SerializeField] private Renderer overlayRenderer;
-    [SerializeField, Tooltip("Gestor del puzzle de tablones (en SampleScene). Necesario para re-ocultar tablones rotos al volver del pasillo.")]
+    [SerializeField, Tooltip("Gestor del puzzle de tablones.")]
     private DoorPuzzleManager doorPuzzleManager;
 
     [Header("Pasillo (en escena)")]
-    [SerializeField, Tooltip("GameObject raíz del pasillo. Debe estar desactivado al inicio y es hijo de FrameRoot para calibración.")]
+    [SerializeField, Tooltip("GameObject raíz del pasillo.")]
     private GameObject pasilloRoot;
     [SerializeField, Tooltip("Referencia directa al PasilloManager dentro del pasillo.")]
     private PasilloManager pasilloManager;
@@ -164,8 +161,6 @@ public class KnockPuzzleManager : MonoBehaviour
     public EstadoPuzzle Estado => estadoActual;
     public bool PuzzleCompletado => estadoActual == EstadoPuzzle.PuertaAbierta;
 
-    // ─── Activación / desactivación del pasillo ───────────────────────────────
-
     private void ActivarPasillo()
     {
         if (pasilloRoot != null)
@@ -187,8 +182,6 @@ public class KnockPuzzleManager : MonoBehaviour
             Debug.Log("[KnockPuzzle] Pasillo desactivado.");
         }
     }
-
-    // ─── Transiciones ─────────────────────────────────────────────────────────
 
     private IEnumerator TransicionMRaVR()
     {
@@ -281,8 +274,6 @@ public class KnockPuzzleManager : MonoBehaviour
         estadoActual = EstadoPuzzle.PuertaAbierta;
         Debug.Log("[KnockPuzzle] ¡Puerta 217 abierta! Puzzle completado.");
     }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private void TeleportarASpawn(Unity.XR.CoreUtils.XROrigin xrOrigin, Transform spawn)
     {

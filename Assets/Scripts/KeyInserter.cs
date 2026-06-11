@@ -3,38 +3,33 @@ using UnityEngine;
 
 public class KeyInserter : MonoBehaviour
 {
-    // ── Llave ─────────────────────────────────────────────────────────────────
     [Header("Llave")]
-    [SerializeField, Tooltip("XRGrabInteractable de la llave (llaveEnDestino)")]
+    [SerializeField, Tooltip("XRGrabInteractable de la llave")]
     private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable llaveInteractable;
 
-    [SerializeField, Tooltip("Radio (metros) para detectar la llave cerca de la cerradura")]
+    [SerializeField, Tooltip("Radio para detectar la llave cerca de la cerradura")]
     private float radioDeteccion = 0.12f;
 
-    // ── Puerta trasera ────────────────────────────────────────────────────────
     [Header("Puerta trasera")]
-    [SerializeField, Tooltip("Objeto de la puerta CERRADA (se desactiva al abrir)")]
+    [SerializeField, Tooltip("Objeto de la puerta cerrada")]
     private GameObject puertaCerrada;
 
-    [SerializeField, Tooltip("Objeto de la puerta ABIERTA (se activa al abrir; empieza desactivado)")]
+    [SerializeField, Tooltip("Objeto de la puerta abierta")]
     private GameObject puertaAbierta;
 
-    // ── Audio ─────────────────────────────────────────────────────────────────
     [Header("Audio")]
-    [SerializeField, Tooltip("Sonido de la llave girando en la cerradura")]
+    [SerializeField, Tooltip("Sonido de la llave en la cerradura")]
     private AudioSource audioCerradura;
 
     [SerializeField, Tooltip("Sonido de la puerta abriéndose")]
     private AudioSource audioApertura;
 
-    // ── Timing ────────────────────────────────────────────────────────────────
     [Header("Timing")]
     [SerializeField, Tooltip("Segundos entre el clic de cerradura y que la puerta se abra")]
     private float retardoApertura = 1.2f;
 
     private bool _insertado = false;
 
-    // ── Update ────────────────────────────────────────────────────────────────
     void Update()
     {
         if (_insertado) return;
@@ -51,7 +46,6 @@ public class KeyInserter : MonoBehaviour
         }
     }
 
-    // ── Secuencia de apertura ─────────────────────────────────────────────────
     private IEnumerator SecuenciaApertura()
     {
         llaveInteractable.enabled = false;
@@ -77,7 +71,6 @@ public class KeyInserter : MonoBehaviour
         StartCoroutine(SecuenciaApertura());
     }
 
-    // ── Gizmos ────────────────────────────────────────────────────────────────
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.cyan;

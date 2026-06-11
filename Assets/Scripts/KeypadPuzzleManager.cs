@@ -7,8 +7,6 @@ using UnityEngine.InputSystem;
 
 public class KeypadPuzzleManager : MonoBehaviour
 {
-    // ─── Estados ──────────────────────────────────────────────────────────────
-
     public enum EstadoKeypad
     {
         Inactivo,
@@ -23,68 +21,50 @@ public class KeypadPuzzleManager : MonoBehaviour
     [Header("Estado")]
     [SerializeField] private EstadoKeypad estadoActual = EstadoKeypad.Inactivo;
 
-    // ─── Combinación ──────────────────────────────────────────────────────────
-
     [Header("Combinación")]
-    [SerializeField, Tooltip("Combinación numérica correcta. Por defecto: 2026")]
+    [SerializeField, Tooltip("Combinación numérica correcta")]
     private string combinacionCorrecta = "2026";
-
-    // ─── Arduino ──────────────────────────────────────────────────────────────
 
     [Header("Arduino")]
     [SerializeField] private ArduinoLuz arduinoLuz;
 
-    // ─── Cofre y Llave ────────────────────────────────────────────────────────
-
     [Header("Cofre y Llave")]
-    [SerializeField, Tooltip("GameObject de la llave dentro del cofre (se activa al acertar la combo; se desactiva cuando las gemelas la cogen)")]
+    [SerializeField, Tooltip("GameObject de la llave dentro del cofre")]
     private GameObject llaveEnCofre;
 
-    [SerializeField, Tooltip("GameObject de la llave en el punto destino (interactable; empieza desactivado)")]
+    [SerializeField, Tooltip("GameObject de la llave en el punto destino")]
     private GameObject llaveEnDestino;
 
-    [SerializeField, Tooltip("GameObject de la llave que las gemelas llevan consigo mientras se mueven " +
-        "(hijo de gemelasRoot o Transform independiente que se mueve junto a ellas). " +
-        "Empieza desactivado.")]
+    [SerializeField, Tooltip("GameObject de la llave que las gemelas llevan consigo mientras se mueven")]
     private GameObject llavePortada;
 
-    // ─── Proximidad al jugador ────────────────────────────────────────────────
-
     [Header("Detección de proximidad")]
-    [SerializeField, Tooltip("Cámara principal del XR Origin (o MainCamera si queda null)")]
+    [SerializeField, Tooltip("Cámara principal del XR Origin ")]
     private Camera camaraPrincipal;
 
-    [SerializeField, Tooltip("Distancia (metros) entre la cámara del jugador y la llave para activar la secuencia de las gemelas")]
+    [SerializeField, Tooltip("Distancia entre la cámara del jugador y la llave")]
     private float distanciaActivacion = 1.5f;
 
-    // ─── Pasillo ──────────────────────────────────────────────────────────────
-
     [Header("Pasillo")]
-    [SerializeField, Tooltip("GameObject raíz del pasillo. Se activa cuando el jugador gira 180\u00b0 tras acertar la combo.")]
+    [SerializeField, Tooltip("GameObject raíz del pasillo")]
     private GameObject pasilloRoot;
 
-    // ─── Gemelas ──────────────────────────────────────────────────────────────
-
     [Header("Gemelas")]
-    [SerializeField, Tooltip("GameObject de las gemelas (Quad billboard con twins.png; empieza desactivado)")]
+    [SerializeField, Tooltip("GameObject de las gemelas")]
     private GameObject gemelasRoot;
 
-    [SerializeField, Tooltip("Velocidad de movimiento de las gemelas en m/s")]
+    [SerializeField, Tooltip("Velocidad de movimiento de las gemelas")]
     private float velocidadGemelas = 1.2f;
 
     [SerializeField, Tooltip("Waypoints que siguen las gemelas desde el cofre hasta el punto destino")]
     private List<Transform> waypointsGemelas = new List<Transform>();
 
-    [SerializeField, Tooltip("Tiempo que las gemelas 'esperan' junto al cofre antes de empezar a moverse (segundos)")]
+    [SerializeField, Tooltip("Tiempo que las gemelas esperan junto al cofre antes de empezar a moverse")]
     private float pausaGemelasEnCofre = 1.5f;
-
-    // ─── Puzzle siguiente ────────────────────────────────────────────────────
 
     [Header("Puzzle siguiente")]
     [SerializeField, Tooltip("KnockPuzzleManager que se activa al coger la llave")]
     private KnockPuzzleManager knockPuzzleManager;
-
-    // ─── Audio ───────────────────────────────────────────────────────────────
 
     [Header("Audio (opcional)")]
     [SerializeField, Tooltip("Sonido de error al introducir la combinación incorrecta")]
@@ -95,8 +75,6 @@ public class KeypadPuzzleManager : MonoBehaviour
 
     [SerializeField, Tooltip("Sonido cuando las gemelas cogen la llave")]
     private AudioSource audioGemelasCogenLlave;
-
-    // ─────────────────────────────────────────────────────────────────────────
 
     void Awake()
     {
@@ -124,8 +102,6 @@ public class KeypadPuzzleManager : MonoBehaviour
             arduinoLuz.OnComboRecibido -= OnComboArduino;
     }
 
-    // ─── Update ───────────────────────────────────────────────────────────────
-
     void Update()
     {
 #if UNITY_EDITOR
@@ -151,15 +127,12 @@ public class KeypadPuzzleManager : MonoBehaviour
         estadoActual = EstadoKeypad.PuzzleCompletado;
         Debug.Log("[KeypadPuzzle] ¡Llave cogida! Puzzle de llave iniciado.");
 
-        // El KnockPuzzle se activará más adelante; de momento es opcional
         if (knockPuzzleManager != null)
             knockPuzzleManager.IniciarPuzzleGolpes();
     }
 
 
     public EstadoKeypad Estado => estadoActual;
-
-    // ─── Recepción de combo ───────────────────────────────────────────────────
 
     private void OnComboArduino(string combo)
     {
@@ -180,8 +153,6 @@ public class KeypadPuzzleManager : MonoBehaviour
         }
     }
 
-    // ─── Secuencias ───────────────────────────────────────────────────────────
-
     private IEnumerator SecuenciaExito()
     {
         estadoActual = EstadoKeypad.ComboExito;
@@ -197,8 +168,6 @@ public class KeypadPuzzleManager : MonoBehaviour
         estadoActual = EstadoKeypad.EsperandoGiro;
         Debug.Log($"[KeypadPuzzle] Esperando proximidad del jugador a la llave (≤ {distanciaActivacion:F1} m).");
     }
-
-    // ─── Detección de proximidad jugador–llave ────────────────────────────────
 
     private void ComprobarProximidadLlave()
     {
@@ -221,8 +190,6 @@ public class KeypadPuzzleManager : MonoBehaviour
             StartCoroutine(SecuenciaGemelas());
         }
     }
-
-    // ─── Secuencia de gemelas ─────────────────────────────────────────────────
 
     private IEnumerator SecuenciaGemelas()
     {
@@ -300,8 +267,6 @@ public class KeypadPuzzleManager : MonoBehaviour
         estadoActual = EstadoKeypad.LlaveDisponible;
         Debug.Log("[KeypadPuzzle] Llave disponible en el punto destino – el usuario puede cogerla.");
     }
-
-    // ─── Simulación en Editor ─────────────────────────────────────────────────
 
 #if UNITY_EDITOR
     private void SimularEntradaEditor()

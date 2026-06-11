@@ -5,19 +5,17 @@ using Unity.XR.CoreUtils;
 public class VRSpawnController : MonoBehaviour
 {
     [Header("Referencias")]
-    [Tooltip("Punto de spawn inicial en el mundo virtual. " +
-             "Crea un GameObject vacío en la posición donde quieres que aparezca el jugador.")]
+    [Tooltip("Punto de spawn inicial en el mundo virtual.")]
     [SerializeField] private Transform puntoSpawnVR;
 
     [Tooltip("XR Origin de la escena. Si se deja vacío se busca automáticamente.")]
     [SerializeField] private XROrigin xrOrigin;
 
     [Header("Tracking")]
-    [Tooltip("Altura mínima (metros) que debe reportar la cámara para considerar que el " +
-             "tracking está activo. Reduce a 0 si el tracking siempre está listo.")]
+    [Tooltip("Altura mínima")]
     [SerializeField] private float alturaTrackingMinima = 0.05f;
 
-    [Tooltip("Tiempo máximo (segundos) esperando tracking antes de aplicar el spawn igualmente.")]
+    [Tooltip("Tiempo máximo.")]
     [SerializeField] private float timeoutTracking = 5f;
 
     void Awake()

@@ -14,11 +14,9 @@ public class LlaveInteractable : MonoBehaviour
     [SerializeField, Tooltip("Referencia al KeypadPuzzleManager (si es null se busca automáticamente)")]
     private KeypadPuzzleManager keypadManager;
 
-    // ── Estado ────────────────────────────────────────────────────────────────
     private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable _grab;
     private bool _llaveCogida = false;
 
-    // ── Ciclo de vida ─────────────────────────────────────────────────────────
     void Awake()
     {
         _grab = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
@@ -34,7 +32,6 @@ public class LlaveInteractable : MonoBehaviour
         _grab.selectEntered.RemoveListener(OnGrabbed);
     }
 
-    // ── Evento de agarre ──────────────────────────────────────────────────────
     private void OnGrabbed(SelectEnterEventArgs args)
     {
         if (_llaveCogida) return;
