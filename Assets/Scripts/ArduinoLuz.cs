@@ -31,6 +31,8 @@ public class ArduinoLuz : MonoBehaviour
 
     public System.Action<string> OnComboRecibido;
 
+    public System.Action OnLuzDetectada;
+
     private volatile string _comboRecibido = null;
 
     private volatile bool luzDetectada = false;
@@ -122,7 +124,15 @@ public class ArduinoLuz : MonoBehaviour
         puzzleCompletado = true;
         luzDetectada = false;
 
-        cameraCullingMaskController?.SetMode(false);
+        if (OnLuzDetectada != null)
+        {
+            OnLuzDetectada.Invoke();
+        }
+        else
+        {
+            Debug.LogWarning("[ArduinoLuz] OnLuzDetectada sin suscriptores.");
+            cameraCullingMaskController?.SetMode(false);
+        }
     }
 
     void OnDestroy()

@@ -33,7 +33,7 @@ public class IntroSequenceManager : MonoBehaviour
     private AudioSource audioDuranteParpadeo;
 
     [Header("Tutorial e Inspectora")]
-    [SerializeField, Tooltip("Objeto base del Tutorial (el padre que contiene toda la UI)")]
+    [SerializeField, Tooltip("Objeto base del video intro")]
     private GameObject rootVideoTutorial;
     [SerializeField, Tooltip("Componente VideoPlayer dentro del tutorial")]
     private VideoPlayer videoTutorial;

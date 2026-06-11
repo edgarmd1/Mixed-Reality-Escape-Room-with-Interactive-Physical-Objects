@@ -7,25 +7,11 @@ public class AxeGrabController : MonoBehaviour
     [Header("── Agarre ──")]
 
     [SerializeField, Tooltip(
-        "Rotación del hacha respecto al mando (grados Euler).\n" +
-        "El mando tiene estos ejes cuando se sujeta naturalmente:\n" +
-        "  +Y = arriba (hacia el techo)\n" +
-        "  +Z = hacia delante (la dirección del rayo)\n" +
-        "  +X = a la derecha\n\n" +
-        "Para que el mango quede VERTICAL (correcto para hacha):\n" +
-        "  Prueba (90, 0, 0) → mango queda a lo largo del brazo\n" +
-        "  Prueba (-90, 0, 0) → mango queda al revés\n" +
-        "  Añade 180 en Y si la hoja apunta hacia ti")]
+        "rotacion del mando respecto al hacha")]
     private Vector3 rotationOffset = new Vector3(90f, 180f, 0f);
 
     [SerializeField, Tooltip(
-        "Posición del punto de agarre en el espacio LOCAL del hacha (después de aplicar la rotación).\n\n" +
-        "Indica cuál es el punto del mango donde el jugador agarra,\n" +
-        "respecto al origen del hacha.\n\n" +
-        "Ejemplo: si el mango mide 0.5m y el origen del hacha está en la hoja,\n" +
-        "el punto de agarre estaría en (0, -0.5, 0) o (0, 0.5, 0)\n" +
-        "dependiendo de hacia dónde apunta el mango.\n\n" +
-        "USA el ContextMenu 'Mostrar ejes del hacha' para ver cuáles son tus ejes.")]
+        "Posición del punto de agarre en el espacio local del hacha")]
     private Vector3 gripLocalPosition = Vector3.zero;
 
 
