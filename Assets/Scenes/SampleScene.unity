@@ -671,7 +671,7 @@ GameObject:
   - component: {fileID: 189566507}
   - component: {fileID: 189566506}
   m_Layer: 0
-  m_Name: Frase0
+  m_Name: IntroNatalia
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -688,7 +688,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 444754445cbeb314e8761df7fbdf0faf, type: 3}
+  m_Resource: {fileID: 8300000, guid: fada9f07b5e0e104089f5af9105965b5, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -1454,7 +1454,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 384763705}
-  - component: {fileID: 384763704}
+  - component: {fileID: 384763706}
   m_Layer: 0
   m_Name: Foco
   m_TagString: Untagged
@@ -1462,23 +1462,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &384763704
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 384763703}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c38427296ab8af2449e976e838f3535f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  portName: COM6
-  rojo: 255
-  verde: 0
-  azul: 0
-  dimmer: 255
 --- !u!4 &384763705
 Transform:
   m_ObjectHideFlags: 0
@@ -1494,6 +1477,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &384763706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 384763703}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62b4d679a34c51a4d9417379ebb517b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  colorChangInterval: 1.5
 --- !u!1001 &418137676
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1537,7 +1533,7 @@ PrefabInstance:
     - target: {fileID: 4415745982179208543, guid: dc067c577ec1b854684d789b6e727cc0, type: 3}
       propertyPath: m_VideoClip
       value: 
-      objectReference: {fileID: 32900000, guid: ab63febaf3989ca41b5ab4b3ae0af406, type: 3}
+      objectReference: {fileID: 32900000, guid: b5f2d535c5b629342835790019933a87, type: 3}
     - target: {fileID: 4415745982179208543, guid: dc067c577ec1b854684d789b6e727cc0, type: 3}
       propertyPath: m_AudioOutputMode
       value: 1
@@ -3404,7 +3400,7 @@ GameObject:
   - component: {fileID: 912500678}
   - component: {fileID: 912500677}
   m_Layer: 0
-  m_Name: Frase2
+  m_Name: CorteLuz
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3421,7 +3417,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 6a0de0354d9f34e43947b5c9c0df2b9f, type: 3}
+  m_Resource: {fileID: 8300000, guid: e8a08ffb53fa83f4a8df9d3a96b52844, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
