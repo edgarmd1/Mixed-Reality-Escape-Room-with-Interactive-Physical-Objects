@@ -190,12 +190,23 @@ public class KeypadPuzzleManager : MonoBehaviour
         Debug.Log($"[KeypadPuzzle] Esperando proximidad del jugador a la cámara (≤ {distanciaActivacion:F1} m).");
     }
 
+    private float _logTimerCamara = 0f;
+
     private void ComprobarProximidadCamara()
     {
         if (camaraPrincipal == null) return;
         if (camaraEnVitrina == null || !camaraEnVitrina.activeInHierarchy) return;
 
         float dist = Vector3.Distance(camaraPrincipal.transform.position, camaraEnVitrina.transform.position);
+
+#if UNITY_EDITOR
+        _logTimerCamara += Time.deltaTime;
+        if (_logTimerCamara >= 1f)
+        {
+            _logTimerCamara = 0f;
+            Debug.Log($"[KeypadPuzzle] Dist jugador→cámara: {dist:F2} m (umbral: {distanciaActivacion:F1} m) | estado: {estadoActual}");
+        }
+#endif
 
         if (dist <= distanciaActivacion)
         {
@@ -211,6 +222,7 @@ public class KeypadPuzzleManager : MonoBehaviour
             StartCoroutine(SecuenciaFantasma());
         }
     }
+
 
     private IEnumerator SecuenciaFantasma()
     {
