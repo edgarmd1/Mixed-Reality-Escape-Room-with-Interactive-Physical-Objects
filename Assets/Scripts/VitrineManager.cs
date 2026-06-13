@@ -6,9 +6,9 @@ public class VitrineManager : MonoBehaviour
     public enum EstadoVitrine
     {
         Inactivo,
-        Listo,         
-        AudioContexto,  
-        EsperandoTelefono, 
+        Listo,
+        AudioContexto,
+        EsperandoTelefono,
         TelefonoActivado
     }
 
@@ -20,6 +20,8 @@ public class VitrineManager : MonoBehaviour
     private Camera camaraPrincipal;
     [SerializeField, Tooltip("Distancia a la que el jugador activa el audio de contexto")]
     private float distanciaActivacion = 2f;
+    [SerializeField, Tooltip("Transform para medir la distancia")]
+    private Transform puntoReferencia;
 
     [Header("Audio de contexto")]
     [SerializeField, Tooltip("Audio")]
@@ -31,11 +33,20 @@ public class VitrineManager : MonoBehaviour
     [SerializeField, Tooltip("Segundos de pausa tras el audio")]
     private float pausaAntesTelefono = 2f;
 
+    [Header("Testing / Debug")]
+    [SerializeField, Tooltip("Si está activo, la vitrina se activa automáticamente al Start.")]
+    private bool activarDesdeStart = false;
+
     void Start()
     {
         if (camaraPrincipal == null)
             camaraPrincipal = Camera.main;
+
+        if (activarDesdeStart)
+            Activar();
     }
+
+    private float _logTimer = 0f;
 
     void Update()
     {
@@ -46,7 +57,18 @@ public class VitrineManager : MonoBehaviour
 
         if (camaraPrincipal == null) return;
 
-        float dist = Vector3.Distance(camaraPrincipal.transform.position, transform.position);
+        Vector3 origen = puntoReferencia != null ? puntoReferencia.position : transform.position;
+        float dist = Vector3.Distance(camaraPrincipal.transform.position, origen);
+
+#if UNITY_EDITOR
+        _logTimer += Time.deltaTime;
+        if (_logTimer >= 1f)
+        {
+            _logTimer = 0f;
+            Debug.Log($"[Vitrine] Distancia jugador→vitrina: {dist:F2} m (umbral: {distanciaActivacion:F2} m)");
+        }
+#endif
+
         if (dist <= distanciaActivacion)
         {
             Debug.Log($"[Vitrine] Jugador a {dist:F2} m de la vitrina. Iniciando audio de contexto.");
@@ -104,10 +126,18 @@ public class VitrineManager : MonoBehaviour
         var kb = UnityEngine.InputSystem.Keyboard.current;
         if (kb == null) return;
 
-        if (kb.vKey.wasPressedThisFrame && estadoActual == EstadoVitrine.Listo)
+        if (kb.vKey.wasPressedThisFrame)
         {
-            Debug.Log("[Vitrine] (Editor) V → Simulando proximidad a la vitrina.");
-            StartCoroutine(SecuenciaAudioContexto());
+            if (estadoActual == EstadoVitrine.Inactivo)
+            {
+                Debug.Log("[Vitrine] (Editor) V → Forzando activación desde Inactivo.");
+                Activar();
+            }
+            else if (estadoActual == EstadoVitrine.Listo)
+            {
+                Debug.Log("[Vitrine] (Editor) V → Simulando proximidad a la vitrina.");
+                StartCoroutine(SecuenciaAudioContexto());
+            }
         }
     }
 #endif

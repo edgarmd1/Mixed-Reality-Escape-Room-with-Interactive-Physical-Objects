@@ -85,17 +85,19 @@ public class KeypadPuzzleManager : MonoBehaviour
 
     void Awake()
     {
-        if (camaraEnVitrina  != null) camaraEnVitrina.SetActive(false);
-        if (camaraEnDestino  != null) camaraEnDestino.SetActive(false);
-        if (camaraPortada    != null) camaraPortada.SetActive(false);
-        if (gemelasRoot      != null) gemelasRoot.SetActive(false);
-        if (armarioAbierto   != null) armarioAbierto.SetActive(false);
+        if (camaraEnDestino != null) camaraEnDestino.SetActive(false);
+        if (camaraPortada != null) camaraPortada.SetActive(false);
+        if (gemelasRoot != null) gemelasRoot.SetActive(false);
+        if (armarioAbierto != null) armarioAbierto.SetActive(false);
     }
 
     void Start()
     {
         if (camaraPrincipal == null)
             camaraPrincipal = Camera.main;
+
+        if (camaraEnVitrina != null)
+            camaraEnVitrina.SetActive(true);
     }
 
     void OnEnable()

@@ -1949,7 +1949,7 @@ MonoBehaviour:
   armarioAbierto: {fileID: 614242317}
   camaraEnVitrina: {fileID: 575318116}
   camaraEnDestino: {fileID: 681846478}
-  camaraPortada: {fileID: 0}
+  camaraPortada: {fileID: 575318116}
   camaraPrincipal: {fileID: 2750714134435826617}
   distanciaActivacion: 1.5
   pasilloRoot: {fileID: 1561360395}
@@ -6477,9 +6477,11 @@ MonoBehaviour:
   estadoActual: 0
   camaraPrincipal: {fileID: 2750714134435826617}
   distanciaActivacion: 2
+  puntoReferencia: {fileID: 2011440698}
   audioContexto: {fileID: 1620445597}
   telefonoManager: {fileID: 1799922762}
   pausaAntesTelefono: 1.5
+  activarDesdeStart: 0
 --- !u!4 &1662365502
 Transform:
   m_ObjectHideFlags: 0
