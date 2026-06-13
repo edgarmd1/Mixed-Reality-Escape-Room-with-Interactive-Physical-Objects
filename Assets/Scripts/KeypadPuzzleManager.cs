@@ -14,7 +14,7 @@ public class KeypadPuzzleManager : MonoBehaviour
         ComboExito,
         EsperandoGiro,
         GemelasMoviendose,
-        LlaveDisponible,
+        CamaraDisponible,
         PuzzleCompletado
     }
 
@@ -28,21 +28,28 @@ public class KeypadPuzzleManager : MonoBehaviour
     [Header("Arduino")]
     [SerializeField] private ArduinoLuz arduinoLuz;
 
-    [Header("Cofre y Llave")]
-    [SerializeField, Tooltip("GameObject de la llave dentro del cofre")]
-    private GameObject llaveEnCofre;
+    [Header("Armario")]
+    [SerializeField, Tooltip("GameObject del armario cerrado (se desactiva al abrir)")]
+    private GameObject armarioCerrado;
 
-    [SerializeField, Tooltip("GameObject de la llave en el punto destino")]
-    private GameObject llaveEnDestino;
+    [SerializeField, Tooltip("GameObject del armario abierto (se activa al introducir el combo)")]
+    private GameObject armarioAbierto;
 
-    [SerializeField, Tooltip("GameObject de la llave que las gemelas llevan consigo mientras se mueven")]
-    private GameObject llavePortada;
+    [Header("Cámara en vitrina")]
+    [SerializeField, Tooltip("GameObject de la cámara dentro del armario abierto")]
+    private GameObject camaraEnVitrina;
+
+    [SerializeField, Tooltip("GameObject de la cámara en el punto destino (pasillo)")]
+    private GameObject camaraEnDestino;
+
+    [SerializeField, Tooltip("GameObject de la cámara que las gemelas llevan consigo mientras se mueven")]
+    private GameObject camaraPortada;
 
     [Header("Detección de proximidad")]
     [SerializeField, Tooltip("Cámara principal del XR Origin ")]
     private Camera camaraPrincipal;
 
-    [SerializeField, Tooltip("Distancia entre la cámara del jugador y la llave")]
+    [SerializeField, Tooltip("Distancia entre la cámara del jugador y la cámara en el armario")]
     private float distanciaActivacion = 1.5f;
 
     [Header("Pasillo")]
@@ -73,15 +80,16 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Sonido de éxito al introducir la combinación correcta")]
     private AudioSource audioExito;
 
-    [SerializeField, Tooltip("Sonido cuando las gemelas cogen la llave")]
-    private AudioSource audioGemelasCogenLlave;
+    [SerializeField, Tooltip("Sonido cuando las gemelas cogen la cámara")]
+    private AudioSource audioGemelasCogenCamara;
 
     void Awake()
     {
-        if (llaveEnCofre  != null) llaveEnCofre.SetActive(false);
-        if (llaveEnDestino != null) llaveEnDestino.SetActive(false);
-        if (llavePortada   != null) llavePortada.SetActive(false);
-        if (gemelasRoot    != null) gemelasRoot.SetActive(false);
+        if (camaraEnVitrina  != null) camaraEnVitrina.SetActive(false);
+        if (camaraEnDestino  != null) camaraEnDestino.SetActive(false);
+        if (camaraPortada    != null) camaraPortada.SetActive(false);
+        if (gemelasRoot      != null) gemelasRoot.SetActive(false);
+        if (armarioAbierto   != null) armarioAbierto.SetActive(false);
     }
 
     void Start()
@@ -109,7 +117,7 @@ public class KeypadPuzzleManager : MonoBehaviour
 #endif
 
         if (estadoActual == EstadoKeypad.EsperandoGiro)
-            ComprobarProximidadLlave();
+            ComprobarProximidadCamara();
     }
 
     public void IniciarPuzzle()
@@ -120,12 +128,12 @@ public class KeypadPuzzleManager : MonoBehaviour
         Debug.Log($"[KeypadPuzzle] Puzzle iniciado – esperando combinación '{combinacionCorrecta}' en el keypad.");
     }
 
-    public void OnLlaveCogida()
+    public void OnCamaraCogida()
     {
-        if (estadoActual != EstadoKeypad.LlaveDisponible) return;
+        if (estadoActual != EstadoKeypad.CamaraDisponible) return;
 
         estadoActual = EstadoKeypad.PuzzleCompletado;
-        Debug.Log("[KeypadPuzzle] ¡Llave cogida! Puzzle de llave iniciado.");
+        Debug.Log("[KeypadPuzzle] ¡Cámara cogida! Puzzle de cámara completado.");
 
         if (knockPuzzleManager != null)
             knockPuzzleManager.IniciarPuzzleGolpes();
@@ -157,28 +165,39 @@ public class KeypadPuzzleManager : MonoBehaviour
     {
         estadoActual = EstadoKeypad.ComboExito;
 
-        if (llaveEnCofre != null)
+        if (armarioCerrado != null)
         {
-            llaveEnCofre.SetActive(true);
-            Debug.Log("[KeypadPuzzle] Llave visible en el cofre.");
+            armarioCerrado.SetActive(false);
+            Debug.Log("[KeypadPuzzle] Armario cerrado desactivado.");
+        }
+        if (armarioAbierto != null)
+        {
+            armarioAbierto.SetActive(true);
+            Debug.Log("[KeypadPuzzle] Armario abierto activado.");
+        }
+
+        if (camaraEnVitrina != null)
+        {
+            camaraEnVitrina.SetActive(true);
+            Debug.Log("[KeypadPuzzle] Cámara visible en el armario.");
         }
 
         yield return new WaitForSeconds(1.0f);
 
         estadoActual = EstadoKeypad.EsperandoGiro;
-        Debug.Log($"[KeypadPuzzle] Esperando proximidad del jugador a la llave (≤ {distanciaActivacion:F1} m).");
+        Debug.Log($"[KeypadPuzzle] Esperando proximidad del jugador a la cámara (≤ {distanciaActivacion:F1} m).");
     }
 
-    private void ComprobarProximidadLlave()
+    private void ComprobarProximidadCamara()
     {
         if (camaraPrincipal == null) return;
-        if (llaveEnCofre == null || !llaveEnCofre.activeInHierarchy) return;
+        if (camaraEnVitrina == null || !camaraEnVitrina.activeInHierarchy) return;
 
-        float dist = Vector3.Distance(camaraPrincipal.transform.position, llaveEnCofre.transform.position);
+        float dist = Vector3.Distance(camaraPrincipal.transform.position, camaraEnVitrina.transform.position);
 
         if (dist <= distanciaActivacion)
         {
-            Debug.Log($"[KeypadPuzzle] Jugador a {dist:F2} m de la llave. Activando pasillo y gemelas.");
+            Debug.Log($"[KeypadPuzzle] Jugador a {dist:F2} m de la cámara. Activando pasillo y gemelas.");
             estadoActual = EstadoKeypad.GemelasMoviendose;
 
             if (pasilloRoot != null)
@@ -202,22 +221,22 @@ public class KeypadPuzzleManager : MonoBehaviour
 
         gemelasRoot.transform.position = waypointsGemelas[0].position;
         gemelasRoot.SetActive(true);
-        Debug.Log("[KeypadPuzzle] Gemelas aparecidas junto al cofre.");
+        Debug.Log("[KeypadPuzzle] Gemelas aparecidas junto al armario.");
 
         yield return new WaitForSeconds(pausaGemelasEnCofre);
 
-        if (llaveEnCofre != null)
+        if (camaraEnVitrina != null)
         {
-            llaveEnCofre.SetActive(false);
-            Debug.Log("[KeypadPuzzle] Llave recogida por las gemelas.");
+            camaraEnVitrina.SetActive(false);
+            Debug.Log("[KeypadPuzzle] Cámara recogida por las gemelas.");
         }
-        if (llavePortada != null)
-            llavePortada.SetActive(true);
+        if (camaraPortada != null)
+            camaraPortada.SetActive(true);
 
-        if (audioGemelasCogenLlave != null)
+        if (audioGemelasCogenCamara != null)
         {
-            audioGemelasCogenLlave.Play();
-            Debug.Log("[KeypadPuzzle] Reproduciendo audio de gemelas cogiendo la llave.");
+            audioGemelasCogenCamara.Play();
+            Debug.Log("[KeypadPuzzle] Reproduciendo audio de gemelas cogiendo la cámara.");
         }
 
         for (int i = 1; i < waypointsGemelas.Count; i++)
@@ -233,8 +252,8 @@ public class KeypadPuzzleManager : MonoBehaviour
                     velocidadGemelas * Time.deltaTime
                 );
 
-                if (llavePortada != null && llavePortada.transform.parent != gemelasRoot.transform)
-                    llavePortada.transform.position = gemelasRoot.transform.position;
+                if (camaraPortada != null && camaraPortada.transform.parent != gemelasRoot.transform)
+                    camaraPortada.transform.position = gemelasRoot.transform.position;
 
                 if (camaraPrincipal != null)
                 {
@@ -258,14 +277,14 @@ public class KeypadPuzzleManager : MonoBehaviour
     {
         if (gemelasRoot != null)
             gemelasRoot.SetActive(false);
-        if (llavePortada != null)
-            llavePortada.SetActive(false);
+        if (camaraPortada != null)
+            camaraPortada.SetActive(false);
 
-        if (llaveEnDestino != null)
-            llaveEnDestino.SetActive(true);
+        if (camaraEnDestino != null)
+            camaraEnDestino.SetActive(true);
 
-        estadoActual = EstadoKeypad.LlaveDisponible;
-        Debug.Log("[KeypadPuzzle] Llave disponible en el punto destino – el usuario puede cogerla.");
+        estadoActual = EstadoKeypad.CamaraDisponible;
+        Debug.Log("[KeypadPuzzle] Cámara disponible en el punto destino (pasillo).");
     }
 
 #if UNITY_EDITOR
@@ -305,10 +324,10 @@ public class KeypadPuzzleManager : MonoBehaviour
             OnComboArduino("0000");
         }
 
-        if (kb.f7Key.wasPressedThisFrame && estadoActual == EstadoKeypad.LlaveDisponible)
+        if (kb.f7Key.wasPressedThisFrame && estadoActual == EstadoKeypad.CamaraDisponible)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) F7 → Simulando coger la llave.");
-            OnLlaveCogida();
+            Debug.Log("[KeypadPuzzle] (Editor) F7 → Simulando coger la cámara.");
+            OnCamaraCogida();
         }
 
         if (kb.f9Key.wasPressedThisFrame)
@@ -323,7 +342,7 @@ public class KeypadPuzzleManager : MonoBehaviour
 
         if (kb.f8Key.wasPressedThisFrame && estadoActual == EstadoKeypad.EsperandoGiro)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) F8 → Simulando proximidad a la llave.");
+            Debug.Log("[KeypadPuzzle] (Editor) F8 → Simulando proximidad a la cámara.");
             estadoActual = EstadoKeypad.GemelasMoviendose;
             if (pasilloRoot != null) pasilloRoot.SetActive(true);
             StartCoroutine(SecuenciaGemelas());

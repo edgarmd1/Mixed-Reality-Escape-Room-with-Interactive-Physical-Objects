@@ -69,7 +69,7 @@ public class LlaveInteractable : MonoBehaviour
             keypadManager = FindObjectOfType<KeypadPuzzleManager>();
 
         if (keypadManager != null)
-            keypadManager.OnLlaveCogida();
+            keypadManager.OnCamaraCogida();
         else
             Debug.LogWarning("[LlaveInteractable] No se encontró KeypadPuzzleManager.");
     }

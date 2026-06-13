@@ -48,6 +48,10 @@ public class IntroSequenceManager : MonoBehaviour
     [SerializeField, Tooltip("Fastidio")]
     private AudioSource audioFastidio;
 
+    [Header("Vitrina")]
+    [SerializeField, Tooltip("Gestor de la vitrina")]
+    private VitrineManager vitrineManager;
+
     [Header("Environment VR")]
     [SerializeField, Tooltip("FadeMaterial del Environment para hacerlo visible en la escena VR")]
     private FadeMaterial environmentFade;
@@ -175,6 +179,11 @@ public class IntroSequenceManager : MonoBehaviour
 
         if (doorPuzzleManager != null)
             doorPuzzleManager.IniciarPuzzle();
+
+        if (vitrineManager != null)
+            vitrineManager.Activar();
+        else
+            Debug.LogWarning("[IntroSequence] vitrineManager no asignado.");
 
         _secuenciaFinalizada = true;
     }

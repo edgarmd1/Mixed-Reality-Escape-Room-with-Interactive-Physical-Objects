@@ -12,8 +12,6 @@ public class DoorPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Los 5 tablones destructibles")]
     private TableroDestructible[] tablones;
 
-    [SerializeField, Tooltip("Gestor del teléfono que se activa al completar el puzzle")]
-    private TelefonoManager telefonoManager;
 
     [SerializeField, Tooltip("Sonido al abrir el portal (todos los tablones rotos)")]
     private AudioSource sonidoPortalAbierto;
@@ -32,7 +30,6 @@ public class DoorPuzzleManager : MonoBehaviour
         if (puertaRoot != null) puertaRoot.SetActive(false);
         if (hachaRoot != null)  hachaRoot.SetActive(false);
 
-        // Asignar índices a cada tablero para que puedan persistir su estado
         for (int i = 0; i < tablones.Length; i++)
         {
             if (tablones[i] != null)
@@ -47,40 +44,34 @@ public class DoorPuzzleManager : MonoBehaviour
 
     public void IniciarPuzzle()
     {
-        // Si el puzzle ya estaba completado en una carga anterior, no reiniciar
         if (DoorPuzzleState.PuzzleCompletado)
         {
             _puzzleCompletado = true;
             _tablonesRotos = tablones.Length;
-            // Desactivar todos los tablones (ya destruidos)
             foreach (var t in tablones)
                 if (t != null) t.gameObject.SetActive(false);
-            Debug.Log("[DoorPuzzle] Puzzle ya completado – restaurando estado destruido.");
+            Debug.Log("[DoorPuzzle] Puzzle ya completado.");
             return;
         }
 
-        // Restaurar tablones ya rotos en sesiones anteriores de esta carga
         _tablonesRotos = 0;
         _puzzleCompletado = false;
 
         if (puertaRoot != null) puertaRoot.SetActive(true);
         if (hachaRoot  != null) hachaRoot.SetActive(true);
 
-        // Aplicar estado persistido: desactivar tablones que ya fueron rotos
         for (int i = 0; i < tablones.Length; i++)
         {
             if (tablones[i] == null) continue;
 
             if (DoorPuzzleState.TablonesRotosIndices.Contains(i))
             {
-                // Este tablero ya fue roto antes – restaurar como destruido
                 tablones[i].gameObject.SetActive(false);
                 _tablonesRotos++;
                 Debug.Log($"[DoorPuzzle] Tablero {i} restaurado como ya roto.");
             }
         }
 
-        // Comprobar si ya estaban todos rotos antes de que el jugador hiciera nada
         if (_tablonesRotos >= tablones.Length)
         {
             StartCoroutine(CompletarPuzzle());
@@ -104,7 +95,7 @@ public class DoorPuzzleManager : MonoBehaviour
     private IEnumerator CompletarPuzzle()
     {
         _puzzleCompletado = true;
-        DoorPuzzleState.PuzzleCompletado = true;  // Persistir entre recargas
+        DoorPuzzleState.PuzzleCompletado = true;  
 
         yield return new WaitForSeconds(0.8f);
 
@@ -113,10 +104,9 @@ public class DoorPuzzleManager : MonoBehaviour
         if (sonidoPortalAbierto != null)
         {
             yield return new WaitUntil(() => !sonidoPortalAbierto.isPlaying);
-            yield return new WaitForSeconds(0.3f);  // pequeño margen de silencio
+            yield return new WaitForSeconds(0.3f);  
         }
 
-        // Pedir al jugador que devuelva el hacha
         if (audioDevuelveHacha != null)
         {
             Debug.Log($"[DoorPuzzle] Reproduciendo audio 'devuelve hacha': {audioDevuelveHacha.clip?.name}");
@@ -124,27 +114,16 @@ public class DoorPuzzleManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[DoorPuzzle] audioDevuelveHacha");
+            Debug.LogWarning("[DoorPuzzle] audioDevuelveHacha no asignado.");
         }
 
-        Debug.Log("[DoorPuzzle] ¡Tablones rotos! Pidiendo al jugador que devuelva el hacha.");
+        Debug.Log("[DoorPuzzle] ¡Tablones rotos! El teléfono se activará desde la vitrina, no desde aquí.");
 
         if (bandejaHacha != null)
         {
             bandejaHacha.Activar();
-            Debug.Log("[DoorPuzzle] Bandeja activada. Esperando depósito del hacha...");
-            yield return new WaitUntil(() => bandejaHacha.HachaDepositada);
-            Debug.Log("[DoorPuzzle] Hacha depositada. Activando teléfono...");
+            Debug.Log("[DoorPuzzle] Bandeja activada.");
         }
-        else
-        {
-            Debug.LogWarning("[DoorPuzzle] bandejaHacha es null – activando teléfono directamente.");
-        }
-
-        if (telefonoManager != null)
-            telefonoManager.IniciarTelefono();
-        else
-            Debug.LogWarning("[DoorPuzzle] telefonoManager es null – el teléfono no se activará.");
     }
 
     public bool PuzzleCompletado => _puzzleCompletado;
@@ -157,14 +136,12 @@ public class DoorPuzzleManager : MonoBehaviour
 
         if (_puzzleCompletado || DoorPuzzleState.PuzzleCompletado)
         {
-            // Puzzle completado: ocultar todos los tablones
             foreach (var t in tablones)
                 if (t != null) t.gameObject.SetActive(false);
             Debug.Log("[DoorPuzzle] RestaurarEstado: puzzle completado, todos los tablones ocultos.");
             return;
         }
 
-        // Ocultar solo los tablones que fueron rotos
         foreach (int idx in DoorPuzzleState.TablonesRotosIndices)
         {
             if (idx >= 0 && idx < tablones.Length && tablones[idx] != null)
