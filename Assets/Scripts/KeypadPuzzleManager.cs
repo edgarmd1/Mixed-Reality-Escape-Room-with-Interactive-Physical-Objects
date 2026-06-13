@@ -53,21 +53,21 @@ public class KeypadPuzzleManager : MonoBehaviour
     private float distanciaActivacion = 1.5f;
 
     [Header("Pasillo")]
-    [SerializeField, Tooltip("GameObject raíz del pasillo")]
+    [SerializeField, Tooltip("GameObject del pasillo")]
     private GameObject pasilloRoot;
 
-    [Header("Gemelas")]
-    [SerializeField, Tooltip("GameObject de las gemelas")]
-    private GameObject gemelasRoot;
+    [Header("Fantasma")]
+    [SerializeField, Tooltip("GameObject del fantasma")]
+    private GameObject fantasmaRoot;
 
-    [SerializeField, Tooltip("Velocidad de movimiento de las gemelas")]
-    private float velocidadGemelas = 1.2f;
+    [SerializeField, Tooltip("Velocidad de movimiento del fantasma")]
+    private float velocidadFantasma = 1.2f;
 
-    [SerializeField, Tooltip("Waypoints que siguen las gemelas desde el cofre hasta el punto destino")]
-    private List<Transform> waypointsGemelas = new List<Transform>();
+    [SerializeField, Tooltip("Waypoints que sigue el fantasma desde el armario hasta el pasillo")]
+    private List<Transform> waypointsFantasma = new List<Transform>();
 
-    [SerializeField, Tooltip("Tiempo que las gemelas esperan junto al cofre antes de empezar a moverse")]
-    private float pausaGemelasEnCofre = 1.5f;
+    [SerializeField, Tooltip("Tiempo que el fantasma espera junto al armario antes de empezar a moverse")]
+    private float pausaFantasmaEnArmario = 1.5f;
 
     [Header("Puzzle siguiente")]
     [SerializeField, Tooltip("KnockPuzzleManager que se activa al coger la llave")]
@@ -80,15 +80,15 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Sonido de éxito al introducir la combinación correcta")]
     private AudioSource audioExito;
 
-    [SerializeField, Tooltip("Sonido cuando las gemelas cogen la cámara")]
-    private AudioSource audioGemelasCogenCamara;
+    [SerializeField, Tooltip("Sonido que se reproduce en bucle mientras el fantasma lleva la cámara")]
+    private AudioSource audioFantasma;
 
     void Awake()
     {
         if (camaraEnDestino != null) camaraEnDestino.SetActive(false);
-        if (camaraPortada != null) camaraPortada.SetActive(false);
-        if (gemelasRoot != null) gemelasRoot.SetActive(false);
-        if (armarioAbierto != null) armarioAbierto.SetActive(false);
+        if (camaraPortada   != null) camaraPortada.SetActive(false);
+        if (fantasmaRoot    != null) fantasmaRoot.SetActive(false);
+        if (armarioAbierto  != null) armarioAbierto.SetActive(false);
     }
 
     void Start()
@@ -199,7 +199,7 @@ public class KeypadPuzzleManager : MonoBehaviour
 
         if (dist <= distanciaActivacion)
         {
-            Debug.Log($"[KeypadPuzzle] Jugador a {dist:F2} m de la cámara. Activando pasillo y gemelas.");
+            Debug.Log($"[KeypadPuzzle] Jugador a {dist:F2} m de la cámara. Activando pasillo y fantasma.");
             estadoActual = EstadoKeypad.GemelasMoviendose;
 
             if (pasilloRoot != null)
@@ -208,77 +208,83 @@ public class KeypadPuzzleManager : MonoBehaviour
                 Debug.Log("[KeypadPuzzle] Pasillo activado.");
             }
 
-            StartCoroutine(SecuenciaGemelas());
+            StartCoroutine(SecuenciaFantasma());
         }
     }
 
-    private IEnumerator SecuenciaGemelas()
+    private IEnumerator SecuenciaFantasma()
     {
-        if (waypointsGemelas == null || waypointsGemelas.Count == 0)
+        if (waypointsFantasma == null || waypointsFantasma.Count == 0)
         {
-            Debug.LogWarning("[KeypadPuzzle] No hay waypoints asignados para las gemelas. Saltando animación.");
-            FinalizarSecuenciaGemelas();
+            Debug.LogWarning("[KeypadPuzzle] No hay waypoints asignados para el fantasma. Saltando animación.");
+            FinalizarSecuenciaFantasma();
             yield break;
         }
 
-        gemelasRoot.transform.position = waypointsGemelas[0].position;
-        gemelasRoot.SetActive(true);
-        Debug.Log("[KeypadPuzzle] Gemelas aparecidas junto al armario.");
+        if (fantasmaRoot == null)
+        {
+            Debug.LogWarning("[KeypadPuzzle] fantasmaRoot no asignado. Saltando animación.");
+            FinalizarSecuenciaFantasma();
+            yield break;
+        }
 
-        yield return new WaitForSeconds(pausaGemelasEnCofre);
+        fantasmaRoot.transform.position = waypointsFantasma[0].position;
+        fantasmaRoot.SetActive(true);
+        Debug.Log("[KeypadPuzzle] Fantasma aparecido junto al armario.");
+
+        yield return new WaitForSeconds(pausaFantasmaEnArmario);
 
         if (camaraEnVitrina != null)
         {
             camaraEnVitrina.SetActive(false);
-            Debug.Log("[KeypadPuzzle] Cámara recogida por las gemelas.");
+            Debug.Log("[KeypadPuzzle] Cámara recogida por el fantasma.");
         }
         if (camaraPortada != null)
             camaraPortada.SetActive(true);
 
-        if (audioGemelasCogenCamara != null)
+        if (audioFantasma != null)
         {
-            audioGemelasCogenCamara.Play();
-            Debug.Log("[KeypadPuzzle] Reproduciendo audio de gemelas cogiendo la cámara.");
+            audioFantasma.loop = true;
+            audioFantasma.Play();
+            Debug.Log("[KeypadPuzzle] Audio del fantasma iniciado.");
         }
 
-        for (int i = 1; i < waypointsGemelas.Count; i++)
+        for (int i = 1; i < waypointsFantasma.Count; i++)
         {
-            Transform destino = waypointsGemelas[i];
+            Transform destino = waypointsFantasma[i];
             if (destino == null) continue;
 
-            while (Vector3.Distance(gemelasRoot.transform.position, destino.position) > 0.05f)
+            while (Vector3.Distance(fantasmaRoot.transform.position, destino.position) > 0.05f)
             {
-                gemelasRoot.transform.position = Vector3.MoveTowards(
-                    gemelasRoot.transform.position,
+                fantasmaRoot.transform.position = Vector3.MoveTowards(
+                    fantasmaRoot.transform.position,
                     destino.position,
-                    velocidadGemelas * Time.deltaTime
+                    velocidadFantasma * Time.deltaTime
                 );
 
-                if (camaraPortada != null && camaraPortada.transform.parent != gemelasRoot.transform)
-                    camaraPortada.transform.position = gemelasRoot.transform.position;
-
-                if (camaraPrincipal != null)
-                {
-                    Vector3 dir = camaraPrincipal.transform.position - gemelasRoot.transform.position;
-                    dir.y = 0f;
-                    if (dir != Vector3.zero)
-                        gemelasRoot.transform.rotation = Quaternion.LookRotation(-dir);
-                }
+                if (camaraPortada != null && camaraPortada.transform.parent != fantasmaRoot.transform)
+                    camaraPortada.transform.position = fantasmaRoot.transform.position;
 
                 yield return null;
             }
 
-            gemelasRoot.transform.position = destino.position;
+            fantasmaRoot.transform.position = destino.position;
         }
 
-        Debug.Log("[KeypadPuzzle] Gemelas llegaron al destino.");
-        FinalizarSecuenciaGemelas();
+        if (audioFantasma != null)
+        {
+            audioFantasma.Stop();
+            audioFantasma.loop = false;
+        }
+
+        Debug.Log("[KeypadPuzzle] Fantasma llegó al destino.");
+        FinalizarSecuenciaFantasma();
     }
 
-    private void FinalizarSecuenciaGemelas()
+    private void FinalizarSecuenciaFantasma()
     {
-        if (gemelasRoot != null)
-            gemelasRoot.SetActive(false);
+        if (fantasmaRoot != null)
+            fantasmaRoot.SetActive(false);
         if (camaraPortada != null)
             camaraPortada.SetActive(false);
 
@@ -347,7 +353,7 @@ public class KeypadPuzzleManager : MonoBehaviour
             Debug.Log("[KeypadPuzzle] (Editor) F8 → Simulando proximidad a la cámara.");
             estadoActual = EstadoKeypad.GemelasMoviendose;
             if (pasilloRoot != null) pasilloRoot.SetActive(true);
-            StartCoroutine(SecuenciaGemelas());
+            StartCoroutine(SecuenciaFantasma());
         }
     }
 #endif
