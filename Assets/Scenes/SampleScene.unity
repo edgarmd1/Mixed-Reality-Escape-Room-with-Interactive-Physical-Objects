@@ -1021,6 +1021,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 47a699d181273284291900052225f842, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.21622847
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 47a699d181273284291900052225f842, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.21622847
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 47a699d181273284291900052225f842, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.21622847
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 47a699d181273284291900052225f842, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.00048206357
       objectReference: {fileID: 0}
@@ -1067,6 +1079,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 47a699d181273284291900052225f842, type: 3}
       propertyPath: m_Name
       value: Fantasma
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 47a699d181273284291900052225f842, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2021,7 +2037,9 @@ MonoBehaviour:
   pasilloRoot: {fileID: 1561360395}
   fantasmaRoot: {fileID: 253044425}
   velocidadFantasma: 1.2
-  waypointsFantasma: []
+  waypointsFantasma:
+  - {fileID: 128374853}
+  - {fileID: 1650943514}
   pausaFantasmaEnArmario: 1.5
   knockPuzzleManager: {fileID: 1492743550}
   audioError: {fileID: 1673101603}
