@@ -98,6 +98,10 @@ public class PolaroidJumpscareController : MonoBehaviour
     {
         StartCoroutine(CoroutineQuemado());
     }
+    public IEnumerator QuemadoConEspera()
+    {
+        yield return StartCoroutine(CoroutineQuemado());
+    }
 
 
     private IEnumerator CoroutineVuelo()

@@ -45,6 +45,8 @@ public class IntroSequenceManager : MonoBehaviour
     [SerializeField] private DoorPuzzleManager doorPuzzleManager;
     [SerializeField, Tooltip("Controller de la polaroid – activa el quemado al volver al mundo real")]
     private PolaroidJumpscareController polaroidJumpscare;
+    [SerializeField, Tooltip("Fastidio")]
+    private AudioSource audioFastidio;
 
     [Header("Environment VR")]
     [SerializeField, Tooltip("FadeMaterial del Environment para hacerlo visible en la escena VR")]
@@ -151,13 +153,25 @@ public class IntroSequenceManager : MonoBehaviour
 
         cameraCullingMask?.SetMode(true);
 
-        // Al volver al mundo real, disparar el efecto de quemado de la polaroid
-        polaroidJumpscare?.IniciarQuemado();
-
         if (portalAscensor != null)
             portalAscensor.SetActive(true);
 
-        yield return StartCoroutine(CoroutineFadeOverlay(0f, duracionFadeVuelta));
+        StartCoroutine(CoroutineFadeOverlay(0f, duracionFadeVuelta));
+
+        if (polaroidJumpscare != null)
+            yield return StartCoroutine(polaroidJumpscare.QuemadoConEspera());
+
+        if (audioFastidio != null && audioFastidio.clip != null)
+        {
+            Debug.Log($"[IntroSequence] Reproduciendo audio Fastidio ({audioFastidio.clip.length:F1}s).");
+            audioFastidio.Play();
+            yield return new WaitForSeconds(audioFastidio.clip.length);
+        }
+        else if (audioFastidio == null)
+        {
+            Debug.LogWarning("[IntroSequence] audioFastidio no asignado en el Inspector.");
+        }
+
 
         if (doorPuzzleManager != null)
             doorPuzzleManager.IniciarPuzzle();
