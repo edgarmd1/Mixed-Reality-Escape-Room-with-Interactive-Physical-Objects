@@ -42,7 +42,7 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("GameObject de la cámara en el punto destino (pasillo)")]
     private GameObject camaraEnDestino;
 
-    [SerializeField, Tooltip("GameObject de la cámara que las gemelas llevan consigo mientras se mueven")]
+    [SerializeField, Tooltip("GameObject de la cámara que lleva el fantasma")]
     private GameObject camaraPortada;
 
     [Header("Detección de proximidad")]

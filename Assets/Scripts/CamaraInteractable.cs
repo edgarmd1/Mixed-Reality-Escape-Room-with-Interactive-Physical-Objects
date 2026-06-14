@@ -9,6 +9,18 @@ public class CamaraInteractable : MonoBehaviour
     [SerializeField, Tooltip("Sonido al coger la cámara")]
     private AudioSource audioCogida;
 
+    [Header("Al coger la cámara")]
+    [SerializeField, Tooltip("Puerta trasera que se cierra al coger la cámara")]
+    private GameObject puertaTraseraRoot;
+
+    [SerializeField, Tooltip("GameObject de la habitación 217")]
+    private GameObject habitacion217Root;
+
+    [SerializeField, Tooltip("Sonido de portazo al cerrarse la puerta")]
+    private AudioSource audioPortazo;
+
+    private bool _camaraCogida = false;
+
     private XRGrabInteractable _grab;
     private Rigidbody _rb;
 
@@ -49,13 +61,41 @@ public class CamaraInteractable : MonoBehaviour
 
     private void OnCogida(SelectEnterEventArgs args)
     {
-        Debug.Log("[CamaraInteractable] Cámara cogida.");
-
         if (audioCogida != null)
             audioCogida.Play();
 
         if (_rb != null)
             _rb.useGravity = false;
+
+        if (_camaraCogida) return;
+        _camaraCogida = true;
+
+        Debug.Log("[CamaraInteractable] Cámara cogida por primera vez.");
+
+        if (puertaTraseraRoot != null)
+        {
+            puertaTraseraRoot.SetActive(true);
+            Debug.Log("[CamaraInteractable] Puerta trasera cerrada activada.");
+        }
+        else
+        {
+            Debug.LogWarning("[CamaraInteractable] puertaTraseraRoot no asignado.");
+        }
+
+        if (habitacion217Root != null)
+        {
+            habitacion217Root.SetActive(true);
+            Debug.Log("[CamaraInteractable] Habitación 217 activada.");
+        }
+        else
+        {
+            Debug.LogWarning("[CamaraInteractable] habitacion217Root no asignado.");
+        }
+
+        if (audioPortazo != null)
+            audioPortazo.Play();
+        else
+            Debug.LogWarning("[CamaraInteractable] audioPortazo no asignado.");
     }
 
     private void OnSoltada(SelectExitEventArgs args)
