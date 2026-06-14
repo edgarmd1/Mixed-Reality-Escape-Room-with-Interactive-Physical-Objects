@@ -19,6 +19,10 @@ public class CamaraInteractable : MonoBehaviour
     [SerializeField, Tooltip("Sonido de portazo al cerrarse la puerta")]
     private AudioSource audioPortazo;
 
+    [Header("Final")]
+    [SerializeField, Tooltip("FotoJumpscareManager")]
+    private FotoJumpscareManager fotoJumpscareManager;
+
     private bool _camaraCogida = false;
 
     private XRGrabInteractable _grab;
@@ -100,6 +104,26 @@ public class CamaraInteractable : MonoBehaviour
 
     private void OnSoltada(SelectExitEventArgs args)
     {
-        Debug.Log("[CamaraInteractable] Cámara soltada. Queda en la posición actual.");
+        Debug.Log("[CamaraInteractable] OnSoltada disparado.");
+
+        if (fotoJumpscareManager == null)
+        {
+            Debug.LogWarning("[CamaraInteractable] fotoJumpscareManager es NULL. ");
+            return;
+        }
+
+        float dist = Vector3.Distance(transform.position, fotoJumpscareManager.transform.position);
+        float radio = fotoJumpscareManager.RadioDeteccion;
+        Debug.Log($"[CamaraInteractable] Dist cámara→bañera: {dist:F2} m | Radio detección: {radio:F2} m | ¿Dentro? {dist <= radio}");
+
+        if (dist <= radio)
+        {
+            Debug.Log("[CamaraInteractable] Dentro del radio – iniciando secuencia de foto.");
+            fotoJumpscareManager.IniciarSecuenciaFoto(gameObject);
+        }
+        else
+        {
+            Debug.Log("[CamaraInteractable] Fuera del radio – suelta la cámara más cerca de la bañera.");
+        }
     }
 }
