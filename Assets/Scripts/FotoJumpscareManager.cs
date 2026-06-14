@@ -24,24 +24,44 @@ public class FotoJumpscareManager : MonoBehaviour
     [Header("Audio")]
     [SerializeField, Tooltip("Sonido de disparo de cámara (shutter)")]
     private AudioSource audioShutter;
-    [SerializeField, Tooltip("Sonido del jumpscare")]
+    [SerializeField, Tooltip("Sonido del primer jumpscare (habitación 217)")]
     private AudioSource audioJumpscare;
 
-    [Header("Jumpscare")]
-    [SerializeField, Tooltip("GameObject con la imagen del jumpscare")]
+    [Header("Jumpscare 1 (habitación 217)")]
+    [SerializeField, Tooltip("GameObject con la imagen del primer jumpscare")]
     private GameObject imagenJumpscare;
     [SerializeField, Tooltip("Duración del vuelo del jumpscare hacia el jugador")]
     private float duracionJumpscareMov = 1.2f;
     [SerializeField, Tooltip("Distancia detrás de la cámara hasta donde llega el jumpscare")]
     private float distanciaDetrasJumpscare = 0.3f;
 
-    [Header("Final")]
+    [Header("Final – Volver al MR")]
     [SerializeField, Tooltip("GameObject de la habitación 217")]
     private GameObject habitacion217Root;
     [SerializeField, Tooltip("CameraCullingMaskController para volver al modo MR")]
     private CameraCullingMaskController cameraCulling;
-    [SerializeField, Tooltip("Segundos de pausa tras el jumpscare antes de volver al MR")]
-    private float pausaFinalTrasJumpscare = 1.5f;
+    [SerializeField, Tooltip("Segundos de pausa tras el primer jumpscare antes de volver al MR")]
+    private float pausaAntesMR = 1.5f;
+
+    [Header("Parpadeo de luces final (en MR)")]
+    [SerializeField, Tooltip("Duración total del parpadeo de luces en segundos")]
+    private float duracionParpadeoFinal = 4f;
+    [SerializeField, Tooltip("Intervalo entre flashes al inicio (lento)")]
+    private float intervaloInicialParpadeo = 0.55f;
+    [SerializeField, Tooltip("Intervalo entre flashes al final (rápido)")]
+    private float intervaloFinalParpadeo = 0.04f;
+    [SerializeField, Tooltip("Alpha máximo del overlay durante el parpadeo")]
+    [Range(0f, 1f)] private float alphaParpadeo = 0.88f;
+    [SerializeField, Tooltip("Audio que suena durante el parpadeo de luces final")]
+    private AudioSource audioParpadeo;
+
+    [Header("Jumpscare 2 (mundo real – final)")]
+    [SerializeField, Tooltip("Imagen del segundo jumpscare (puede ser diferente al primero)")]
+    private GameObject imagenJumpscare2;
+    [SerializeField, Tooltip("Sonido del segundo jumpscare")]
+    private AudioSource audioJumpscare2;
+    [SerializeField, Tooltip("Duración del vuelo del segundo jumpscare")]
+    private float duracionJumpscare2Mov = 1.0f;
 
     private bool _iniciado       = false;
     private bool _fotoDisparada  = false;
@@ -61,8 +81,8 @@ public class FotoJumpscareManager : MonoBehaviour
             _visorInteractable = visorFoto.GetComponentInChildren<XRSimpleInteractable>();
         }
 
-        if (imagenJumpscare != null)
-            imagenJumpscare.SetActive(false);
+        if (imagenJumpscare  != null) imagenJumpscare.SetActive(false);
+        if (imagenJumpscare2 != null) imagenJumpscare2.SetActive(false);
     }
 
     public void IniciarSecuenciaFoto(GameObject camaraGO)
@@ -76,6 +96,7 @@ public class FotoJumpscareManager : MonoBehaviour
     {
         Debug.Log("[FotoJumpscare] Iniciando secuencia de foto.");
 
+        // ── 1. Mostrar visor / botón ───────────────────────────────
         if (visorFoto != null)
         {
             visorFoto.SetActive(true);
@@ -88,6 +109,7 @@ public class FotoJumpscareManager : MonoBehaviour
             }
         }
 
+        // ── 2. Esperar input del jugador (timeout 20 s) ────────────
         float elapsed = 0f;
         while (!_fotoDisparada && elapsed < 20f)
         {
@@ -101,17 +123,16 @@ public class FotoJumpscareManager : MonoBehaviour
             _visorInteractable.selectEntered.RemoveListener(OnVisorSelected);
         }
 
-        if (visorFoto != null)
-            visorFoto.SetActive(false);
+        if (visorFoto != null) visorFoto.SetActive(false);
 
+        // ── 3. Flash blanco + shutter ──────────────────────────────
         yield return StartCoroutine(FlashBlancoCoroutine());
-        if (audioShutter != null)
-            audioShutter.Play();
-        else
-            Debug.LogWarning("[FotoJumpscare] audioShutter no asignado.");
+        if (audioShutter != null) audioShutter.Play();
+        else Debug.LogWarning("[FotoJumpscare] audioShutter no asignado.");
 
         yield return new WaitForSeconds(0.2f);
 
+        // ── 4. Desactivar cámara prop ──────────────────────────────
         if (camaraGO != null)
         {
             camaraGO.SetActive(false);
@@ -120,9 +141,11 @@ public class FotoJumpscareManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.4f);
 
-        yield return StartCoroutine(JumpscareCoroutine());
+        // ── 5. Primer jumpscare (dentro de la hab. 217) ────────────
+        yield return StartCoroutine(JumpscareCoroutine(imagenJumpscare, audioJumpscare, duracionJumpscareMov));
 
-        yield return new WaitForSeconds(pausaFinalTrasJumpscare);
+        // ── 6. Pausa → desactivar hab. 217 → volver al MR ─────────
+        yield return new WaitForSeconds(pausaAntesMR);
 
         if (habitacion217Root != null)
         {
@@ -131,12 +154,30 @@ public class FotoJumpscareManager : MonoBehaviour
         }
 
         cameraCulling?.SetMode(true);
-        Debug.Log("[FotoJumpscare] Secuencia completada. Volviendo al mundo real.");
+        Debug.Log("[FotoJumpscare] De vuelta al mundo real.");
+
+        // ── 7. Pequeña pausa para que el jugador se oriente ────────
+        yield return new WaitForSeconds(1.5f);
+
+        // ── 8. Parpadeo de luces en el mundo real ──────────────────
+        if (audioParpadeo != null) audioParpadeo.Play();
+        yield return StartCoroutine(CoroutineParpadeoFinal());
+        if (audioParpadeo != null) audioParpadeo.Stop();
+
+        // ── 9. Segundo jumpscare (en el mundo real) ────────────────
+        yield return StartCoroutine(JumpscareCoroutine(imagenJumpscare2, audioJumpscare2, duracionJumpscare2Mov));
+
+        // ── 10. Fin ────────────────────────────────────────────────
+        if (_overlayMat != null)
+            _overlayMat.color = new Color(0f, 0f, 0f, 0f);
+
+        Debug.Log("[FotoJumpscare] Secuencia final completada.");
     }
 
-    private void OnVisorHovered(HoverEnterEventArgs _)  => _fotoDisparada = true;
-    private void OnVisorSelected(SelectEnterEventArgs _) => _fotoDisparada = true;
+    private void OnVisorHovered(HoverEnterEventArgs _)   => _fotoDisparada = true;
+    private void OnVisorSelected(SelectEnterEventArgs _)  => _fotoDisparada = true;
 
+    // ── Flash blanco de cámara ─────────────────────────────────────
     private IEnumerator FlashBlancoCoroutine()
     {
         if (_overlayMat == null) yield break;
@@ -147,48 +188,79 @@ public class FotoJumpscareManager : MonoBehaviour
         while (t < duracionFlash)
         {
             t += Time.deltaTime;
-            float alpha = Mathf.Lerp(1f, 0f, t / duracionFlash);
-            _overlayMat.color = new Color(1f, 1f, 1f, alpha);
+            _overlayMat.color = new Color(1f, 1f, 1f, Mathf.Lerp(1f, 0f, t / duracionFlash));
             yield return null;
         }
 
         _overlayMat.color = colorOriginal;
     }
 
-    private IEnumerator JumpscareCoroutine()
+    // ── Parpadeo de luces (igual que IntroSequenceManager) ─────────
+    private IEnumerator CoroutineParpadeoFinal()
     {
-        if (imagenJumpscare == null) yield break;
+        if (_overlayMat == null) yield break;
+
+        // Poner color negro (parpadeo de oscuridad, como el intro)
+        _overlayMat.color = new Color(0f, 0f, 0f, 0f);
+
+        float tiempoAcumulado = 0f;
+        bool flashActivo = false;
+
+        while (tiempoAcumulado < duracionParpadeoFinal)
+        {
+            float progreso = Mathf.Clamp01(tiempoAcumulado / duracionParpadeoFinal);
+            float t = progreso * progreso;
+            float intervalo = Mathf.Lerp(intervaloInicialParpadeo, intervaloFinalParpadeo, t);
+
+            float alphaMax = Mathf.Lerp(0.35f, alphaParpadeo, progreso);
+            float alphaMin = Mathf.Lerp(0f, alphaParpadeo * 0.25f, progreso);
+
+            flashActivo = !flashActivo;
+            float alpha = flashActivo ? alphaMax : alphaMin;
+            _overlayMat.color = new Color(0f, 0f, 0f, alpha);
+
+            float espera = intervalo * (flashActivo ? 0.35f : 0.65f);
+            yield return new WaitForSeconds(espera);
+            tiempoAcumulado += intervalo;
+        }
+
+        // Apagar overlay al terminar
+        _overlayMat.color = new Color(0f, 0f, 0f, 0f);
+    }
+
+    // ── Jumpscare genérico (reutilizable para ambos) ───────────────
+    private IEnumerator JumpscareCoroutine(GameObject imagen, AudioSource audio, float duracion)
+    {
+        if (imagen == null) yield break;
 
         Camera cam = Camera.main;
         if (cam == null) yield break;
 
-        if (audioJumpscare != null)
-            audioJumpscare.Play();
+        if (audio != null) audio.Play();
 
-        Vector3 posInicio  = imagenJumpscare.transform.position;
-        Vector3 escInicio  = imagenJumpscare.transform.localScale;
-        Vector3 escFinal   = escInicio * 8f;
+        Vector3 posInicio = imagen.transform.position;
+        Vector3 escInicio = imagen.transform.localScale;
+        Vector3 escFinal  = escInicio * 8f;
 
-        imagenJumpscare.SetActive(true);
+        imagen.SetActive(true);
 
         float t = 0f;
-        while (t < duracionJumpscareMov)
+        while (t < duracion)
         {
             t += Time.deltaTime;
-            float progress = Mathf.Clamp01(t / duracionJumpscareMov);
+            float progress = Mathf.Clamp01(t / duracion);
             float eased    = progress * progress;
 
             Vector3 posDestino = cam.transform.position - cam.transform.forward * distanciaDetrasJumpscare;
-            imagenJumpscare.transform.position   = Vector3.Lerp(posInicio, posDestino, eased);
-            imagenJumpscare.transform.localScale = Vector3.Lerp(escInicio, escFinal, eased);
+            imagen.transform.position   = Vector3.Lerp(posInicio, posDestino, eased);
+            imagen.transform.localScale = Vector3.Lerp(escInicio, escFinal, eased);
 
             yield return null;
         }
 
-        imagenJumpscare.SetActive(false);
-        Debug.Log("[FotoJumpscare] Jumpscare completado.");
+        imagen.SetActive(false);
+        Debug.Log($"[FotoJumpscare] Jumpscare '{imagen.name}' completado.");
     }
-
 
     void OnDrawGizmosSelected()
     {

@@ -1,104 +1,126 @@
+using System;
 using System.IO.Ports;
 using System.Threading;
 using UnityEngine;
 
+/// <summary>
+/// Controlador DMX para Enttec Open DMX USB (chip FTDI).
+/// Envía DMX solo cuando cambia el estado. El receptor mantiene el último
+/// valor recibido sin necesitar refresh continuo, evitando el flickering
+/// causado por los breaks frecuentes del protocolo DMX en USB.
+/// </summary>
 public class DMXController : MonoBehaviour
 {
-    private SerialPort serialPort;
-    private byte[] dmxData = new byte[513];
-    
-    // Colores de prueba
-    private Color[] colors = new Color[]
-    {
-        Color.red,
-        Color.green,
-        Color.blue,
-        Color.yellow,
-        Color.cyan,
-        new Color(1f, 0.5f, 0f), // naranja
-        Color.white
-    };
-    
-    private int currentColor = 0;
-    private float timer = 0f;
-    public float colorChangInterval = 1.5f; // segundos entre cambios
+    [SerializeField] private string puertoCOM = "COM6";
+    [SerializeField] private int    baudRate  = 250000;
 
-    void Start()
+    private SerialPort _serialPort;
+    private byte[]     _dmxData = new byte[513];
+
+    // ── Ciclo de colores de prueba (solo para tests) ──────────────────────────
+    [Header("Prueba (desactivar en producción)")]
+    [SerializeField] private bool  cicloColoresPrueba = false;
+    [SerializeField] private float colorChangInterval  = 1.5f;
+    private Color[] _colors = { Color.red, Color.green, Color.blue,
+                                 Color.yellow, Color.cyan,
+                                 new Color(1f, 0.5f, 0f), Color.white };
+    private int   _currentColor = 0;
+    private float _colorTimer   = 0f;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    void Awake()
     {
         try
         {
-            serialPort = new SerialPort("COM6", 250000, Parity.None, 8, StopBits.Two);
-            serialPort.Open();
-            Debug.Log("Puerto COM6 abierto correctamente");
+            _serialPort = new SerialPort(puertoCOM, baudRate, Parity.None, 8, StopBits.Two);
+            _serialPort.Open();
+            Debug.Log($"[DMX] Puerto {puertoCOM} abierto.");
+
+            // Encender focos en blanco desde el primer momento
+            SendColor(255, 255, 255);
+            Debug.Log("[DMX] Focos encendidos en blanco.");
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            Debug.LogError("Error abriendo COM6: " + e.Message);
+            Debug.LogError($"[DMX] Error abriendo {puertoCOM}: {e.Message}");
         }
     }
 
+    // ── Update (ciclo de prueba opcional) ─────────────────────────────────────
     void Update()
     {
-        timer += Time.deltaTime;
-        if (timer >= colorChangInterval)
+        if (!cicloColoresPrueba) return;
+        _colorTimer += Time.deltaTime;
+        if (_colorTimer >= colorChangInterval)
         {
-            timer = 0f;
-            SetBothLights(colors[currentColor]);
-            currentColor = (currentColor + 1) % colors.Length;
+            _colorTimer = 0f;
+            Color c = _colors[_currentColor];
+            SendColor((byte)(c.r * 255), (byte)(c.g * 255), (byte)(c.b * 255));
+            _currentColor = (_currentColor + 1) % _colors.Length;
         }
     }
 
-    void SetBothLights(Color color)
+    // ── API pública ───────────────────────────────────────────────────────────
+
+    /// <summary>Enciende ambos focos en blanco a máxima intensidad.</summary>
+    public void EncenderBlanco()
     {
-        byte r = (byte)(color.r * 255);
-        byte g = (byte)(color.g * 255);
-        byte b = (byte)(color.b * 255);
-
-        // Foco 1 (dirección 1)
-        dmxData[1] = r;
-        dmxData[2] = g;
-        dmxData[3] = b;
-        dmxData[4] = 255;
-
-        // Foco 2 (dirección 5)
-        dmxData[5] = r;
-        dmxData[6] = g;
-        dmxData[7] = b;
-        dmxData[8] = 255;
-
-        SendDMX();
-        
-        Debug.Log($"Color: R={r} G={g} B={b}");
+        cicloColoresPrueba = false;
+        SendColor(255, 255, 255);
     }
 
-    void SendDMX()
+    /// <summary>Apaga ambos focos.</summary>
+    public void Apagar()
     {
-        if (serialPort == null || !serialPort.IsOpen) return;
+        cicloColoresPrueba = false;
+        SendColor(0, 0, 0);
+    }
 
+    /// <summary>Establece el brillo blanco de ambos focos (0-255).
+    /// Llamado por IntroSequenceManager para sincronizar el parpadeo.</summary>
+    public void SetBrilloBlanco(byte brillo)
+    {
+        cicloColoresPrueba = false;
+        SendColor(brillo, brillo, brillo);
+    }
+
+    // ── Envío DMX ─────────────────────────────────────────────────────────────
+
+    private void SendColor(byte r, byte g, byte b)
+    {
+        // Foco 1 (dirección 1)
+        _dmxData[1] = r; _dmxData[2] = g; _dmxData[3] = b; _dmxData[4] = 255;
+        // Foco 2 (dirección 5)
+        _dmxData[5] = r; _dmxData[6] = g; _dmxData[7] = b; _dmxData[8] = 255;
+        SendDMX();
+    }
+
+    private void SendDMX()
+    {
+        if (_serialPort == null || !_serialPort.IsOpen) return;
         try
         {
-            serialPort.BreakState = true;
+            _serialPort.BreakState = true;
             Thread.Sleep(1);
-            serialPort.BreakState = false;
+            _serialPort.BreakState = false;
             Thread.Sleep(1);
 
-            dmxData[0] = 0; // Start code
-            serialPort.Write(dmxData, 0, 513);
+            _dmxData[0] = 0;
+            _serialPort.Write(_dmxData, 0, 513);
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            Debug.LogError("Error enviando DMX: " + e.Message);
+            Debug.LogError($"[DMX] Error enviando: {e.Message}");
         }
     }
 
     void OnDestroy()
     {
-        if (serialPort != null && serialPort.IsOpen)
+        if (_serialPort != null && _serialPort.IsOpen)
         {
-            // Apagar focos al salir
-            SetBothLights(Color.black);
-            serialPort.Close();
-            Debug.Log("Puerto COM6 cerrado");
+            SendColor(0, 0, 0);
+            _serialPort.Close();
+            Debug.Log($"[DMX] Puerto {puertoCOM} cerrado.");
         }
     }
 }

@@ -26,6 +26,10 @@ public class IntroSequenceManager : MonoBehaviour
 
     [SerializeField] private ArduinoLuz arduinoLuz;
 
+    [Header("Focos DMX")]
+    [SerializeField, Tooltip("Controlador DMX de los focos físicos de la sala")]
+    private DMXController dmxController;
+
     [SerializeField] private CameraCullingMaskController cameraCullingMask;
 
     [SerializeField] private AudioSource audioMusica;
@@ -83,6 +87,10 @@ public class IntroSequenceManager : MonoBehaviour
 
         if (arduinoLuz != null)
             arduinoLuz.habilitado = false;
+
+        // Encender focos en blanco a tope desde el principio
+        if (dmxController != null)
+            dmxController.EncenderBlanco();
 
         if (modoDemo)
             StartCoroutine(SecuenciaDemoDirecta());
@@ -205,11 +213,27 @@ public class IntroSequenceManager : MonoBehaviour
             float alphaMin = Mathf.Lerp(0f, alphaOscuridad * 0.25f, progreso);
 
             flashActivo = !flashActivo;
-            SetOverlayAlpha(flashActivo ? alphaMax : alphaMin);
+            float alphaActual = flashActivo ? alphaMax : alphaMin;
+            SetOverlayAlpha(alphaActual);
+
+            // Sincronizar focos: cuando el overlay es más opaco (oscuro) los focos se apagan,
+            // cuando el overlay es más transparente (claro) los focos se encienden.
+            if (dmxController != null)
+            {
+                // alphaActual 0 = luz encendida (brillo 255), alphaActual 1 = apagado (brillo 0)
+                byte brilloFoco = (byte)(Mathf.Clamp01(1f - alphaActual) * 255f);
+                dmxController.SetBrilloBlanco(brilloFoco);
+            }
+
             float tiempoEspera = intervalo * (flashActivo ? 0.35f : 0.65f);
             yield return new WaitForSeconds(tiempoEspera);
             tiempoAcumulado += intervalo;
         }
+
+        // Fade a oscuridad total: apagar focos al acabar
+        if (dmxController != null)
+            dmxController.Apagar();
+
         yield return StartCoroutine(CoroutineFadeOverlay(alphaOscuridad, 0.5f));
     }
 
