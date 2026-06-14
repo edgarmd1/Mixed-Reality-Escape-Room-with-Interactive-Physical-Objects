@@ -26,15 +26,25 @@ public class PomoInteractable : MonoBehaviour
 
     void OnEnable()
     {
-        _interactable.selectEntered.AddListener(OnTocado);
+        _interactable.hoverEntered.AddListener(OnHover);
     }
 
     void OnDisable()
     {
-        _interactable.selectEntered.RemoveListener(OnTocado);
+        _interactable.hoverEntered.RemoveListener(OnHover);
     }
 
-    private void OnTocado(SelectEnterEventArgs args)
+    private void OnHover(HoverEnterEventArgs args)
+    {
+        AbrirPuerta();
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        AbrirPuerta();
+    }
+
+    private void AbrirPuerta()
     {
         if (_abierta) return;
         _abierta = true;
@@ -43,9 +53,13 @@ public class PomoInteractable : MonoBehaviour
 
         if (puertaCerrada != null)
             puertaCerrada.SetActive(false);
+        else
+            Debug.LogWarning("[PomoInteractable] puertaCerrada no asignado.");
 
         if (puertaAbierta != null)
             puertaAbierta.SetActive(true);
+        else
+            Debug.LogWarning("[PomoInteractable] puertaAbierta no asignado.");
 
         if (audioApertura != null)
             audioApertura.Play();
@@ -54,15 +68,7 @@ public class PomoInteractable : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    [UnityEngine.ContextMenu("Simular toque pomo (Editor)")]
-    private void SimularToque()
-    {
-        if (_abierta)
-        {
-            Debug.Log("[PomoInteractable] Ya abierta.");
-            return;
-        }
-        OnTocado(null);
-    }
+    [ContextMenu("Simular toque pomo (Editor)")]
+    private void SimularToque() => AbrirPuerta();
 #endif
 }

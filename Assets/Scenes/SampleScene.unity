@@ -2693,6 +2693,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8531445893640667773, guid: 7683c10d197208e4da0f062d6ae92f3b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 596714687}
+    - targetCorrespondingSourceObject: {fileID: 8531445893640667773, guid: 7683c10d197208e4da0f062d6ae92f3b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 596714692}
   m_SourcePrefab: {fileID: 100100000, guid: 7683c10d197208e4da0f062d6ae92f3b, type: 3}
 --- !u!4 &596714683 stripped
 Transform:
@@ -2820,6 +2823,28 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+--- !u!64 &596714692
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 596714686}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 7853677435275354485, guid: 7683c10d197208e4da0f062d6ae92f3b, type: 3}
 --- !u!1001 &603614294
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2874,10 +2899,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: b2c1aadfeb8a58d45ae6e0a41e2eeb5a, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 65702495048144492, guid: b2c1aadfeb8a58d45ae6e0a41e2eeb5a, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: b2c1aadfeb8a58d45ae6e0a41e2eeb5a, type: 3}
       insertIndex: -1
@@ -3146,7 +3172,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   audioCogida: {fileID: 1065241460}
-  puertaTraseraRoot: {fileID: 1615987193}
+  puertaTraseraRoot: {fileID: 596714684}
   habitacion217Root: {fileID: 603614296}
   audioPortazo: {fileID: 1222538813}
 --- !u!114 &681846482
@@ -7101,11 +7127,6 @@ Transform:
   - {fileID: 257810523}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1615987193 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7983927900353338152, guid: 195bfae27e81e7941a720bd031ef8bf1, type: 3}
-  m_PrefabInstance: {fileID: 1561360393}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1620445596
 GameObject:
   m_ObjectHideFlags: 0
