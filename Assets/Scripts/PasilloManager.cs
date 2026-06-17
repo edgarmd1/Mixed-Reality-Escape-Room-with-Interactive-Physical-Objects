@@ -9,20 +9,20 @@ public class PasilloManager : MonoBehaviour
     private Transform spawnInicio;
 
     [Header("Puerta 217")]
-    [SerializeField, Tooltip("Transform de la puerta cerrada (se desactiva al abrir)")]
+    [SerializeField, Tooltip("Transform de la puerta cerrada")]
     private Transform puerta217;
 
-    [SerializeField, Tooltip("GameObject de la puerta abierta (debe estar desactivado por defecto).")]
+    [SerializeField, Tooltip("GameObject de la puerta abierta")]
     private GameObject puertaAbierta;
 
     [SerializeField, Tooltip("Collider/Interactable de la puerta para detectar interacción")]
     private Collider puertaInteractable;
 
-    [SerializeField, Tooltip("Trigger de entrada a la habitación 217 (desactivado hasta que la puerta esté abierta)")]
+    [SerializeField, Tooltip("Trigger de entrada a la habitación 217")]
     private Trigger217 trigger217;
 
     [Header("Inscripción")]
-    [SerializeField, Tooltip("GameObject con la inscripción en la pared (desactivado por defecto)")]
+    [SerializeField, Tooltip("GameObject con la inscripción en la pared")]
     private GameObject inscripcion;
 
     [Header("Audio")]

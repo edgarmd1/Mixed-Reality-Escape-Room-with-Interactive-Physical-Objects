@@ -13,7 +13,6 @@ public class PortalKnockTrigger : MonoBehaviour
     {
         if (knockPuzzleManager == null) return;
 
-        // Comprobar si es el jugador (por tag o si tiene Camera)
         bool esJugador = other.CompareTag(tagJugador) ||
                          other.GetComponent<Camera>() != null ||
                          other.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>() != null;

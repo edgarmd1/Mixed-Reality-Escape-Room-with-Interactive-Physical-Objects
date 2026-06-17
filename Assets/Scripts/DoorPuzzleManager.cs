@@ -27,7 +27,6 @@ public class DoorPuzzleManager : MonoBehaviour
 
     void Awake()
     {
-        if (puertaRoot != null) puertaRoot.SetActive(false);
         if (hachaRoot != null)  hachaRoot.SetActive(false);
 
         for (int i = 0; i < tablones.Length; i++)

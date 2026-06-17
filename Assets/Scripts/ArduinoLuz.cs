@@ -36,7 +36,7 @@ public class ArduinoLuz : MonoBehaviour
     private volatile string _comboRecibido = null;
 
     private volatile bool luzDetectada = false;
-    private bool _luzEnProceso = false; // true mientras la secuencia de la polaroid está en marcha
+    private bool _luzEnProceso = false; 
     private Thread hiloSerie;
 
     void Start()
@@ -127,23 +127,16 @@ public class ArduinoLuz : MonoBehaviour
 
         if (OnLuzDetectada != null)
         {
-            // PolaroidJumpscareController hará el vuelo y, al terminar,
-            // llamará a CompletarPuzzle() para despertar al IntroSequenceManager.
             OnLuzDetectada.Invoke();
         }
         else
         {
-            // Fallback sin animación: comportamiento original
-            Debug.LogWarning("[ArduinoLuz] OnLuzDetectada sin suscriptores – activando jumpscare directamente.");
+            Debug.LogWarning("[ArduinoLuz] OnLuzDetectada sin suscriptores");
             CompletarPuzzle();
             cameraCullingMaskController?.SetMode(false);
         }
     }
 
-    /// <summary>
-    /// Llamado por PolaroidJumpscareController cuando el vuelo termina.
-    /// Pone puzzleCompletado = true, lo que despierta al IntroSequenceManager.
-    /// </summary>
     public void CompletarPuzzle()
     {
         puzzleCompletado = true;

@@ -88,7 +88,6 @@ public class IntroSequenceManager : MonoBehaviour
         if (arduinoLuz != null)
             arduinoLuz.habilitado = false;
 
-        // Encender focos en blanco a tope desde el principio
         if (dmxController != null)
             dmxController.EncenderBlanco();
 
@@ -118,7 +117,7 @@ public class IntroSequenceManager : MonoBehaviour
             else videoTutorial.gameObject.SetActive(true);
 
             videoTutorial.Play();
-            yield return new WaitForSeconds(0.5f); // Pequeña espera por si tarda en cargar
+            yield return new WaitForSeconds(0.5f);
             yield return new WaitWhile(() => videoTutorial.isPlaying);
 
             if (rootVideoTutorial != null) rootVideoTutorial.SetActive(false);
@@ -216,11 +215,8 @@ public class IntroSequenceManager : MonoBehaviour
             float alphaActual = flashActivo ? alphaMax : alphaMin;
             SetOverlayAlpha(alphaActual);
 
-            // Sincronizar focos: cuando el overlay es más opaco (oscuro) los focos se apagan,
-            // cuando el overlay es más transparente (claro) los focos se encienden.
             if (dmxController != null)
             {
-                // alphaActual 0 = luz encendida (brillo 255), alphaActual 1 = apagado (brillo 0)
                 byte brilloFoco = (byte)(Mathf.Clamp01(1f - alphaActual) * 255f);
                 dmxController.SetBrilloBlanco(brilloFoco);
             }
@@ -230,7 +226,6 @@ public class IntroSequenceManager : MonoBehaviour
             tiempoAcumulado += intervalo;
         }
 
-        // Fade a oscuridad total: apagar focos al acabar
         if (dmxController != null)
             dmxController.Apagar();
 

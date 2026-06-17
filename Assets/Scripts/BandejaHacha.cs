@@ -5,7 +5,6 @@ using UnityEngine.InputSystem;
 
 public class BandejaHacha : MonoBehaviour
 {
-    // ── Referencia directa al hacha ────────────────────────────────────────
     [Header("Hacha")]
     [SerializeField, Tooltip("El AxeGrabController del hacha (arrástralo desde la jerarquía)")]
     private AxeGrabController hachaController;
@@ -15,36 +14,28 @@ public class BandejaHacha : MonoBehaviour
         "para considerar que ha sido depositada.")]
     private float radioDeposito = 0.35f;
 
-    // ── Punto central de detección ─────────────────────────────────────────
     [Header("Zona")]
     [SerializeField, Tooltip(
         "Transform que marca el centro de la zona de depósito. " +
         "Si se deja vacío se usa el transform de este GameObject.")]
     private Transform centroZona;
 
-    // ── Audio ──────────────────────────────────────────────────────────────
     [Header("Audio")]
     [SerializeField, Tooltip("Sonido de confirmación al depositar el hacha en la bandeja")]
     private AudioSource audioDeposito;
 
-    // ── Visual (opcional) ──────────────────────────────────────────────────
     [Header("Visual (opcional)")]
     [SerializeField, Tooltip("GameObject de highlight que se muestra mientras espera la hacha")]
     private GameObject efectoHighlight;
 
-    // ── Estado ────────────────────────────────────────────────────────────
-    /// <summary>True en cuanto el hacha ha sido depositada (y suelta) correctamente.</summary>
     public bool HachaDepositada { get; private set; } = false;
 
     private bool _activa = false;
-
-    // ─────────────────────────────────────────────────────────────────────
 
     void Awake()
     {
         if (efectoHighlight != null) efectoHighlight.SetActive(false);
 
-        // Diagnóstico
         if (hachaController == null)
             Debug.LogWarning("[BandejaHacha] ¡CAMPO NULO! 'Hacha Controller' no asignado en Inspector.");
         else
@@ -77,8 +68,6 @@ public class BandejaHacha : MonoBehaviour
         Debug.Log("[BandejaHacha] Bandeja activada – esperando que el jugador deposite el hacha.");
     }
 
-    // ── Detección por distancia ───────────────────────────────────────────
-
     private void ComprobarDepositoPorDistancia()
     {
         if (hachaController == null) return;
@@ -89,7 +78,6 @@ public class BandejaHacha : MonoBehaviour
         {
             if (hachaController.EstaEnMano)
             {
-                // El jugador todavía lleva el hacha – esperar a que la suelte
                 return;
             }
 
@@ -110,8 +98,6 @@ public class BandejaHacha : MonoBehaviour
         Debug.Log("[BandejaHacha] ¡Hacha depositada correctamente en la bandeja!");
     }
 
-    // ── Simulación en Editor ──────────────────────────────────────────────
-
 #if UNITY_EDITOR
     private void SimularDepositoEditor()
     {
@@ -125,8 +111,6 @@ public class BandejaHacha : MonoBehaviour
         }
     }
 #endif
-
-    // ── Gizmos ────────────────────────────────────────────────────────────
 
     void OnDrawGizmosSelected()
     {

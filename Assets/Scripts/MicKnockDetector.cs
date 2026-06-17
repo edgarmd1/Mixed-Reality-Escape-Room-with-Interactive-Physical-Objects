@@ -39,7 +39,6 @@ public class MicKnockDetector : MonoBehaviour
     {
         if (!_micInicializado) return;
 
-        // Comprobar que el micrófono sigue activo (por si se quita)
         if (!Microphone.IsRecording(_dispositivoActivo))
         {
             Debug.LogWarning("[MicKnock] El micrófono dejó de grabar. Intentando reiniciar...");
@@ -58,8 +57,6 @@ public class MicKnockDetector : MonoBehaviour
             Debug.Log("[MicKnock] Micrófono detenido.");
         }
     }
-
-    // ── Inicialización ─────────────────────────────────────────────────────────
 
     private void IniciarMicrofono()
     {
@@ -99,8 +96,6 @@ public class MicKnockDetector : MonoBehaviour
                   $"Debounce: {debounceSegundos:F2}s");
     }
 
-    // ── Análisis de audio ──────────────────────────────────────────────────────
-
     private void AnalizarAudio()
     {
         int posActual = Microphone.GetPosition(_dispositivoActivo);
@@ -130,7 +125,6 @@ public class MicKnockDetector : MonoBehaviour
         if (logRMSContinuo)
             Debug.Log($"[MicKnock] RMS: {rms:F4}");
 
-        // Detectar golpe
         if (rms >= umbralRMS)
         {
             float ahora = Time.time;

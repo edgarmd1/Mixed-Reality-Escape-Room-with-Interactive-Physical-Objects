@@ -3,7 +3,6 @@ using UnityEngine.XR;
 
 public class AxeGrabController : MonoBehaviour
 {
-    // ── Agarre ────────────────────────────────────────────────────────────
     [Header("── Agarre ──")]
 
     [SerializeField, Tooltip(
@@ -15,7 +14,6 @@ public class AxeGrabController : MonoBehaviour
     private Vector3 gripLocalPosition = Vector3.zero;
 
 
-    // ── Detección de impacto ───────────────────────────────────────────────
     [Header("── Detección de impacto ──")]
     [SerializeField] private Transform puntoImpacto;
     [SerializeField] private Transform ejeHoja;
@@ -25,32 +23,25 @@ public class AxeGrabController : MonoBehaviour
     [SerializeField] private float cooldownEntreGolpes = 0.55f;
     [SerializeField] private LayerMask layerTableros;
 
-    // ── Haptic ─────────────────────────────────────────────────────────────
     [Header("── Haptic feedback ──")]
     [SerializeField, Range(0f, 1f)] private float hapticIntensidad = 0.6f;
     [SerializeField, Range(0.05f, 1f)] private float hapticDuracion = 0.25f;
 
-    // ── Auto-calibración ───────────────────────────────────────────────────
-    // Clave para PlayerPrefs
     private const string PREFS_KEY = "Hacha_PosicionReposo";
 
     private Vector3    _posReposo;
     private Quaternion _rotReposo;
     private bool       _tienePosReposo = false;
 
-    // ── Estado interno ─────────────────────────────────────────────────────
     private InputDevice _mando;
     private bool        _mandoEnMano;
     private float       _tiempoUltimoGolpe = -999f;
     private Vector3     _posAnterior;
     private float       _velocidadActual;
 
-    /// <summary>True mientras el jugador está sosteniendo el mando con el hacha activa.</summary>
     public bool EstaEnMano => _mandoEnMano;
 
     private Unity.XR.CoreUtils.XROrigin _xrOrigin;
-
-    // ─────────────────────────────────────────────────────────────────────
 
     void Awake()
     {
@@ -97,14 +88,12 @@ public class AxeGrabController : MonoBehaviour
             AplicarPosicionReposo();
     }
 
-    // ── Auto-calibración ───────────────────────────────────────────────────
     private void GuardarPosicionReposo()
     {
         _posReposo      = transform.position;
         _rotReposo      = transform.rotation;
         _tienePosReposo = true;
 
-        // Guardar la posición local del controller
         if (_mando.isValid && _mando.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 ctrlLocal))
         {
             _controllerRestLocalPos  = ctrlLocal;
@@ -158,7 +147,6 @@ public class AxeGrabController : MonoBehaviour
             _tieneControllerRestPos = true;
         }
 
-        // Aplicar posición de reposo inmediatamente
         transform.position = _posReposo;
         transform.rotation = _rotReposo;
 
@@ -197,8 +185,6 @@ public class AxeGrabController : MonoBehaviour
         _tienePosReposo = false;
         Debug.Log("[Hacha] Posición de reposo borrada.");
     }
-
-    // ── Dispositivo ────────────────────────────────────────────────────────
 
     private void OnDeviceConnected(InputDevice device)
     {
@@ -260,7 +246,6 @@ public class AxeGrabController : MonoBehaviour
         }
         _estabaGripando = griping;
 
-        // ── Estado "mando en mano" ────────────────────────────────────────────
         if (!tracked)
         {
             if (_mandoEnMano) OnMandoSoltado();
@@ -284,7 +269,6 @@ public class AxeGrabController : MonoBehaviour
 
     private bool ControllerHaMovidoDeReposo()
     {
-        // Sin posición de reposo guardada: cualquier tracking = cogido
         if (!_tieneControllerRestPos) return true;
 
         if (!_mando.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 localPos))
@@ -328,8 +312,6 @@ public class AxeGrabController : MonoBehaviour
         transform.rotation = targetRot;
     }
 
-    // ── Detección de impacto ───────────────────────────────────────────────
-
     private bool InclinacionCorrecta()
     {
         if (ejeHoja == null)
@@ -367,11 +349,8 @@ public class AxeGrabController : MonoBehaviour
             _mando.SendHapticImpulse(0, hapticIntensidad, hapticDuracion);
     }
 
-    // ── Gizmos ─────────────────────────────────────────────────────────────
-
     void OnDrawGizmosSelected()
     {
-        // Punto de agarre en espacio mundo (después de aplicar rotation offset)
         Quaternion gizmoRot = transform.rotation;
         Vector3 gripWorldPos = transform.position + gizmoRot * gripLocalPosition;
         Gizmos.color = Color.green;

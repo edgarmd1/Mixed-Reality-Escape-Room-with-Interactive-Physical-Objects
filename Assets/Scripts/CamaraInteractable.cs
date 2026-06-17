@@ -16,6 +16,9 @@ public class CamaraInteractable : MonoBehaviour
     [SerializeField, Tooltip("GameObject de la habitación 217")]
     private GameObject habitacion217Root;
 
+    [SerializeField, Tooltip("GameObjects que se desactivan al coger la cámara")]
+    private GameObject[] objetosADesactivar;
+
     [SerializeField, Tooltip("Sonido de portazo al cerrarse la puerta")]
     private AudioSource audioPortazo;
 
@@ -94,6 +97,18 @@ public class CamaraInteractable : MonoBehaviour
         else
         {
             Debug.LogWarning("[CamaraInteractable] habitacion217Root no asignado.");
+        }
+
+        if (objetosADesactivar != null)
+        {
+            foreach (GameObject obj in objetosADesactivar)
+            {
+                if (obj != null)
+                {
+                    obj.SetActive(false);
+                    Debug.Log($"[CamaraInteractable] Desactivado: {obj.name}");
+                }
+            }
         }
 
         if (audioPortazo != null)

@@ -10,7 +10,7 @@ public class FotoJumpscareManager : MonoBehaviour
     private float radioDeteccion = 1.5f;
 
     [Header("Visor de foto")]
-    [SerializeField, Tooltip("GameObject del visor (world-space). Necesita XRSimpleInteractable. Se posiciona automáticamente frente al jugador.")]
+    [SerializeField, Tooltip("GameObject del visor")]
     private GameObject visorFoto;
     [SerializeField, Tooltip("Distancia delante de la cámara del jugador donde aparece el visor")]
     private float distanciaVisor = 0.55f;
@@ -22,12 +22,12 @@ public class FotoJumpscareManager : MonoBehaviour
     private float duracionFlash = 0.3f;
 
     [Header("Audio")]
-    [SerializeField, Tooltip("Sonido de disparo de cámara (shutter)")]
+    [SerializeField, Tooltip("Sonido de captura de cámara")]
     private AudioSource audioShutter;
-    [SerializeField, Tooltip("Sonido del primer jumpscare (habitación 217)")]
+    [SerializeField, Tooltip("Sonido del primer jumpscare")]
     private AudioSource audioJumpscare;
 
-    [Header("Jumpscare 1 (habitación 217)")]
+    [Header("Jumpscare 1")]
     [SerializeField, Tooltip("GameObject con la imagen del primer jumpscare")]
     private GameObject imagenJumpscare;
     [SerializeField, Tooltip("Duración del vuelo del jumpscare hacia el jugador")]
@@ -35,7 +35,7 @@ public class FotoJumpscareManager : MonoBehaviour
     [SerializeField, Tooltip("Distancia detrás de la cámara hasta donde llega el jumpscare")]
     private float distanciaDetrasJumpscare = 0.3f;
 
-    [Header("Final – Volver al MR")]
+    [Header("Final el Volver al MR")]
     [SerializeField, Tooltip("GameObject de la habitación 217")]
     private GameObject habitacion217Root;
     [SerializeField, Tooltip("CameraCullingMaskController para volver al modo MR")]
@@ -43,20 +43,20 @@ public class FotoJumpscareManager : MonoBehaviour
     [SerializeField, Tooltip("Segundos de pausa tras el primer jumpscare antes de volver al MR")]
     private float pausaAntesMR = 1.5f;
 
-    [Header("Parpadeo de luces final (en MR)")]
+    [Header("Parpadeo de luces final")]
     [SerializeField, Tooltip("Duración total del parpadeo de luces en segundos")]
     private float duracionParpadeoFinal = 4f;
-    [SerializeField, Tooltip("Intervalo entre flashes al inicio (lento)")]
+    [SerializeField, Tooltip("Intervalo entre flashes al inicio")]
     private float intervaloInicialParpadeo = 0.55f;
-    [SerializeField, Tooltip("Intervalo entre flashes al final (rápido)")]
+    [SerializeField, Tooltip("Intervalo entre flashes al final")]
     private float intervaloFinalParpadeo = 0.04f;
     [SerializeField, Tooltip("Alpha máximo del overlay durante el parpadeo")]
     [Range(0f, 1f)] private float alphaParpadeo = 0.88f;
     [SerializeField, Tooltip("Audio que suena durante el parpadeo de luces final")]
     private AudioSource audioParpadeo;
 
-    [Header("Jumpscare 2 (mundo real – final)")]
-    [SerializeField, Tooltip("Imagen del segundo jumpscare (puede ser diferente al primero)")]
+    [Header("Jumpscare 2")]
+    [SerializeField, Tooltip("Imagen del segundo jumpscare")]
     private GameObject imagenJumpscare2;
     [SerializeField, Tooltip("Sonido del segundo jumpscare")]
     private AudioSource audioJumpscare2;
@@ -96,7 +96,6 @@ public class FotoJumpscareManager : MonoBehaviour
     {
         Debug.Log("[FotoJumpscare] Iniciando secuencia de foto.");
 
-        // ── 1. Mostrar visor / botón ───────────────────────────────
         if (visorFoto != null)
         {
             visorFoto.SetActive(true);
@@ -109,7 +108,6 @@ public class FotoJumpscareManager : MonoBehaviour
             }
         }
 
-        // ── 2. Esperar input del jugador (timeout 20 s) ────────────
         float elapsed = 0f;
         while (!_fotoDisparada && elapsed < 20f)
         {
@@ -125,14 +123,12 @@ public class FotoJumpscareManager : MonoBehaviour
 
         if (visorFoto != null) visorFoto.SetActive(false);
 
-        // ── 3. Flash blanco + shutter ──────────────────────────────
         yield return StartCoroutine(FlashBlancoCoroutine());
         if (audioShutter != null) audioShutter.Play();
         else Debug.LogWarning("[FotoJumpscare] audioShutter no asignado.");
 
         yield return new WaitForSeconds(0.2f);
 
-        // ── 4. Desactivar cámara prop ──────────────────────────────
         if (camaraGO != null)
         {
             camaraGO.SetActive(false);
@@ -141,10 +137,8 @@ public class FotoJumpscareManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.4f);
 
-        // ── 5. Primer jumpscare (dentro de la hab. 217) ────────────
         yield return StartCoroutine(JumpscareCoroutine(imagenJumpscare, audioJumpscare, duracionJumpscareMov));
 
-        // ── 6. Pausa → desactivar hab. 217 → volver al MR ─────────
         yield return new WaitForSeconds(pausaAntesMR);
 
         if (habitacion217Root != null)
@@ -156,18 +150,14 @@ public class FotoJumpscareManager : MonoBehaviour
         cameraCulling?.SetMode(true);
         Debug.Log("[FotoJumpscare] De vuelta al mundo real.");
 
-        // ── 7. Pequeña pausa para que el jugador se oriente ────────
         yield return new WaitForSeconds(1.5f);
 
-        // ── 8. Parpadeo de luces en el mundo real ──────────────────
         if (audioParpadeo != null) audioParpadeo.Play();
         yield return StartCoroutine(CoroutineParpadeoFinal());
         if (audioParpadeo != null) audioParpadeo.Stop();
 
-        // ── 9. Segundo jumpscare (en el mundo real) ────────────────
         yield return StartCoroutine(JumpscareCoroutine(imagenJumpscare2, audioJumpscare2, duracionJumpscare2Mov));
 
-        // ── 10. Fin ────────────────────────────────────────────────
         if (_overlayMat != null)
             _overlayMat.color = new Color(0f, 0f, 0f, 0f);
 
@@ -177,7 +167,6 @@ public class FotoJumpscareManager : MonoBehaviour
     private void OnVisorHovered(HoverEnterEventArgs _)   => _fotoDisparada = true;
     private void OnVisorSelected(SelectEnterEventArgs _)  => _fotoDisparada = true;
 
-    // ── Flash blanco de cámara ─────────────────────────────────────
     private IEnumerator FlashBlancoCoroutine()
     {
         if (_overlayMat == null) yield break;
@@ -195,12 +184,10 @@ public class FotoJumpscareManager : MonoBehaviour
         _overlayMat.color = colorOriginal;
     }
 
-    // ── Parpadeo de luces (igual que IntroSequenceManager) ─────────
     private IEnumerator CoroutineParpadeoFinal()
     {
         if (_overlayMat == null) yield break;
 
-        // Poner color negro (parpadeo de oscuridad, como el intro)
         _overlayMat.color = new Color(0f, 0f, 0f, 0f);
 
         float tiempoAcumulado = 0f;
@@ -224,11 +211,9 @@ public class FotoJumpscareManager : MonoBehaviour
             tiempoAcumulado += intervalo;
         }
 
-        // Apagar overlay al terminar
         _overlayMat.color = new Color(0f, 0f, 0f, 0f);
     }
 
-    // ── Jumpscare genérico (reutilizable para ambos) ───────────────
     private IEnumerator JumpscareCoroutine(GameObject imagen, AudioSource audio, float duracion)
     {
         if (imagen == null) yield break;

@@ -67,7 +67,7 @@ public class TelefonoManager : MonoBehaviour
     private IEnumerator ActivarVoz()
     {
         _vozActivada = true;
-        Debug.Log("[Telefono] Auricular descolgado – reproduciendo voz del Hotel Overlook.");
+        Debug.Log("[Telefono] Auricular descolgado");
 
         if (telefonoSonando != null && telefonoSonando.isPlaying)
         {
@@ -86,7 +86,6 @@ public class TelefonoManager : MonoBehaviour
         if (vozAudio != null)
             vozAudio.Play();
 
-        // Esperar a que termine el audio de la voz
         yield return new WaitUntil(() => vozAudio == null || !vozAudio.isPlaying);
 
         if (audioReflexion != null)
@@ -97,7 +96,6 @@ public class TelefonoManager : MonoBehaviour
 
         Debug.Log("[Telefono] Activando puzzle de teclado matricial.");
 
-        // Activar el puzzle de teclado matricial
         if (keypadPuzzleManager != null)
             keypadPuzzleManager.IniciarPuzzle();
     }

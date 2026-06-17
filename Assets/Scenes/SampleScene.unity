@@ -1602,6 +1602,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62b4d679a34c51a4d9417379ebb517b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  puertoCOM: COM6
+  baudRate: 250000
   cicloColoresPrueba: 1
   colorChangInterval: 1.5
 --- !u!1001 &418137676
@@ -3187,6 +3189,10 @@ MonoBehaviour:
   audioCogida: {fileID: 1065241460}
   puertaTraseraRoot: {fileID: 596714684}
   habitacion217Root: {fileID: 603614296}
+  objetosADesactivar:
+  - {fileID: 668762069}
+  - {fileID: 1989142590}
+  - {fileID: 1899918982}
   audioPortazo: {fileID: 1222538813}
   fotoJumpscareManager: {fileID: 1867907805}
 --- !u!114 &681846482
@@ -9341,7 +9347,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47ddec1ffbb566d438af92816cb20c50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  umbralActivacion: 800
+  umbralActivacion: 830
   puzzleCompletado: 0
   habilitado: 0
   cameraCullingMaskController: {fileID: 0}

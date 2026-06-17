@@ -8,30 +8,30 @@ public class PolaroidJumpscareController : MonoBehaviour
     [Tooltip("Transform de la foto polaroid virtual")]
     public Transform polaroidTransform;
 
-    [Tooltip("Renderer de la polaroid (para intercambiar material de quemado)")]
+    [Tooltip("Renderer de la polaroid")]
     public Renderer polaroidRenderer;
 
     [Tooltip("ArduinoLuz que detecta la linterna")]
     public ArduinoLuz arduinoLuz;
 
-    [Tooltip("Controlador de modos – necesario para activar VR al terminar el vuelo")]
+    [Tooltip("Controlador de modos")]
     public CameraCullingMaskController cameraCullingMaskController;
 
     [Header("Fase 1 – Vuelo")]
-    [Tooltip("Segundos que dura la fase de vuelo hacia la cámara")]
+    [Tooltip("Duración de la fase de vuelo")]
     public float duracionVuelo = 2.5f;
 
-    [Tooltip("Multiplicador de escala máxima durante el vuelo (sobre la escala original)")]
+    [Tooltip("Multiplicador de escala máxima durante el vuelo")]
     public float multiplicadorEscalaFinal = 6f;
 
-    [Tooltip("Distancia detrás de la cámara hasta la que viaja la polaroid (metros)")]
+    [Tooltip("Distancia detrás de la cámara hasta la que viaja la polaroid")]
     public float distanciaDetras = 0.4f;
 
-    [Tooltip("Curva de easing para el vuelo (EaseIn recomendado: lento al principio, rápido al final)")]
+    [Tooltip("Curva de easing para el vuelo")]
     public AnimationCurve curvaVuelo = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-    [Header("Fase 2 – Quemado (llamado por IntroSequenceManager al volver a MR)")]
-    [Tooltip("Segundos que dura el efecto de quemado")]
+    [Header("Fase 2 – Quemado")]
+    [Tooltip("Duración del efecto de quemado")]
     public float duracionQuemado = 2f;
 
     [Tooltip("Material con shader Custom/PolaroidBurn")]
@@ -162,7 +162,7 @@ public class PolaroidJumpscareController : MonoBehaviour
     {
         if (polaroidTransform == null || polaroidRenderer == null)
         {
-            Debug.LogWarning("[PolaroidJumpscare] polaroidTransform/Renderer no asignado – saltando quemado.");
+            Debug.LogWarning("[PolaroidJumpscare] polaroidTransform/Renderer no asignado.");
             yield break;
         }
 
@@ -199,7 +199,7 @@ public class PolaroidJumpscareController : MonoBehaviour
         if (_materialOriginal != null)
             polaroidRenderer.material = _materialOriginal;
 
-        Debug.Log("[PolaroidJumpscare] Quemado completado – polaroid desactivada.");
+        Debug.Log("[PolaroidJumpscare] Quemado completado.");
     }
 
     private void FallbackActivarVR()

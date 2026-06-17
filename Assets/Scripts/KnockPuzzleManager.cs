@@ -82,9 +82,6 @@ public class KnockPuzzleManager : MonoBehaviour
 
         if (overlayRenderer != null)
             _overlayMat = overlayRenderer.material;
-
-        if (pasilloRoot != null)
-            pasilloRoot.SetActive(false);
     }
 
     void OnEnable()
