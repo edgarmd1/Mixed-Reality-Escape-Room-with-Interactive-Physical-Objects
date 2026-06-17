@@ -29,17 +29,17 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField] private ArduinoLuz arduinoLuz;
 
     [Header("Armario")]
-    [SerializeField, Tooltip("GameObject del armario cerrado (se desactiva al abrir)")]
+    [SerializeField, Tooltip("GameObject del armario cerrado")]
     private GameObject armarioCerrado;
 
-    [SerializeField, Tooltip("GameObject del armario abierto (se activa al introducir el combo)")]
+    [SerializeField, Tooltip("GameObject del armario abierto")]
     private GameObject armarioAbierto;
 
     [Header("Cámara en vitrina")]
     [SerializeField, Tooltip("GameObject de la cámara dentro del armario abierto")]
     private GameObject camaraEnVitrina;
 
-    [SerializeField, Tooltip("GameObject de la cámara en el punto destino (pasillo)")]
+    [SerializeField, Tooltip("GameObject de la cámara en el punto destino")]
     private GameObject camaraEnDestino;
 
     [SerializeField, Tooltip("GameObject de la cámara que lleva el fantasma")]
@@ -73,7 +73,7 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("KnockPuzzleManager que se activa al coger la llave")]
     private KnockPuzzleManager knockPuzzleManager;
 
-    [Header("Audio (opcional)")]
+    [Header("Audio")]
     [SerializeField, Tooltip("Sonido de error al introducir la combinación incorrecta")]
     private AudioSource audioError;
 

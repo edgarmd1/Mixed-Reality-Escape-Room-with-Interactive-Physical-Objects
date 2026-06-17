@@ -24,27 +24,17 @@ public class FotoJumpscareManager : MonoBehaviour
     [Header("Audio")]
     [SerializeField, Tooltip("Sonido de captura de cámara")]
     private AudioSource audioShutter;
-    [SerializeField, Tooltip("Sonido del primer jumpscare")]
-    private AudioSource audioJumpscare;
+    [SerializeField, Tooltip("Sonido que suena al activarse el objeto de susto")]
+    private AudioSource audioSusto;
 
-    [Header("Jumpscare 1")]
-    [SerializeField, Tooltip("GameObject con la imagen del primer jumpscare")]
-    private GameObject imagenJumpscare;
-    [SerializeField, Tooltip("Duración del vuelo del jumpscare hacia el jugador")]
-    private float duracionJumpscareMov = 1.2f;
-    [SerializeField, Tooltip("Distancia detrás de la cámara hasta donde llega el jumpscare")]
-    private float distanciaDetrasJumpscare = 0.3f;
+    [Header("Susto (en habitación 217)")]
+    [SerializeField, Tooltip("GameObject que se activa como susto tras hacer la foto")]
+    private GameObject objetoSusto;
+    [SerializeField, Tooltip("Segundos que el objeto de susto permanece visible antes del parpadeo")]
+    private float duracionSusto = 1.5f;
 
-    [Header("Final el Volver al MR")]
-    [SerializeField, Tooltip("GameObject de la habitación 217")]
-    private GameObject habitacion217Root;
-    [SerializeField, Tooltip("CameraCullingMaskController para volver al modo MR")]
-    private CameraCullingMaskController cameraCulling;
-    [SerializeField, Tooltip("Segundos de pausa tras el primer jumpscare antes de volver al MR")]
-    private float pausaAntesMR = 1.5f;
-
-    [Header("Parpadeo de luces final")]
-    [SerializeField, Tooltip("Duración total del parpadeo de luces en segundos")]
+    [Header("Parpadeo de luces")]
+    [SerializeField, Tooltip("Duración total del parpadeo en segundos")]
     private float duracionParpadeoFinal = 4f;
     [SerializeField, Tooltip("Intervalo entre flashes al inicio")]
     private float intervaloInicialParpadeo = 0.55f;
@@ -52,16 +42,16 @@ public class FotoJumpscareManager : MonoBehaviour
     private float intervaloFinalParpadeo = 0.04f;
     [SerializeField, Tooltip("Alpha máximo del overlay durante el parpadeo")]
     [Range(0f, 1f)] private float alphaParpadeo = 0.88f;
-    [SerializeField, Tooltip("Audio que suena durante el parpadeo de luces final")]
+    [SerializeField, Tooltip("Audio que suena durante el parpadeo de luces")]
     private AudioSource audioParpadeo;
+    [SerializeField, Tooltip("(Opcional) Controlador DMX para sincronizar focos físicos con el parpadeo")]
+    private DMXController dmxController;
 
-    [Header("Jumpscare 2")]
-    [SerializeField, Tooltip("Imagen del segundo jumpscare")]
-    private GameObject imagenJumpscare2;
-    [SerializeField, Tooltip("Sonido del segundo jumpscare")]
-    private AudioSource audioJumpscare2;
-    [SerializeField, Tooltip("Duración del vuelo del segundo jumpscare")]
-    private float duracionJumpscare2Mov = 1.0f;
+    [Header("Vuelta al MR")]
+    [SerializeField, Tooltip("GameObject de la habitación 217")]
+    private GameObject habitacion217Root;
+    [SerializeField, Tooltip("CameraCullingMaskController para volver al modo MR")]
+    private CameraCullingMaskController cameraCulling;
 
     private bool _iniciado       = false;
     private bool _fotoDisparada  = false;
@@ -81,8 +71,7 @@ public class FotoJumpscareManager : MonoBehaviour
             _visorInteractable = visorFoto.GetComponentInChildren<XRSimpleInteractable>();
         }
 
-        if (imagenJumpscare  != null) imagenJumpscare.SetActive(false);
-        if (imagenJumpscare2 != null) imagenJumpscare2.SetActive(false);
+        if (objetoSusto != null) objetoSusto.SetActive(false);
     }
 
     public void IniciarSecuenciaFoto(GameObject camaraGO)
@@ -135,11 +124,30 @@ public class FotoJumpscareManager : MonoBehaviour
             Debug.Log("[FotoJumpscare] Cámara prop desactivada.");
         }
 
-        yield return new WaitForSeconds(0.4f);
+        yield return new WaitForSeconds(0.3f);
 
-        yield return StartCoroutine(JumpscareCoroutine(imagenJumpscare, audioJumpscare, duracionJumpscareMov));
+        if (objetoSusto != null)
+        {
+            objetoSusto.SetActive(true);
+            Debug.Log("[FotoJumpscare] Objeto de susto activado.");
+        }
+        else
+        {
+            Debug.LogWarning("[FotoJumpscare] objetoSusto no asignado.");
+        }
 
-        yield return new WaitForSeconds(pausaAntesMR);
+        if (audioSusto != null) audioSusto.Play();
+
+        yield return new WaitForSeconds(duracionSusto);
+
+        if (audioParpadeo != null) audioParpadeo.Play();
+        yield return StartCoroutine(CoroutineParpadeoFinal());
+        if (audioParpadeo != null) audioParpadeo.Stop();
+
+        if (_overlayMat != null)
+            _overlayMat.color = new Color(0f, 0f, 0f, 1f);
+
+        if (objetoSusto != null) objetoSusto.SetActive(false);
 
         if (habitacion217Root != null)
         {
@@ -150,13 +158,7 @@ public class FotoJumpscareManager : MonoBehaviour
         cameraCulling?.SetMode(true);
         Debug.Log("[FotoJumpscare] De vuelta al mundo real.");
 
-        yield return new WaitForSeconds(1.5f);
-
-        if (audioParpadeo != null) audioParpadeo.Play();
-        yield return StartCoroutine(CoroutineParpadeoFinal());
-        if (audioParpadeo != null) audioParpadeo.Stop();
-
-        yield return StartCoroutine(JumpscareCoroutine(imagenJumpscare2, audioJumpscare2, duracionJumpscare2Mov));
+        yield return StartCoroutine(FadeOverlayCoroutine(0f, 1.5f));
 
         if (_overlayMat != null)
             _overlayMat.color = new Color(0f, 0f, 0f, 0f);
@@ -206,45 +208,47 @@ public class FotoJumpscareManager : MonoBehaviour
             float alpha = flashActivo ? alphaMax : alphaMin;
             _overlayMat.color = new Color(0f, 0f, 0f, alpha);
 
+            if (dmxController != null)
+            {
+                byte brillo = (byte)(Mathf.Clamp01(1f - alpha) * 255f);
+                dmxController.SetBrilloBlanco(brillo);
+            }
+
             float espera = intervalo * (flashActivo ? 0.35f : 0.65f);
             yield return new WaitForSeconds(espera);
             tiempoAcumulado += intervalo;
         }
 
+        if (dmxController != null)
+            dmxController.Apagar();
+
         _overlayMat.color = new Color(0f, 0f, 0f, 0f);
     }
 
-    private IEnumerator JumpscareCoroutine(GameObject imagen, AudioSource audio, float duracion)
+    private IEnumerator FadeOverlayCoroutine(float alphaObjetivo, float duracion)
     {
-        if (imagen == null) yield break;
+        if (_overlayMat == null) yield break;
 
-        Camera cam = Camera.main;
-        if (cam == null) yield break;
+        float alphaInicial = _overlayMat.color.a;
+        Color c = _overlayMat.color;
+        float tiempo = 0f;
 
-        if (audio != null) audio.Play();
-
-        Vector3 posInicio = imagen.transform.position;
-        Vector3 escInicio = imagen.transform.localScale;
-        Vector3 escFinal  = escInicio * 8f;
-
-        imagen.SetActive(true);
-
-        float t = 0f;
-        while (t < duracion)
+        while (tiempo < duracion)
         {
-            t += Time.deltaTime;
-            float progress = Mathf.Clamp01(t / duracion);
-            float eased    = progress * progress;
+            tiempo += Time.deltaTime;
+            float alpha = Mathf.Lerp(alphaInicial, alphaObjetivo, tiempo / duracion);
+            _overlayMat.color = new Color(c.r, c.g, c.b, alpha);
 
-            Vector3 posDestino = cam.transform.position - cam.transform.forward * distanciaDetrasJumpscare;
-            imagen.transform.position   = Vector3.Lerp(posInicio, posDestino, eased);
-            imagen.transform.localScale = Vector3.Lerp(escInicio, escFinal, eased);
+            if (dmxController != null && alphaObjetivo < alphaInicial)
+            {
+                byte brillo = (byte)(Mathf.Clamp01(1f - alpha) * 255f);
+                dmxController.SetBrilloBlanco(brillo);
+            }
 
             yield return null;
         }
 
-        imagen.SetActive(false);
-        Debug.Log($"[FotoJumpscare] Jumpscare '{imagen.name}' completado.");
+        _overlayMat.color = new Color(c.r, c.g, c.b, alphaObjetivo);
     }
 
     void OnDrawGizmosSelected()
