@@ -15,15 +15,14 @@ public class ArduinoLuz : MonoBehaviour
 
     private bool _telefonoHabilitado = false;
     private volatile bool _senalTelefono = false;
-    private bool _telefonoDescolgado = false;
-
-    public bool TelefonoDescolgado => _telefonoDescolgado;
+    private bool _telefonoDescolgadoPulso = false;
+    public bool TelefonoDescolgado => _telefonoDescolgadoPulso;
 
     public void HabilitarTelefono() => _telefonoHabilitado = true;
 
     private volatile bool _senalKnock = false;
 
-    [Tooltip("Tiempo mínimo entre golpes (segundos). Evita rebotes del acelerómetro.")]
+    [Tooltip("Tiempo mínimo entre golpes.")]
     public float debounceKnock = 0.2f;
     private float _ultimoKnockTime = -999f;
 
@@ -90,10 +89,11 @@ public class ArduinoLuz : MonoBehaviour
         if (habilitado && luzDetectada && !puzzleCompletado && !_luzEnProceso)
             ActivarTransicion();
 
-        if (_telefonoHabilitado && _senalTelefono && !_telefonoDescolgado)
+        _telefonoDescolgadoPulso = _telefonoHabilitado && _senalTelefono;
+        if (_telefonoDescolgadoPulso)
         {
-            _telefonoDescolgado = true;
-            Debug.Log("[ArduinoLuz] Señal PHONE recibida – teléfono descolgado.");
+            _senalTelefono = false;
+            Debug.Log("[ArduinoLuz] Señal PHONE recibida – teléfono descolgado (pulso).");
         }
 
         if (_senalKnock)

@@ -47,7 +47,11 @@ public class IntroSequenceManager : MonoBehaviour
     private GameObject objetoApareceOscuridad;
     [SerializeField] private GameObject portalAscensor;
     [SerializeField] private DoorPuzzleManager doorPuzzleManager;
-    [SerializeField, Tooltip("Controller de la polaroid – activa el quemado al volver al mundo real")]
+
+    [Header("Jumpscare ascensor")]
+    [SerializeField, Tooltip("GameObjects")]
+    private GameObject[] objetosJumpscare;
+    [SerializeField, Tooltip("Controller de la polaroid")]
     private PolaroidJumpscareController polaroidJumpscare;
     [SerializeField, Tooltip("Fastidio")]
     private AudioSource audioFastidio;
@@ -147,6 +151,9 @@ public class IntroSequenceManager : MonoBehaviour
         if (objetoApareceOscuridad != null)
             objetoApareceOscuridad.SetActive(false);
 
+        foreach (var obj in objetosJumpscare)
+            if (obj != null) obj.SetActive(false);
+
         if (environmentFade != null)
             environmentFade.FadeSkybox(false);
 
@@ -155,7 +162,10 @@ public class IntroSequenceManager : MonoBehaviour
         if (audioMusica != null)
             audioMusica.Play(); 
 
-        yield return StartCoroutine(CoroutineParpadeoRojo(duracionEnVR)); 
+        yield return StartCoroutine(CoroutineParpadeoRojo(duracionEnVR));
+
+        foreach (var obj in objetosJumpscare)
+            if (obj != null) obj.SetActive(true);
 
         yield return StartCoroutine(CoroutineFadeOverlay(0.6f, 0.4f));
 
