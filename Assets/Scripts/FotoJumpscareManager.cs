@@ -5,7 +5,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class FotoJumpscareManager : MonoBehaviour
 {
-    [Header("Detección de proximidad (bañera)")]
+    [Header("Detección de proximidad")]
     [SerializeField, Tooltip("Radio alrededor de la bañera para detectar la cámara suelta")]
     private float radioDeteccion = 1.5f;
 
@@ -30,6 +30,8 @@ public class FotoJumpscareManager : MonoBehaviour
     [Header("Susto (en habitación 217)")]
     [SerializeField, Tooltip("GameObject que se activa como susto tras hacer la foto")]
     private GameObject objetoSusto;
+    [SerializeField, Tooltip("GameObject del zombie 1")]
+    private GameObject zombie1;
     [SerializeField, Tooltip("Segundos que el objeto de susto permanece visible antes del parpadeo")]
     private float duracionSusto = 1.5f;
 
@@ -44,7 +46,7 @@ public class FotoJumpscareManager : MonoBehaviour
     [Range(0f, 1f)] private float alphaParpadeo = 0.88f;
     [SerializeField, Tooltip("Audio que suena durante el parpadeo de luces")]
     private AudioSource audioParpadeo;
-    [SerializeField, Tooltip("(Opcional) Controlador DMX para sincronizar focos físicos con el parpadeo")]
+    [SerializeField, Tooltip("(En Proceso) Controlador DMX para sincronizar focos físicos con el parpadeo")]
     private DMXController dmxController;
 
     [Header("Vuelta al MR")]
@@ -136,6 +138,11 @@ public class FotoJumpscareManager : MonoBehaviour
             Debug.LogWarning("[FotoJumpscare] objetoSusto no asignado.");
         }
 
+        if (zombie1 != null)
+        {
+            zombie1.SetActive(false);
+        }
+
         if (audioSusto != null) audioSusto.Play();
 
         yield return new WaitForSeconds(duracionSusto);
@@ -149,16 +156,16 @@ public class FotoJumpscareManager : MonoBehaviour
 
         if (objetoSusto != null) objetoSusto.SetActive(false);
 
+        cameraCulling?.SetMode(true);
+        Debug.Log("[FotoJumpscare] De vuelta al mundo real.");
+
+        yield return StartCoroutine(FadeOverlayCoroutine(0f, 1.5f));
+
         if (habitacion217Root != null)
         {
             habitacion217Root.SetActive(false);
             Debug.Log("[FotoJumpscare] Habitación 217 desactivada.");
         }
-
-        cameraCulling?.SetMode(true);
-        Debug.Log("[FotoJumpscare] De vuelta al mundo real.");
-
-        yield return StartCoroutine(FadeOverlayCoroutine(0f, 1.5f));
 
         if (_overlayMat != null)
             _overlayMat.color = new Color(0f, 0f, 0f, 0f);
@@ -258,7 +265,7 @@ public class FotoJumpscareManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    [ContextMenu("Simular foto (Editor)")]
+    [ContextMenu("Simular foto")]
     private void SimularFoto()
     {
         if (!Application.isPlaying) return;
