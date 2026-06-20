@@ -24,24 +24,25 @@ public class CamaraInteractable : MonoBehaviour
     [SerializeField, Tooltip("Sonido de portazo al cerrarse la puerta")]
     private AudioSource audioPortazo;
 
-    [Header("Auto-suelta en bañera")]
+    [Header("Final")]
     [SerializeField, Tooltip("FotoJumpscareManager")]
     private FotoJumpscareManager fotoJumpscareManager;
 
     [SerializeField, Tooltip("Transform vacío")]
     private Transform posicionObjetivoBanera;
 
-    [SerializeField, Tooltip("Velocidad del lerp")]
+    [SerializeField, Tooltip("Velocidad del lerp SmoothStep hacia la bañera")]
     private float velocidadSnap = 5f;
 
     private bool _camaraCogida = false;
-    private bool _pegadaAMano = false;
-    private bool _snapping = false;
+    private bool _siendoSostenida = false;
     private bool _secuenciaIniciada = false;
+    private bool _snapping = false;
+
+    private IXRSelectInteractor _interactorActual;
 
     private XRGrabInteractable _grab;
     private Rigidbody _rb;
-    private IXRSelectInteractor _interactorActual;
 
     void Awake()
     {
@@ -53,21 +54,19 @@ public class CamaraInteractable : MonoBehaviour
 
     void OnEnable()
     {
-        _grab.hoverEntered.AddListener(OnHoverEntrada);
         _grab.selectEntered.AddListener(OnCogida);
         _grab.selectExited.AddListener(OnSoltada);
     }
 
     void OnDisable()
     {
-        _grab.hoverEntered.RemoveListener(OnHoverEntrada);
         _grab.selectEntered.RemoveListener(OnCogida);
         _grab.selectExited.RemoveListener(OnSoltada);
     }
 
     private void ConfigurarGrab()
     {
-        _grab.movementType  = XRBaseInteractable.MovementType.Kinematic;
+        _grab.movementType = XRBaseInteractable.MovementType.Kinematic;
         _grab.trackPosition = true;
         _grab.trackRotation = true;
         _grab.throwOnDetach = false;
@@ -80,21 +79,9 @@ public class CamaraInteractable : MonoBehaviour
         }
     }
 
-    private void OnHoverEntrada(HoverEnterEventArgs args)
-    {
-        if (_pegadaAMano || _snapping || _secuenciaIniciada) return;
-
-        if (args.interactorObject is IXRSelectInteractor selectInteractor)
-        {
-            var manager = _grab.interactionManager;
-            if (manager != null)
-                manager.SelectEnter(selectInteractor, _grab);
-        }
-    }
-
     private void OnCogida(SelectEnterEventArgs args)
     {
-        _pegadaAMano     = true;
+        _siendoSostenida  = true;
         _interactorActual = args.interactorObject;
 
         if (audioCogida != null)
@@ -103,84 +90,11 @@ public class CamaraInteractable : MonoBehaviour
         if (_rb != null)
             _rb.useGravity = false;
 
-        if (!_camaraCogida)
-        {
-            _camaraCogida = true;
-            Debug.Log("[CamaraInteractable] Cámara cogida por primera vez.");
-            ActivarHabitacion217();
-        }
-    }
+        if (_camaraCogida) return;
+        _camaraCogida = true;
 
-    private void OnSoltada(SelectExitEventArgs args)
-    {
-        _pegadaAMano      = false;
-        _interactorActual = null;
-        Debug.Log("[CamaraInteractable] Cámara suelta (por el jugador).");
-    }
+        Debug.Log("[CamaraInteractable] Cámara cogida por primera vez.");
 
-    void Update()
-    {
-        if (!_pegadaAMano || _snapping || _secuenciaIniciada) return;
-        if (fotoJumpscareManager == null) return;
-
-        float dist  = Vector3.Distance(transform.position, fotoJumpscareManager.transform.position);
-        float radio = fotoJumpscareManager.RadioDeteccion;
-
-        if (dist <= radio)
-        {
-            Debug.Log($"[CamaraInteractable] Dentro del radio bañera ({dist:F2} m ≤ {radio:F2} m) → auto-suelta.");
-            AutoSoltarEnBanera();
-        }
-    }
-
-    private void AutoSoltarEnBanera()
-    {
-        _secuenciaIniciada = true;
-        if (_interactorActual != null && _grab.interactionManager != null)
-        {
-            _grab.interactionManager.SelectExit(_interactorActual, _grab);
-        }
-
-        _grab.enabled = false;
-
-        if (posicionObjetivoBanera != null)
-            StartCoroutine(SnapHaciaBanera());
-        else
-        {
-            Debug.LogWarning("[CamaraInteractable] posicionObjetivoBanera no asignado");
-            fotoJumpscareManager.IniciarSecuenciaFoto(gameObject);
-        }
-    }
-
-    private IEnumerator SnapHaciaBanera()
-    {
-        _snapping = true;
-        Debug.Log("[CamaraInteractable] Iniciando snap lerp hacia la bañera.");
-
-        Vector3 posInicial = transform.position;
-        Quaternion rotInicial = transform.rotation;
-        Vector3 posObjetivo = posicionObjetivoBanera.position;
-        Quaternion rotObjetivo = posicionObjetivoBanera.rotation;
-
-        float t = 0f;
-        while (t < 1f)
-        {
-            t += Time.deltaTime * velocidadSnap;
-            transform.position = Vector3.Lerp(posInicial, posObjetivo, Mathf.SmoothStep(0f, 1f, t));
-            transform.rotation = Quaternion.Slerp(rotInicial, rotObjetivo, Mathf.SmoothStep(0f, 1f, t));
-            yield return null;
-        }
-
-        transform.position = posObjetivo;
-        transform.rotation = rotObjetivo;
-
-        _snapping = false;
-        Debug.Log("[CamaraInteractable] Snap completado. Iniciando secuencia de foto.");
-        fotoJumpscareManager.IniciarSecuenciaFoto(gameObject);
-    }
-
-    private void ActivarHabitacion217()
-    {
         if (puertaTraseraRoot != null)
         {
             puertaTraseraRoot.SetActive(true);
@@ -217,6 +131,93 @@ public class CamaraInteractable : MonoBehaviour
             audioPortazo.Play();
         else
             Debug.LogWarning("[CamaraInteractable] audioPortazo no asignado.");
+    }
+
+    private void OnSoltada(SelectExitEventArgs args)
+    {
+        _siendoSostenida = false;
+        _interactorActual = null;
+
+        if (_secuenciaIniciada) return;
+
+        Debug.Log("[CamaraInteractable] OnSoltada disparado.");
+
+        if (fotoJumpscareManager == null)
+        {
+            Debug.LogWarning("[CamaraInteractable] fotoJumpscareManager es NULL.");
+            return;
+        }
+
+        float dist  = Vector3.Distance(transform.position, fotoJumpscareManager.transform.position);
+        float radio = fotoJumpscareManager.RadioDeteccion;
+        Debug.Log($"[CamaraInteractable] Dist cámara→bañera: {dist:F2} m | ¿Dentro? {dist <= radio}");
+
+        if (dist <= radio)
+        {
+            Debug.Log("[CamaraInteractable] Dentro del radio – iniciando snap.");
+            IniciarSnapYSecuencia();
+        }
+        else
+        {
+            Debug.Log("[CamaraInteractable] Fuera del radio – suelta la cámara más cerca de la bañera.");
+        }
+    }
+
+    void Update()
+    {
+        if (!_siendoSostenida || _snapping || _secuenciaIniciada) return;
+        if (fotoJumpscareManager == null) return;
+
+        float dist  = Vector3.Distance(transform.position, fotoJumpscareManager.transform.position);
+        float radio = fotoJumpscareManager.RadioDeteccion;
+
+        if (dist <= radio)
+        {
+            Debug.Log($"[CamaraInteractable] Zona bañera detectada mientras se sostiene ({dist:F2} m) → auto-suelta.");
+
+            if (_interactorActual != null && _grab.interactionManager != null)
+                _grab.interactionManager.SelectExit(_interactorActual, _grab);
+
+            IniciarSnapYSecuencia();
+        }
+    }
+
+    private void IniciarSnapYSecuencia()
+    {
+        if (_secuenciaIniciada) return;
+        _secuenciaIniciada = true;
+        _grab.enabled = false;
+
+        if (posicionObjetivoBanera != null)
+            StartCoroutine(SnapHaciaBanera());
+        else
+            fotoJumpscareManager.IniciarSecuenciaFoto(gameObject);
+    }
+
+    private IEnumerator SnapHaciaBanera()
+    {
+        _snapping = true;
+
+        Vector3 posInicial = transform.position;
+        Quaternion rotInicial = transform.rotation;
+        Vector3 posObjetivo = posicionObjetivoBanera.position;
+        Quaternion rotObjetivo = posicionObjetivoBanera.rotation;
+
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime * velocidadSnap;
+            transform.position = Vector3.Lerp(posInicial, posObjetivo, Mathf.SmoothStep(0f, 1f, t));
+            transform.rotation = Quaternion.Slerp(rotInicial, rotObjetivo, Mathf.SmoothStep(0f, 1f, t));
+            yield return null;
+        }
+
+        transform.position = posObjetivo;
+        transform.rotation = rotObjetivo;
+        _snapping = false;
+
+        Debug.Log("[CamaraInteractable] Snap completado → IniciarSecuenciaFoto.");
+        fotoJumpscareManager.IniciarSecuenciaFoto(gameObject);
     }
 
     void OnDrawGizmosSelected()
