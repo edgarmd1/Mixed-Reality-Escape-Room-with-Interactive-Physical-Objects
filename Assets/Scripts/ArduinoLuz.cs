@@ -32,10 +32,13 @@ public class ArduinoLuz : MonoBehaviour
 
     public System.Action OnLuzDetectada;
 
+    public System.Action OnUmbralSuperado;
+
     private volatile string _comboRecibido = null;
 
     private volatile bool luzDetectada = false;
-    private bool _luzEnProceso = false; 
+    private volatile bool _umbralSuperado = false;
+    private bool _luzEnProceso = false;
     private Thread hiloSerie;
 
     void Start()
@@ -76,7 +79,10 @@ public class ArduinoLuz : MonoBehaviour
                 else if (int.TryParse(valor, out int luz))
                 {
                     if (luz >= umbralActivacion)
+                    {
                         luzDetectada = true;
+                        _umbralSuperado = true;
+                    }
                 }
             }
             catch (System.TimeoutException) { }
@@ -86,6 +92,12 @@ public class ArduinoLuz : MonoBehaviour
 
     void Update()
     {
+        if (habilitado && _umbralSuperado && !puzzleCompletado)
+        {
+            _umbralSuperado = false;
+            OnUmbralSuperado?.Invoke();
+        }
+
         if (habilitado && luzDetectada && !puzzleCompletado && !_luzEnProceso)
             ActivarTransicion();
 

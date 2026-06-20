@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.XR;
+using UnityEngine.Events;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.XR.CoreUtils;
@@ -12,13 +13,17 @@ public class ObjectCalibrationManager : MonoBehaviour
         public string name;
         public Transform objectTransform;
 
-        [Tooltip("Si está activo, la Y del objeto se calcula automáticamente " +
-                 "a partir del suelo detectado por las Quest, en lugar de usar la Y calibrada manualmente.")]
+        [Tooltip("Si está activo, la Y del objeto se calcula automáticamente")]
         public bool anclarAlSuelo = false;
 
-        [Tooltip("Offset en metros sobre el suelo detectado. " +
-                 "Normalmente 0 si el objeto debe tocar el suelo.")]
+        [Tooltip("Offset en metros sobre el suelo detectado")]
         public float offsetYSobreSuelo = 0f;
+
+        [Tooltip("Se dispara al iniciar la calibración de este objeto.")]
+        public UnityEvent onStartCalibration;
+
+        [Tooltip("Se dispara al guardar la calibración de este objeto.")]
+        public UnityEvent onStopCalibration;
 
         [HideInInspector] public string prefsPrefix;
     }
@@ -48,17 +53,14 @@ public class ObjectCalibrationManager : MonoBehaviour
     private bool isCalibrating = false;
     private CalibratableObject currentObject;
 
-    // Ángulos de Euler gestionados explícitamente para evitar gimbal lock
-    private float _eulerY = 0f;   // Rotación horizontal (stick derecho X)
-    private float _eulerX = 0f;   // Inclinación vertical  (stick derecho Y)
+    private float _eulerY = 0f;
+    private float _eulerX = 0f;
 
-    // Caché de dispositivos XR
-    private readonly List<InputDevice> _leftDevices  = new List<InputDevice>();
+    private readonly List<InputDevice> _leftDevices = new List<InputDevice>();
     private readonly List<InputDevice> _rightDevices = new List<InputDevice>();
 
-    // Altura Y del suelo en coordenadas mundo, calculada a partir del tracking
     private float _floorWorldY = 0f;
-    private bool  _floorReady  = false;
+    private bool _floorReady = false;
 
     void Awake()
     {
@@ -74,7 +76,6 @@ public class ObjectCalibrationManager : MonoBehaviour
         if (calibratableObjects.Count > 0)
             selectedObjectName = calibratableObjects[0].name;
 
-        // Si algún objeto necesita anclaje al suelo, esperamos al tracking
         bool necesitaSuelo = false;
         foreach (var obj in calibratableObjects)
             if (obj.anclarAlSuelo) { necesitaSuelo = true; break; }
@@ -85,10 +86,6 @@ public class ObjectCalibrationManager : MonoBehaviour
             LoadAllPositions();
     }
 
-    /// <summary>
-    /// Espera a que el tracking XR reporte una altura válida de cámara
-    /// para poder calcular dónde está el suelo real, y entonces carga las posiciones.
-    /// </summary>
     private IEnumerator EsperarSueloYCargar()
     {
         if (xrOrigin == null || xrOrigin.Camera == null)
@@ -102,9 +99,8 @@ public class ObjectCalibrationManager : MonoBehaviour
         }
 
         Camera cam = xrOrigin.Camera;
-        yield return null; // esperar un frame
+        yield return null;
 
-        // Esperar hasta que la cámara reporte una altura > 5cm (tracking activo)
         float timeout = 5f;
         float elapsed = 0f;
         while (cam.transform.localPosition.y < 0.05f && elapsed < timeout)
@@ -113,10 +109,6 @@ public class ObjectCalibrationManager : MonoBehaviour
             yield return null;
         }
 
-        // La Y del suelo en coordenadas mundo = posición mundo de la cámara - offset local Y
-        // El offset local Y de la cámara es la altura del usuario sobre el suelo del guardian.
-        // Por tanto, sueloMundo = xrOrigin.position.y + 0  (si XROrigin.y no se ha movido)
-        // Más robusto: sueloMundo = posiciónMundoCámara - offsetLocalCámara
         float cameraWorldY = cam.transform.position.y;
         float cameraLocalY = cam.transform.localPosition.y;
         _floorWorldY = cameraWorldY - cameraLocalY;
@@ -132,7 +124,6 @@ public class ObjectCalibrationManager : MonoBehaviour
     {
         if (!isCalibrating || currentObject == null) return;
 
-        // ── Leer thumbsticks de los mandos vía XR InputDevices ───────────
         InputDevices.GetDevicesWithCharacteristics(
             InputDeviceCharacteristics.Left | InputDeviceCharacteristics.Controller,
             _leftDevices);
@@ -155,10 +146,8 @@ public class ObjectCalibrationManager : MonoBehaviour
         float dt = Time.deltaTime;
         Transform obj = currentObject.objectTransform;
 
-        // ── Traslación ────────────────────────────────────────────────────
         if (!gripLeft)
         {
-            // Stick izquierdo → mover en XZ relativo a la cámara
             Camera cam = Camera.main;
             if (cam != null && leftStick.sqrMagnitude > 0.01f)
             {
@@ -170,16 +159,12 @@ public class ObjectCalibrationManager : MonoBehaviour
         }
         else
         {
-            // Grip izquierdo + stick izquierdo → mover en Y
             obj.position += Vector3.up * leftStick.y * velocidadMovimiento * dt;
         }
 
-        // ── Rotación sin gimbal lock ──────────────────────────────────────
-        // Se acumulan ángulos de Euler por separado y se aplican de una vez
-        // con Quaternion.Euler, evitando que los ejes se mezclen entre sí.
         _eulerY += rightStick.x * velocidadRotacion * dt;
         _eulerX -= rightStick.y * velocidadRotacion * dt;
-        _eulerX  = Mathf.Clamp(_eulerX, -85f, 85f); // evitar volteo completo
+        _eulerX  = Mathf.Clamp(_eulerX, -85f, 85f);
         obj.rotation = Quaternion.Euler(_eulerX, _eulerY, 0f);
     }
 
@@ -209,13 +194,13 @@ public class ObjectCalibrationManager : MonoBehaviour
         }
 
         currentObject = calibratableObjects[selectedObjectIndex];
-        
-        // Al empezar la calibración, continuamos desde la orientación actual
+
+        currentObject.onStartCalibration?.Invoke();
+
         Vector3 currentAngles = currentObject.objectTransform.rotation.eulerAngles;
         _eulerX = currentAngles.x;
         _eulerY = currentAngles.y;
         
-        // Formatear _eulerX al rango [-180, 180] para que Mathf.Clamp funcione bien
         if (_eulerX > 180f) _eulerX -= 360f;
 
         Debug.Log($"ObjectCalibrationManager: ✅ Calibrando '{currentObject.name}' (Transform: {currentObject.objectTransform.name})");
@@ -234,6 +219,8 @@ public class ObjectCalibrationManager : MonoBehaviour
         SavePosition(currentObject);
         isCalibrating = false;
         Debug.Log($"ObjectCalibrationManager: '{currentObject.name}' calibrado y guardado.");
+
+        currentObject.onStopCalibration?.Invoke();
         currentObject = null;
     }
 
@@ -262,8 +249,6 @@ public class ObjectCalibrationManager : MonoBehaviour
 
         if (PlayerPrefs.GetInt(prefix + "HasPos", 0) == 0)
         {
-            // Si no hay posición guardada pero tiene anclaje al suelo,
-            // al menos ajustar la Y al suelo
             if (obj.anclarAlSuelo && _floorReady)
             {
                 Vector3 p = obj.objectTransform.position;
@@ -292,8 +277,6 @@ public class ObjectCalibrationManager : MonoBehaviour
             PlayerPrefs.GetFloat(prefix + "RotW", 1f)
         );
 
-        // Si el objeto está anclado al suelo, reemplazar la Y guardada
-        // por la del suelo detectado + offset
         if (obj.anclarAlSuelo && _floorReady)
         {
             float yOriginal = pos.y;

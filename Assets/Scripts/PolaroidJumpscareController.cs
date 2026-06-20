@@ -43,15 +43,28 @@ public class PolaroidJumpscareController : MonoBehaviour
     [Tooltip("Nombre del parámetro de quemado en el shader")]
     public string shaderParamBurn = "_BurnAmount";
 
-    private Vector3    _posicionOriginal;
+    [Tooltip("Si está activo, la polaroid virtual permanece oculta")]
+    public bool mostrarSoloConLuz = true;
+
+    private Vector3 _posicionOriginal;
     private Quaternion _rotacionOriginal;
-    private Vector3    _escalaOriginal;
-    private Material   _materialOriginal;
-    private bool       _vueloActivo = false;
+    private Vector3 _escalaOriginal;
+    private Material _materialOriginal;
+    private bool _vueloActivo = false;
+    private bool _polaroidVisible = false;
 
     void Awake()
     {
         CapturarEstadoOriginal();
+    }
+
+    void LateUpdate()
+    {
+        if (mostrarSoloConLuz && !_polaroidVisible && !_vueloActivo && polaroidTransform != null)
+        {
+            if (polaroidTransform.gameObject.activeSelf)
+                polaroidTransform.gameObject.SetActive(false);
+        }
     }
 
     void Start()
@@ -59,8 +72,17 @@ public class PolaroidJumpscareController : MonoBehaviour
         if (polaroidRenderer != null)
             _materialOriginal = polaroidRenderer.material;
 
+        if (mostrarSoloConLuz && polaroidTransform != null)
+        {
+            polaroidTransform.gameObject.SetActive(false);
+            _polaroidVisible = false;
+        }
+
         if (arduinoLuz != null)
-            arduinoLuz.OnLuzDetectada += IniciarVuelo;
+        {
+            arduinoLuz.OnUmbralSuperado += MostrarPolaroid;
+            arduinoLuz.OnLuzDetectada   += IniciarVuelo;
+        }
         else
             Debug.LogWarning("[PolaroidJumpscare] ArduinoLuz no asignado.");
     }
@@ -68,7 +90,27 @@ public class PolaroidJumpscareController : MonoBehaviour
     void OnDestroy()
     {
         if (arduinoLuz != null)
-            arduinoLuz.OnLuzDetectada -= IniciarVuelo;
+        {
+            arduinoLuz.OnUmbralSuperado -= MostrarPolaroid;
+            arduinoLuz.OnLuzDetectada   -= IniciarVuelo;
+        }
+    }
+
+    public void MostrarPolaroid()
+    {
+        if (_polaroidVisible || _vueloActivo || polaroidTransform == null) return;
+        _polaroidVisible = true;
+        polaroidTransform.gameObject.SetActive(true);
+        Debug.Log("[PolaroidJumpscare] Polaroid virtual visible.");
+    }
+
+    public void OcultarPolaroid()
+    {
+        if (!_polaroidVisible || _vueloActivo || polaroidTransform == null) return;
+        RefrescarPosicionOriginal();
+        _polaroidVisible = false;
+        polaroidTransform.gameObject.SetActive(false);
+        Debug.Log("[PolaroidJumpscare] Polaroid virtual oculta. Posición original actualizada.");
     }
 
     public void RefrescarPosicionOriginal()
@@ -108,7 +150,7 @@ public class PolaroidJumpscareController : MonoBehaviour
     {
         if (polaroidTransform == null)
         {
-            Debug.LogWarning("[PolaroidJumpscare] polaroidTransform no asignado – saltando vuelo.");
+            Debug.LogWarning("[PolaroidJumpscare] polaroidTransform no asignado");
             FallbackActivarVR();
             yield break;
         }
@@ -116,7 +158,7 @@ public class PolaroidJumpscareController : MonoBehaviour
         Camera cam = Camera.main;
         if (cam == null)
         {
-            Debug.LogWarning("[PolaroidJumpscare] No se encontró Camera.main – saltando vuelo.");
+            Debug.LogWarning("[PolaroidJumpscare] No se encontró Camera.main");
             FallbackActivarVR();
             yield break;
         }
@@ -152,6 +194,7 @@ public class PolaroidJumpscareController : MonoBehaviour
         }
 
         polaroidTransform.gameObject.SetActive(false);
+        _polaroidVisible = false;
         Debug.Log("[PolaroidJumpscare] Vuelo completado. Activando VR.");
 
         arduinoLuz?.CompletarPuzzle();
@@ -207,4 +250,21 @@ public class PolaroidJumpscareController : MonoBehaviour
         arduinoLuz?.CompletarPuzzle();
         cameraCullingMaskController?.SetMode(false);
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("Simular: Mostrar Polaroid (umbral luz)")]
+    private void SimularMostrarPolaroid()
+    {
+        if (!Application.isPlaying) { Debug.LogWarning("Solo en Play Mode."); return; }
+        _polaroidVisible = false;
+        MostrarPolaroid();
+    }
+
+    [ContextMenu("Simular: Iniciar Vuelo")]
+    private void SimularVuelo()
+    {
+        if (!Application.isPlaying) { Debug.LogWarning("Solo en Play Mode."); return; }
+        IniciarVuelo();
+    }
+#endif
 }
