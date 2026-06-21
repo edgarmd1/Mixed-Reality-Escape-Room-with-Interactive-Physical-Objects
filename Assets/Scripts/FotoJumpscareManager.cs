@@ -48,7 +48,7 @@ public class FotoJumpscareManager : MonoBehaviour
     [Range(0f, 1f)] private float alphaParpadeo = 0.88f;
     [SerializeField, Tooltip("Audio que suena durante el parpadeo de luces")]
     private AudioSource audioParpadeo;
-    [SerializeField, Tooltip("(En Proceso) Controlador DMX para sincronizar focos físicos con el parpadeo")]
+    [SerializeField, Tooltip("Controlador DMX")]
     private DMXController dmxController;
 
     [Header("Vuelta al MR")]

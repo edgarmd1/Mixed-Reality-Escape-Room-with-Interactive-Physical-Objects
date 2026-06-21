@@ -9,7 +9,7 @@ public class DMXController : MonoBehaviour
     [SerializeField] private int    baudRate  = 250000;
 
     private SerialPort _serialPort;
-    private byte[]     _dmxData = new byte[513];
+    private byte[] _dmxData = new byte[513];
 
     [Header("Ciclo de colores de prueba")]
     [SerializeField] private bool  cicloColoresPrueba = false;
