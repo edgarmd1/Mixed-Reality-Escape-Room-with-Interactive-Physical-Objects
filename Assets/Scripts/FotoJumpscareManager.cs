@@ -28,10 +28,12 @@ public class FotoJumpscareManager : MonoBehaviour
     private AudioSource audioSusto;
 
     [Header("Susto (en habitación 217)")]
-    [SerializeField, Tooltip("GameObject que se activa como susto tras hacer la foto")]
+    [SerializeField, Tooltip("GameObject zombie 2")]
     private GameObject objetoSusto;
-    [SerializeField, Tooltip("GameObject del zombie 1")]
+    [SerializeField, Tooltip("GameObject zombie 1")]
     private GameObject zombie1;
+    [SerializeField, Tooltip("GameObject zombie 3")]
+    private GameObject zombie3;
     [SerializeField, Tooltip("Segundos que el objeto de susto permanece visible antes del parpadeo")]
     private float duracionSusto = 1.5f;
 
@@ -54,6 +56,8 @@ public class FotoJumpscareManager : MonoBehaviour
     private GameObject habitacion217Root;
     [SerializeField, Tooltip("CameraCullingMaskController para volver al modo MR")]
     private CameraCullingMaskController cameraCulling;
+    [SerializeField, Tooltip("Video final al volver a MR")]
+    private GameObject videoFinal;
 
     private bool _iniciado       = false;
     private bool _fotoDisparada  = false;
@@ -74,6 +78,8 @@ public class FotoJumpscareManager : MonoBehaviour
         }
 
         if (objetoSusto != null) objetoSusto.SetActive(false);
+        if (zombie3 != null) zombie3.SetActive(false);
+        if (videoFinal != null) videoFinal.SetActive(false);
     }
 
     public void IniciarSecuenciaFoto(GameObject camaraGO)
@@ -170,6 +176,12 @@ public class FotoJumpscareManager : MonoBehaviour
         if (_overlayMat != null)
             _overlayMat.color = new Color(0f, 0f, 0f, 0f);
 
+        if (videoFinal != null)
+        {
+            videoFinal.SetActive(true);
+            Debug.Log("[FotoJumpscare] Vídeo final activado.");
+        }
+
         Debug.Log("[FotoJumpscare] Secuencia final completada.");
     }
 
@@ -215,6 +227,9 @@ public class FotoJumpscareManager : MonoBehaviour
             float alpha = flashActivo ? alphaMax : alphaMin;
             _overlayMat.color = new Color(0f, 0f, 0f, alpha);
 
+            if (objetoSusto != null) objetoSusto.SetActive( flashActivo);
+            if (zombie3 != null) zombie3.SetActive(!flashActivo);
+
             if (dmxController != null)
             {
                 byte brillo = (byte)(Mathf.Clamp01(1f - alpha) * 255f);
@@ -228,6 +243,9 @@ public class FotoJumpscareManager : MonoBehaviour
 
         if (dmxController != null)
             dmxController.Apagar();
+
+        if (zombie3 != null) zombie3.SetActive(false);
+        if (objetoSusto != null) objetoSusto.SetActive(false);
 
         _overlayMat.color = new Color(0f, 0f, 0f, 0f);
     }
