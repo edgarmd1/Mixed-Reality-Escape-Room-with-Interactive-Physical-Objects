@@ -2159,6 +2159,8 @@ MonoBehaviour:
   audioError: {fileID: 1673101603}
   audioExito: {fileID: 20452097}
   audioFantasma: {fileID: 963413958}
+  dmxController: {fileID: 384763706}
+  intervaloParpadeoDMX: 0.15
 --- !u!4 &471188181
 Transform:
   m_ObjectHideFlags: 0
@@ -9967,7 +9969,7 @@ MonoBehaviour:
   intervaloFinalParpadeo: 0.04
   alphaParpadeo: 0.88
   audioParpadeo: {fileID: 896351477}
-  dmxController: {fileID: 0}
+  dmxController: {fileID: 384763706}
   habitacion217Root: {fileID: 1732679465}
   cameraCulling: {fileID: 530151974729343749}
   videoFinal: {fileID: 475743489}

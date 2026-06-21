@@ -254,7 +254,13 @@ public class IntroSequenceManager : MonoBehaviour
         {
             flashActivo = !flashActivo;
             SetOverlayAlpha(flashActivo ? alphaRojoMaximo : 0f);
-            
+
+            if (dmxController != null)
+            {
+                byte brilloRojo = (byte)(flashActivo ? 255 : 0);
+                dmxController.SetBrilloRojo(brilloRojo);
+            }
+
             float tiempoEspera = flashActivo ? (intervaloParpadeoRojo * 0.4f) : (intervaloParpadeoRojo * 0.6f);
             
             if (tiempoAcumulado + tiempoEspera > duracion)
@@ -265,6 +271,9 @@ public class IntroSequenceManager : MonoBehaviour
             yield return new WaitForSeconds(tiempoEspera);
             tiempoAcumulado += tiempoEspera;
         }
+
+        if (dmxController != null)
+            dmxController.Apagar();
 
         _overlayMat.color = new Color(0f, 0f, 0f, 0f);
     }

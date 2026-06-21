@@ -3,12 +3,6 @@ using System.IO.Ports;
 using System.Threading;
 using UnityEngine;
 
-/// <summary>
-/// Controlador DMX para Enttec Open DMX USB (chip FTDI).
-/// Envía DMX solo cuando cambia el estado. El receptor mantiene el último
-/// valor recibido sin necesitar refresh continuo, evitando el flickering
-/// causado por los breaks frecuentes del protocolo DMX en USB.
-/// </summary>
 public class DMXController : MonoBehaviour
 {
     [SerializeField] private string puertoCOM = "COM6";
@@ -17,8 +11,7 @@ public class DMXController : MonoBehaviour
     private SerialPort _serialPort;
     private byte[]     _dmxData = new byte[513];
 
-    // ── Ciclo de colores de prueba (solo para tests) ──────────────────────────
-    [Header("Prueba (desactivar en producción)")]
+    [Header("Ciclo de colores de prueba")]
     [SerializeField] private bool  cicloColoresPrueba = false;
     [SerializeField] private float colorChangInterval  = 1.5f;
     private Color[] _colors = { Color.red, Color.green, Color.blue,
@@ -27,7 +20,6 @@ public class DMXController : MonoBehaviour
     private int   _currentColor = 0;
     private float _colorTimer   = 0f;
 
-    // ─────────────────────────────────────────────────────────────────────────
     void Awake()
     {
         try
@@ -36,9 +28,8 @@ public class DMXController : MonoBehaviour
             _serialPort.Open();
             Debug.Log($"[DMX] Puerto {puertoCOM} abierto.");
 
-            // Encender focos en blanco desde el primer momento
-            SendColor(255, 255, 255);
-            Debug.Log("[DMX] Focos encendidos en blanco.");
+            SendColor(0, 0, 0);
+            Debug.Log("[DMX] Focos apagados al inicio.");
         }
         catch (Exception e)
         {
@@ -46,7 +37,6 @@ public class DMXController : MonoBehaviour
         }
     }
 
-    // ── Update (ciclo de prueba opcional) ─────────────────────────────────────
     void Update()
     {
         if (!cicloColoresPrueba) return;
@@ -60,37 +50,39 @@ public class DMXController : MonoBehaviour
         }
     }
 
-    // ── API pública ───────────────────────────────────────────────────────────
-
-    /// <summary>Enciende ambos focos en blanco a máxima intensidad.</summary>
     public void EncenderBlanco()
     {
         cicloColoresPrueba = false;
         SendColor(255, 255, 255);
     }
 
-    /// <summary>Apaga ambos focos.</summary>
     public void Apagar()
     {
         cicloColoresPrueba = false;
         SendColor(0, 0, 0);
     }
 
-    /// <summary>Establece el brillo blanco de ambos focos (0-255).
-    /// Llamado por IntroSequenceManager para sincronizar el parpadeo.</summary>
     public void SetBrilloBlanco(byte brillo)
     {
         cicloColoresPrueba = false;
         SendColor(brillo, brillo, brillo);
     }
 
-    // ── Envío DMX ─────────────────────────────────────────────────────────────
+    public void SetBrilloRojo(byte brillo)
+    {
+        cicloColoresPrueba = false;
+        SendColor(brillo, 0, 0);
+    }
+
+    public void FlashBlanco()
+    {
+        cicloColoresPrueba = false;
+        SendColor(255, 255, 255);
+    }
 
     private void SendColor(byte r, byte g, byte b)
     {
-        // Foco 1 (dirección 1)
         _dmxData[1] = r; _dmxData[2] = g; _dmxData[3] = b; _dmxData[4] = 255;
-        // Foco 2 (dirección 5)
         _dmxData[5] = r; _dmxData[6] = g; _dmxData[7] = b; _dmxData[8] = 255;
         SendDMX();
     }

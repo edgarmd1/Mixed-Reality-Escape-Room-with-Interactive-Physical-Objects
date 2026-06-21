@@ -83,6 +83,15 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Sonido que se reproduce en bucle mientras el fantasma lleva la cámara")]
     private AudioSource audioFantasma;
 
+    [Header("Focos DMX")]
+    [SerializeField, Tooltip("Controlador DMX")]
+    private DMXController dmxController;
+
+    [SerializeField, Tooltip("Intervalo de parpadeo rojo de los focos")]
+    private float intervaloParpadeoDMX = 0.15f;
+
+    private Coroutine _coroutineParpadeoRojo;
+
     void Awake()
     {
         if (camaraEnDestino != null) camaraEnDestino.SetActive(false);
@@ -261,6 +270,9 @@ public class KeypadPuzzleManager : MonoBehaviour
             Debug.Log("[KeypadPuzzle] Audio del fantasma iniciado.");
         }
 
+        if (dmxController != null)
+            _coroutineParpadeoRojo = StartCoroutine(CoroutineParpadeoRojoDMX());
+
         for (int i = 1; i < waypointsFantasma.Count; i++)
         {
             Transform destino = waypointsFantasma[i];
@@ -289,6 +301,14 @@ public class KeypadPuzzleManager : MonoBehaviour
             audioFantasma.loop = false;
         }
 
+        if (_coroutineParpadeoRojo != null)
+        {
+            StopCoroutine(_coroutineParpadeoRojo);
+            _coroutineParpadeoRojo = null;
+        }
+        if (dmxController != null)
+            dmxController.Apagar();
+
         Debug.Log("[KeypadPuzzle] Fantasma llegó al destino.");
         FinalizarSecuenciaFantasma();
     }
@@ -305,6 +325,18 @@ public class KeypadPuzzleManager : MonoBehaviour
 
         estadoActual = EstadoKeypad.CamaraDisponible;
         Debug.Log("[KeypadPuzzle] Cámara disponible en el punto destino (pasillo).");
+    }
+
+    private IEnumerator CoroutineParpadeoRojoDMX()
+    {
+        bool flashActivo = false;
+        while (true)
+        {
+            flashActivo = !flashActivo;
+            dmxController.SetBrilloRojo(flashActivo ? (byte)255 : (byte)0);
+            float espera = flashActivo ? (intervaloParpadeoDMX * 0.4f) : (intervaloParpadeoDMX * 0.6f);
+            yield return new WaitForSeconds(espera);
+        }
     }
 
 #if UNITY_EDITOR

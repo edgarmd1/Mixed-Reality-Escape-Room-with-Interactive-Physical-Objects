@@ -194,15 +194,26 @@ public class FotoJumpscareManager : MonoBehaviour
         Color colorOriginal = _overlayMat.color;
         _overlayMat.color = new Color(1f, 1f, 1f, 1f);
 
+        if (dmxController != null)
+            dmxController.FlashBlanco();
+
         float t = 0f;
         while (t < duracionFlash)
         {
             t += Time.deltaTime;
-            _overlayMat.color = new Color(1f, 1f, 1f, Mathf.Lerp(1f, 0f, t / duracionFlash));
+            float alpha = Mathf.Lerp(1f, 0f, t / duracionFlash);
+            _overlayMat.color = new Color(1f, 1f, 1f, alpha);
+
+            if (dmxController != null)
+                dmxController.SetBrilloBlanco((byte)(alpha * 255f));
+
             yield return null;
         }
 
         _overlayMat.color = colorOriginal;
+
+        if (dmxController != null)
+            dmxController.Apagar();
     }
 
     private IEnumerator CoroutineParpadeoFinal()
