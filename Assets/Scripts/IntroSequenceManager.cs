@@ -60,10 +60,6 @@ public class IntroSequenceManager : MonoBehaviour
     [SerializeField, Tooltip("Gestor de la vitrina")]
     private VitrineManager vitrineManager;
 
-    [Header("Post-Jumpscare")]
-    [SerializeField, Tooltip("GameObject de paredes personalizadas que se activa al terminar toda la secuencia del jumpscare")]
-    private GameObject paredesPersonalizadas;
-
     [Header("Environment VR")]
     [SerializeField, Tooltip("FadeMaterial del Environment para hacerlo visible en la escena VR")]
     private FadeMaterial environmentFade;
@@ -179,15 +175,7 @@ public class IntroSequenceManager : MonoBehaviour
         cameraCullingMask?.SetMode(true);
 
         if (portalAscensor != null)
-        {
             portalAscensor.SetActive(true);
-
-            if (paredesPersonalizadas != null)
-            {
-                paredesPersonalizadas.SetActive(true);
-                Debug.Log("[IntroSequence] Paredes personalizadas activadas.");
-            }
-        }
 
         StartCoroutine(CoroutineFadeOverlay(0f, duracionFadeVuelta));
 

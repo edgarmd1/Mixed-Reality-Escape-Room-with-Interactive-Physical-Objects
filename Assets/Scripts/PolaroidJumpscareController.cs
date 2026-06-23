@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class PolaroidJumpscareController : MonoBehaviour
 {
-
     [Header("Referencias")]
     [Tooltip("Transform de la foto polaroid virtual")]
     public Transform polaroidTransform;
@@ -27,14 +26,8 @@ public class PolaroidJumpscareController : MonoBehaviour
     [Tooltip("Distancia detrás de la cámara hasta la que viaja la polaroid")]
     public float distanciaDetras = 0.4f;
 
-    [Tooltip("Desplazamiento extra hacia atrás")]
+    [Tooltip("Desplazamiento extra hacia atrás respecto a su propia orientación")]
     public float offsetInicioHaciaAtras = 1.5f;
-
-    [Tooltip("Número de veces que se repite el ciclo de vuelo antes de terminar")]
-    [Min(1)] public int repeticionesVuelo = 2;
-
-    [Tooltip("Pausa en segundos entre repeticiones")]
-    public float pausaEntreRepeticiones = 0.3f;
 
     [Tooltip("Curva de easing para el vuelo")]
     public AnimationCurve curvaVuelo = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
@@ -61,14 +54,19 @@ public class PolaroidJumpscareController : MonoBehaviour
     private Material _materialOriginal;
     private bool _vueloActivo = false;
     private bool _polaroidVisible = false;
+    private ObjectCalibrationManager _calibrationManager;
+
 
     void Awake()
     {
         CapturarEstadoOriginal();
+        _calibrationManager = FindObjectOfType<ObjectCalibrationManager>();
     }
 
     void LateUpdate()
     {
+        if (_calibrationManager != null && _calibrationManager.IsCalibrating) return;
+
         if (mostrarSoloConLuz && !_polaroidVisible && !_vueloActivo && polaroidTransform != null)
         {
             if (polaroidTransform.gameObject.activeSelf)
@@ -154,7 +152,6 @@ public class PolaroidJumpscareController : MonoBehaviour
         yield return StartCoroutine(CoroutineQuemado());
     }
 
-
     private IEnumerator CoroutineVuelo()
     {
         if (polaroidTransform == null)
@@ -180,46 +177,32 @@ public class PolaroidJumpscareController : MonoBehaviour
         _rotacionOriginal = polaroidTransform.rotation;
         _escalaOriginal   = polaroidTransform.localScale;
 
-        Vector3 escFinal = _escalaOriginal * multiplicadorEscalaFinal;
+        Vector3 dirAtras = -(_rotacionOriginal * Vector3.forward);
+        Vector3 posInicio = _posicionOriginal + dirAtras * offsetInicioHaciaAtras;
+        Vector3 escInicio = _escalaOriginal;
+        Vector3 escFinal  = _escalaOriginal * multiplicadorEscalaFinal;
 
-        Debug.Log($"[PolaroidJumpscare] Iniciando vuelo de la polaroid ({repeticionesVuelo} ciclo/s).");
+        float tiempo = 0f;
 
-        for (int ciclo = 0; ciclo < repeticionesVuelo; ciclo++)
+        Debug.Log("[PolaroidJumpscare] Iniciando vuelo de la polaroid.");
+
+        while (tiempo < duracionVuelo)
         {
-            Vector3 dirCamAPolaroid = (_posicionOriginal - cam.transform.position).normalized;
-            Vector3 posInicio = _posicionOriginal + dirCamAPolaroid * offsetInicioHaciaAtras;
-            Vector3 escInicio = _escalaOriginal;
-            polaroidTransform.position   = posInicio;
-            polaroidTransform.localScale = escInicio;
-            polaroidTransform.rotation   = _rotacionOriginal;
+            tiempo += Time.deltaTime;
+            float t      = Mathf.Clamp01(tiempo / duracionVuelo);
+            float tEased = curvaVuelo.Evaluate(t);
 
-            float tiempo = 0f;
+            Vector3 posFinal = cam.transform.position - cam.transform.forward * distanciaDetras;
 
-            while (tiempo < duracionVuelo)
-            {
-                tiempo += Time.deltaTime;
-                float t      = Mathf.Clamp01(tiempo / duracionVuelo);
-                float tEased = curvaVuelo.Evaluate(t);
+            polaroidTransform.position   = Vector3.Lerp(posInicio, posFinal, tEased);
+            polaroidTransform.localScale = Vector3.Lerp(escInicio, escFinal, tEased);
 
-                Vector3 posFinal = cam.transform.position - cam.transform.forward * distanciaDetras;
-
-                polaroidTransform.position   = Vector3.Lerp(posInicio, posFinal, tEased);
-                polaroidTransform.localScale = Vector3.Lerp(escInicio, escFinal, tEased);
-
-                yield return null;
-            }
-            if (ciclo < repeticionesVuelo - 1)
-            {
-                polaroidTransform.gameObject.SetActive(false);
-                Debug.Log($"[PolaroidJumpscare] Ciclo {ciclo + 1}/{repeticionesVuelo} completado. Pausa antes del siguiente.");
-                yield return new WaitForSeconds(pausaEntreRepeticiones);
-                polaroidTransform.gameObject.SetActive(true);
-            }
+            yield return null;
         }
 
         polaroidTransform.gameObject.SetActive(false);
         _polaroidVisible = false;
-        Debug.Log("[PolaroidJumpscare] Todos los ciclos completados. Activando VR.");
+        Debug.Log("[PolaroidJumpscare] Vuelo completado. Activando VR.");
 
         arduinoLuz?.CompletarPuzzle();
         cameraCullingMaskController?.SetMode(false);

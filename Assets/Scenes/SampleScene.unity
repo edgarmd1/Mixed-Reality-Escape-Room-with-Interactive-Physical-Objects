@@ -2237,7 +2237,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   estadoActual: 0
-  combinacionCorrecta: 1331
+  combinacionCorrecta: 1351
   arduinoLuz: {fileID: 1924958761}
   armarioCerrado: {fileID: 2011440697}
   armarioAbierto: {fileID: 614242317}
@@ -6508,12 +6508,10 @@ MonoBehaviour:
   polaroidRenderer: {fileID: 1801764670}
   arduinoLuz: {fileID: 1924958761}
   cameraCullingMaskController: {fileID: 530151974729343749}
-  duracionVuelo: 2.5
+  duracionVuelo: 5
   multiplicadorEscalaFinal: 6
-  distanciaDetras: 0.4
-  offsetInicioHaciaAtras: 1.5
-  repeticionesVuelo: 2
-  pausaEntreRepeticiones: 0.3
+  distanciaDetras: 0
+  offsetInicioHaciaAtras: 0
   curvaVuelo:
     serializedVersion: 2
     m_Curve:
@@ -10502,7 +10500,6 @@ MonoBehaviour:
   polaroidJumpscare: {fileID: 1099065864}
   audioFastidio: {fileID: 1052106863}
   vitrineManager: {fileID: 1662365501}
-  paredesPersonalizadas: {fileID: 1786911050}
   environmentFade: {fileID: 1241364538}
   modoDemo: 0
 --- !u!4 &1892221550
@@ -10583,7 +10580,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47ddec1ffbb566d438af92816cb20c50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  umbralActivacion: 600
+  umbralActivacion: 700
   puzzleCompletado: 0
   habilitado: 0
   cameraCullingMaskController: {fileID: 0}
