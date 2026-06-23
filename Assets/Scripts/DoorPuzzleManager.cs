@@ -22,6 +22,9 @@ public class DoorPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Bandeja virtual donde el jugador debe depositar el hacha antes de que suene el teléfono")]
     private BandejaHacha bandejaHacha;
 
+    [SerializeField, Tooltip("CamaraInteractable que se desbloquea al romper todos los tablones")]
+    private CamaraInteractable camaraInteractable;
+
     private int _tablonesRotos = 0;
     private bool _puzzleCompletado = false;
 
@@ -49,6 +52,7 @@ public class DoorPuzzleManager : MonoBehaviour
             _tablonesRotos = tablones.Length;
             foreach (var t in tablones)
                 if (t != null) t.gameObject.SetActive(false);
+            camaraInteractable?.HabilitarGrab();
             Debug.Log("[DoorPuzzle] Puzzle ya completado.");
             return;
         }
@@ -123,6 +127,8 @@ public class DoorPuzzleManager : MonoBehaviour
             bandejaHacha.Activar();
             Debug.Log("[DoorPuzzle] Bandeja activada.");
         }
+
+        camaraInteractable?.HabilitarGrab();
     }
 
     public bool PuzzleCompletado => _puzzleCompletado;

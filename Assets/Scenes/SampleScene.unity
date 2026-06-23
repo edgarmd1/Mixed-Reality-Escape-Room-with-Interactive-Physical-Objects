@@ -1956,15 +1956,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4941219564456579801, guid: dc067c577ec1b854684d789b6e727cc0, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.0015
+      value: 0.00089011504
       objectReference: {fileID: 0}
     - target: {fileID: 4941219564456579801, guid: dc067c577ec1b854684d789b6e727cc0, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.0015000001
+      value: 0.0008901151
       objectReference: {fileID: 0}
     - target: {fileID: 4941219564456579801, guid: dc067c577ec1b854684d789b6e727cc0, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.0015
+      value: 0.00089011504
       objectReference: {fileID: 0}
     - target: {fileID: 4941219564456579801, guid: dc067c577ec1b854684d789b6e727cc0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3846,11 +3846,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 974f9d3885c993b41a748a8564e76429, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 5.6436357
+      value: 5.644
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 974f9d3885c993b41a748a8564e76429, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.6955937
+      value: 2.398
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 974f9d3885c993b41a748a8564e76429, type: 3}
       propertyPath: m_LocalPosition.z
@@ -4150,6 +4150,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8761baeddb7c434e948927bc0eaf5e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  distanciaGrab: 0.15
+  tiempoMinimoCogida: 0.5
   umbralDedosAbiertos: 0.8
   autoActivarSinMando: 1
 --- !u!23 &711189281 stripped
@@ -10581,7 +10583,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47ddec1ffbb566d438af92816cb20c50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  umbralActivacion: 830
+  umbralActivacion: 600
   puzzleCompletado: 0
   habilitado: 0
   cameraCullingMaskController: {fileID: 0}

@@ -43,6 +43,7 @@ public class CamaraInteractable : MonoBehaviour
 
     private XRGrabInteractable _grab;
     private Rigidbody _rb;
+    private CamaraAutoGrabHelper _autoGrab;
 
     void Awake()
     {
@@ -50,6 +51,11 @@ public class CamaraInteractable : MonoBehaviour
         _rb   = GetComponent<Rigidbody>();
 
         ConfigurarGrab();
+
+        _grab.enabled = false;
+        _autoGrab = GetComponent<CamaraAutoGrabHelper>();
+        if (_autoGrab != null) _autoGrab.enabled = false;
+        Debug.Log("[CamaraInteractable] XRGrabInteractable desactivado");
     }
 
     void OnEnable()
@@ -81,8 +87,30 @@ public class CamaraInteractable : MonoBehaviour
 
     private void OnCogida(SelectEnterEventArgs args)
     {
-        _siendoSostenida  = true;
         _interactorActual = args.interactorObject;
+        LogicaCogida();
+    }
+
+    private void OnSoltada(SelectExitEventArgs args)
+    {
+        _interactorActual = null;
+        LogicaSoltada();
+    }
+    public void NotificarCogidaPorMano()
+    {
+        _interactorActual = null;
+        LogicaCogida();
+    }
+
+    public void NotificarSoltadaPorMano()
+    {
+        _interactorActual = null;
+        LogicaSoltada();
+    }
+
+    private void LogicaCogida()
+    {
+        _siendoSostenida = true;
 
         if (audioCogida != null)
             audioCogida.Play();
@@ -133,14 +161,14 @@ public class CamaraInteractable : MonoBehaviour
             Debug.LogWarning("[CamaraInteractable] audioPortazo no asignado.");
     }
 
-    private void OnSoltada(SelectExitEventArgs args)
+    private void LogicaSoltada()
     {
-        _siendoSostenida = false;
+        _siendoSostenida  = false;
         _interactorActual = null;
 
         if (_secuenciaIniciada) return;
 
-        Debug.Log("[CamaraInteractable] OnSoltada disparado.");
+        Debug.Log("[CamaraInteractable] Soltada.");
 
         if (fotoJumpscareManager == null)
         {
@@ -175,10 +203,30 @@ public class CamaraInteractable : MonoBehaviour
         {
             Debug.Log($"[CamaraInteractable] Zona bañera detectada mientras se sostiene ({dist:F2} m) → auto-suelta.");
 
+            _autoGrab?.ForzarSuelta();
+
             if (_interactorActual != null && _grab.interactionManager != null)
                 _grab.interactionManager.SelectExit(_interactorActual, _grab);
 
+            _siendoSostenida = false;
             IniciarSnapYSecuencia();
+        }
+    }
+
+    public void HabilitarGrab()
+    {
+        if (_autoGrab != null)
+        {
+            if (!_autoGrab.enabled) _autoGrab.enabled = true;
+            Debug.Log("[CamaraInteractable] CamaraAutoGrabHelper activado ");
+        }
+        else
+        {
+            if (!_grab.enabled)
+            {
+                _grab.enabled = true;
+                Debug.Log("[CamaraInteractable] XRGrabInteractable ACTIVADO.");
+            }
         }
     }
 
@@ -187,6 +235,7 @@ public class CamaraInteractable : MonoBehaviour
         if (_secuenciaIniciada) return;
         _secuenciaIniciada = true;
         _grab.enabled = false;
+        if (_autoGrab != null) _autoGrab.enabled = false;
 
         if (posicionObjetivoBanera != null)
             StartCoroutine(SnapHaciaBanera());
