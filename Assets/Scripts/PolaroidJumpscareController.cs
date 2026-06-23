@@ -19,13 +19,22 @@ public class PolaroidJumpscareController : MonoBehaviour
 
     [Header("Fase 1 – Vuelo")]
     [Tooltip("Duración de la fase de vuelo")]
-    public float duracionVuelo = 2.5f;
+    public float duracionVuelo = 4f;
 
     [Tooltip("Multiplicador de escala máxima durante el vuelo")]
     public float multiplicadorEscalaFinal = 6f;
 
     [Tooltip("Distancia detrás de la cámara hasta la que viaja la polaroid")]
     public float distanciaDetras = 0.4f;
+
+    [Tooltip("Desplazamiento extra hacia atrás")]
+    public float offsetInicioHaciaAtras = 1.5f;
+
+    [Tooltip("Número de veces que se repite el ciclo de vuelo antes de terminar")]
+    [Min(1)] public int repeticionesVuelo = 2;
+
+    [Tooltip("Pausa en segundos entre repeticiones")]
+    public float pausaEntreRepeticiones = 0.3f;
 
     [Tooltip("Curva de easing para el vuelo")]
     public AnimationCurve curvaVuelo = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
@@ -166,36 +175,51 @@ public class PolaroidJumpscareController : MonoBehaviour
         polaroidTransform.gameObject.SetActive(true);
         int capaPolaroid = polaroidTransform.gameObject.layer;
         cam.cullingMask |= (1 << capaPolaroid);
+
         _posicionOriginal = polaroidTransform.position;
         _rotacionOriginal = polaroidTransform.rotation;
         _escalaOriginal   = polaroidTransform.localScale;
 
-        Vector3 posInicio = _posicionOriginal;
-        Vector3 escInicio = _escalaOriginal;
+        Vector3 escFinal = _escalaOriginal * multiplicadorEscalaFinal;
 
-        Vector3 escFinal  = _escalaOriginal * multiplicadorEscalaFinal;
+        Debug.Log($"[PolaroidJumpscare] Iniciando vuelo de la polaroid ({repeticionesVuelo} ciclo/s).");
 
-        float tiempo = 0f;
-
-        Debug.Log("[PolaroidJumpscare] Iniciando vuelo de la polaroid.");
-
-        while (tiempo < duracionVuelo)
+        for (int ciclo = 0; ciclo < repeticionesVuelo; ciclo++)
         {
-            tiempo += Time.deltaTime;
-            float t      = Mathf.Clamp01(tiempo / duracionVuelo);
-            float tEased = curvaVuelo.Evaluate(t);
+            Vector3 dirCamAPolaroid = (_posicionOriginal - cam.transform.position).normalized;
+            Vector3 posInicio = _posicionOriginal + dirCamAPolaroid * offsetInicioHaciaAtras;
+            Vector3 escInicio = _escalaOriginal;
+            polaroidTransform.position   = posInicio;
+            polaroidTransform.localScale = escInicio;
+            polaroidTransform.rotation   = _rotacionOriginal;
 
-            Vector3 posFinal = cam.transform.position - cam.transform.forward * distanciaDetras;
+            float tiempo = 0f;
 
-            polaroidTransform.position   = Vector3.Lerp(posInicio, posFinal, tEased);
-            polaroidTransform.localScale = Vector3.Lerp(escInicio, escFinal, tEased);
+            while (tiempo < duracionVuelo)
+            {
+                tiempo += Time.deltaTime;
+                float t      = Mathf.Clamp01(tiempo / duracionVuelo);
+                float tEased = curvaVuelo.Evaluate(t);
 
-            yield return null;
+                Vector3 posFinal = cam.transform.position - cam.transform.forward * distanciaDetras;
+
+                polaroidTransform.position   = Vector3.Lerp(posInicio, posFinal, tEased);
+                polaroidTransform.localScale = Vector3.Lerp(escInicio, escFinal, tEased);
+
+                yield return null;
+            }
+            if (ciclo < repeticionesVuelo - 1)
+            {
+                polaroidTransform.gameObject.SetActive(false);
+                Debug.Log($"[PolaroidJumpscare] Ciclo {ciclo + 1}/{repeticionesVuelo} completado. Pausa antes del siguiente.");
+                yield return new WaitForSeconds(pausaEntreRepeticiones);
+                polaroidTransform.gameObject.SetActive(true);
+            }
         }
 
         polaroidTransform.gameObject.SetActive(false);
         _polaroidVisible = false;
-        Debug.Log("[PolaroidJumpscare] Vuelo completado. Activando VR.");
+        Debug.Log("[PolaroidJumpscare] Todos los ciclos completados. Activando VR.");
 
         arduinoLuz?.CompletarPuzzle();
         cameraCullingMaskController?.SetMode(false);
