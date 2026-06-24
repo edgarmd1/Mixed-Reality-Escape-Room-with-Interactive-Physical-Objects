@@ -13,6 +13,8 @@ public class IntroSequenceManager : MonoBehaviour
 
     [SerializeField] public float duracionEnVR = 10f;
     [SerializeField] private float duracionFadeVuelta = 1.5f;
+    [SerializeField, Tooltip("Retraso para evitar que los focos activen la arduini")] 
+    private float delayAntesPuzzleLuz = 2.5f;
 
     [SerializeField] private float intervaloInicialParpadeo = 0.55f;
 
@@ -141,6 +143,8 @@ public class IntroSequenceManager : MonoBehaviour
         {
             audioInspector2.Play();
         }
+
+        yield return new WaitForSeconds(delayAntesPuzzleLuz);
 
         if (arduinoLuz != null)
             arduinoLuz.habilitado = true; 
