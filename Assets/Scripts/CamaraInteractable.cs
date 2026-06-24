@@ -24,6 +24,12 @@ public class CamaraInteractable : MonoBehaviour
     [SerializeField, Tooltip("Sonido de portazo al cerrarse la puerta")]
     private AudioSource audioPortazo;
 
+    [SerializeField, Tooltip("Camara en Mano")]
+    private GameObject camaraMano;
+
+    [SerializeField, Tooltip("Transform de la mano derecha (al que se emparentará la cámara al cogerla)")]
+    private Transform transformManoDerecha;
+
     [Header("Final")]
     [SerializeField, Tooltip("FotoJumpscareManager")]
     private FotoJumpscareManager fotoJumpscareManager;
@@ -38,6 +44,7 @@ public class CamaraInteractable : MonoBehaviour
     private bool _siendoSostenida = false;
     private bool _secuenciaIniciada = false;
     private bool _snapping = false;
+    private bool _siguiendoMano = false;
 
     private IXRSelectInteractor _interactorActual;
 
@@ -45,6 +52,8 @@ public class CamaraInteractable : MonoBehaviour
     private Rigidbody _rb;
     private CamaraAutoGrabHelper _autoGrab;
     private bool _grabHabilitado = false;
+    
+    private System.Collections.Generic.List<Renderer> _renderersOcultados = new System.Collections.Generic.List<Renderer>();
 
     void Awake()
     {
@@ -72,12 +81,14 @@ public class CamaraInteractable : MonoBehaviour
     {
         _grab.selectEntered.AddListener(OnCogida);
         _grab.selectExited.AddListener(OnSoltada);
+        _grab.hoverEntered.AddListener(OnTocada);
     }
 
     void OnDisable()
     {
         _grab.selectEntered.RemoveListener(OnCogida);
         _grab.selectExited.RemoveListener(OnSoltada);
+        _grab.hoverEntered.RemoveListener(OnTocada);
     }
 
     private void ConfigurarGrab()
@@ -95,10 +106,21 @@ public class CamaraInteractable : MonoBehaviour
         }
     }
 
+    private void OnTocada(HoverEnterEventArgs args)
+    {
+        if (!_camaraCogida)
+        {
+            LogicaCogida();
+        }
+    }
+
     private void OnCogida(SelectEnterEventArgs args)
     {
-        _interactorActual = args.interactorObject;
-        LogicaCogida();
+        if (!_camaraCogida)
+        {
+            _interactorActual = args.interactorObject;
+            LogicaCogida();
+        }
     }
 
     private void OnSoltada(SelectExitEventArgs args)
@@ -106,6 +128,7 @@ public class CamaraInteractable : MonoBehaviour
         _interactorActual = null;
         LogicaSoltada();
     }
+    
     public void NotificarCogidaPorMano()
     {
         _interactorActual = null;
@@ -128,72 +151,117 @@ public class CamaraInteractable : MonoBehaviour
         if (_rb != null)
             _rb.useGravity = false;
 
-        if (_camaraCogida) return;
-        _camaraCogida = true;
-
-        if (puertaTraseraRoot != null)
+        if (!_camaraCogida)
         {
-            puertaTraseraRoot.SetActive(true);
-        }
+            _camaraCogida = true;
 
-        if (habitacion217Root != null)
-        {
-            habitacion217Root.SetActive(true);
-        }
-
-        if (objetosADesactivar != null)
-        {
-            foreach (GameObject obj in objetosADesactivar)
+            if (puertaTraseraRoot != null)
             {
-                if (obj != null)
+                puertaTraseraRoot.SetActive(true);
+            }
+
+            if (camaraMano != null)
+            {
+                camaraMano.transform.position = transform.position;
+                camaraMano.transform.rotation = transform.rotation;
+
+                if (transformManoDerecha != null)
                 {
-                    obj.SetActive(false);
+                    camaraMano.transform.SetParent(transformManoDerecha, true);
+                }
+
+                camaraMano.SetActive(true);
+            }
+
+            if (habitacion217Root != null)
+            {
+                habitacion217Root.SetActive(true);
+            }
+
+            if (objetosADesactivar != null)
+            {
+                foreach (GameObject obj in objetosADesactivar)
+                {
+                    if (obj != null)
+                    {
+                        obj.SetActive(false);
+                    }
                 }
             }
+
+            if (audioPortazo != null)
+                audioPortazo.Play();
         }
 
-        if (audioPortazo != null)
-            audioPortazo.Play();
+        StartCoroutine(ActivarCamaraManoYDesvincular());
+    }
+
+    private IEnumerator ActivarCamaraManoYDesvincular()
+    {
+        yield return new WaitForEndOfFrame();
+
+        if (_interactorActual != null && _grab != null && _grab.interactionManager != null)
+        {
+            _grab.interactionManager.SelectExit(_interactorActual, _grab);
+        }
+        if (_grab != null) _grab.enabled = false;
+        if (_autoGrab != null) _autoGrab.enabled = false;
+
+        OcultarVisuales();
+
+        Collider[] colliders = GetComponentsInChildren<Collider>();
+        foreach (var c in colliders) c.enabled = false;
+
+        _siendoSostenida = false;
+        _siguiendoMano = true;
+    }
+
+    private void OcultarVisuales()
+    {
+        _renderersOcultados.Clear();
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        foreach (var r in renderers)
+        {
+            if (r.enabled)
+            {
+                _renderersOcultados.Add(r);
+                r.enabled = false;
+            }
+        }
+    }
+
+    private void MostrarVisuales()
+    {
+        foreach (var r in _renderersOcultados)
+        {
+            if (r != null) r.enabled = true;
+        }
+        _renderersOcultados.Clear();
     }
 
     private void LogicaSoltada()
     {
         _siendoSostenida  = false;
         _interactorActual = null;
-
-        if (_secuenciaIniciada) return;
-
-        if (fotoJumpscareManager == null)
-        {
-            return;
-        }
-
-        float dist  = Vector3.Distance(transform.position, fotoJumpscareManager.transform.position);
-        float radio = fotoJumpscareManager.RadioDeteccion;
-
-        if (dist <= radio)
-        {
-            IniciarSnapYSecuencia();
-        }
     }
 
     void Update()
     {
-        if (!_siendoSostenida || _snapping || _secuenciaIniciada) return;
-        if (fotoJumpscareManager == null) return;
+        if (_secuenciaIniciada || _snapping) return;
 
-        float dist  = Vector3.Distance(transform.position, fotoJumpscareManager.transform.position);
-        float radio = fotoJumpscareManager.RadioDeteccion;
-
-        if (dist <= radio)
+        if (_siguiendoMano && camaraMano != null)
         {
-            _autoGrab?.ForzarSuelta();
+            if (fotoJumpscareManager != null)
+            {
+                float dist  = Vector3.Distance(camaraMano.transform.position, fotoJumpscareManager.transform.position);
+                float radio = fotoJumpscareManager.RadioDeteccion;
 
-            if (_interactorActual != null && _grab.interactionManager != null)
-                _grab.interactionManager.SelectExit(_interactorActual, _grab);
-
-            _siendoSostenida = false;
-            IniciarSnapYSecuencia();
+                if (dist <= radio)
+                {
+                    _siguiendoMano = false;
+                    IniciarSnapYSecuencia();
+                }
+            }
         }
     }
 
@@ -224,8 +292,16 @@ public class CamaraInteractable : MonoBehaviour
     {
         if (_secuenciaIniciada) return;
         _secuenciaIniciada = true;
-        _grab.enabled = false;
+        
+        if (_grab != null) _grab.enabled = false;
         if (_autoGrab != null) _autoGrab.enabled = false;
+
+        if (camaraMano != null)
+        {
+            camaraMano.SetActive(false);
+        }
+
+        MostrarVisuales();
 
         if (posicionObjetivoBanera != null)
             StartCoroutine(SnapHaciaBanera());
