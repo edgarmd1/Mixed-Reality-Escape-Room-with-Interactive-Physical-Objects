@@ -298,6 +298,9 @@ public class CamaraInteractable : MonoBehaviour
 
         if (camaraMano != null)
         {
+            transform.position = camaraMano.transform.position;
+            transform.rotation = camaraMano.transform.rotation;
+
             camaraMano.SetActive(false);
         }
 
