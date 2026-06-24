@@ -21,10 +21,10 @@ public class TelefonoManager : MonoBehaviour
     [SerializeField, Tooltip("Gestor del nuevo puzzle de teclado matricial que se activa al terminar la voz")]
     private KeypadPuzzleManager keypadPuzzleManager;
 
-    private bool _telefonoActivo   = false;
-    private bool _vozActivada      = false; 
-    private bool _puzzleActivado   = false;  
-    private bool _recordandoVoz    = false;   
+    private bool _telefonoActivo = false;
+    private bool _vozActivada = false; 
+    private bool _puzzleActivado = false;  
+    private bool _recordandoVoz = false;   
 
     private bool _descolgadoAnterior = false;
 
@@ -75,7 +75,6 @@ public class TelefonoManager : MonoBehaviour
             arduinoLuz.HabilitarTelefono();
 
         StartCoroutine(EmpezarSonidoTelefono());
-        Debug.Log("[Telefono] Teléfono iniciado.");
     }
 
     private IEnumerator EmpezarSonidoTelefono()
@@ -92,7 +91,6 @@ public class TelefonoManager : MonoBehaviour
     private IEnumerator ActivarVoz()
     {
         _vozActivada = true;
-        Debug.Log("[Telefono] Auricular descolgado.");
 
         yield return FadeYPararTimbre();
 
@@ -107,20 +105,16 @@ public class TelefonoManager : MonoBehaviour
             yield return new WaitUntil(() => !audioReflexion.isPlaying);
         }
 
-        Debug.Log("[Telefono] Activando puzzle de teclado matricial.");
-
         if (keypadPuzzleManager != null)
             keypadPuzzleManager.IniciarPuzzle();
 
         _puzzleActivado = true;
         _descolgadoAnterior = LeerDescolgado();
-        Debug.Log("[Telefono] Modo recordatorio activado.");
     }
 
     private IEnumerator ActivarRecordatorio()
     {
         _recordandoVoz = true;
-        Debug.Log("[Telefono] Auricular descolgado.");
 
         yield return FadeYPararTimbre();
 
@@ -132,7 +126,6 @@ public class TelefonoManager : MonoBehaviour
         AudioSource audioActivo = vozRecordatorio != null ? vozRecordatorio : vozAudio;
         yield return new WaitUntil(() => audioActivo == null || !audioActivo.isPlaying);
 
-        Debug.Log("[Telefono] Recordatorio finalizado.");
         _descolgadoAnterior = LeerDescolgado();
         _recordandoVoz = false;
     }

@@ -19,6 +19,5 @@ public class GameModeManager : MonoBehaviour
     public static void SetMode(bool mrMode)
     {
         IsMRMode = mrMode;
-        Debug.Log($"[GameModeManager] Modo cambiado → {(mrMode ? "MR" : "VR")}");
     }
 }

@@ -4,20 +4,20 @@ using UnityEngine.XR.Templates.MR;
 public class CameraCullingMaskController : MonoBehaviour
 {
     [Header("Referencias")]
-    [SerializeField, Tooltip("Cámara principal a controlar (Main Camera del XR Origin)")]
+    [SerializeField, Tooltip("Cámara principal a controlar")]
     private Camera mainCamera;
 
-    [SerializeField, Tooltip("ARFeatureController que gestiona el Passthrough")]
+    [SerializeField, Tooltip("ARFeatureController")]
     private ARFeatureController arFeatureController;
 
     [SerializeField, Tooltip("Controlador de spawn inicial en el mundo virtual")]
     private VRSpawnController vrSpawnController;
 
     [Header("Configuración de Capas")]
-    [SerializeField, Tooltip("Nombre de la capa para objetos del mundo real (MR)")]
+    [SerializeField, Tooltip("Nombre de la capa para objetos del mundo real")]
     private string mundoRealLayerName = "Mundo_Real";
 
-    [SerializeField, Tooltip("Nombre de la capa para objetos del mundo virtual (VR)")]
+    [SerializeField, Tooltip("Nombre de la capa para objetos del mundo virtual")]
     private string mundoVirtualLayerName = "Mundo_Virtual";
 
     private int mundoRealLayer;
@@ -30,7 +30,6 @@ public class CameraCullingMaskController : MonoBehaviour
             mainCamera = Camera.main;
             if (mainCamera == null)
             {
-                Debug.LogError("CameraCullingMaskController: No se encontró la cámara principal.");
                 return;
             }
         }
@@ -40,7 +39,6 @@ public class CameraCullingMaskController : MonoBehaviour
             arFeatureController = FindObjectOfType<ARFeatureController>();
             if (arFeatureController == null)
             {
-                Debug.LogError("CameraCullingMaskController: No se encontró el ARFeatureController.");
                 return;
             }
         }
@@ -48,16 +46,9 @@ public class CameraCullingMaskController : MonoBehaviour
         mundoRealLayer = LayerMask.NameToLayer(mundoRealLayerName);
         mundoVirtualLayer = LayerMask.NameToLayer(mundoVirtualLayerName);
 
-        if (mundoRealLayer == -1)
-            Debug.LogWarning($"CameraCullingMaskController: La capa '{mundoRealLayerName}' no existe.");
-
-        if (mundoVirtualLayer == -1)
-            Debug.LogWarning($"CameraCullingMaskController: La capa '{mundoVirtualLayerName}' no existe.");
-
         if (arFeatureController != null && arFeatureController.onARPassthroughFeatureChanged != null)
         {
             arFeatureController.onARPassthroughFeatureChanged.AddListener(OnPassthroughChanged);
-            Debug.Log("CameraCullingMaskController: Suscrito al evento de Passthrough.");
         }
     }
 
@@ -69,7 +60,6 @@ public class CameraCullingMaskController : MonoBehaviour
         }
     }
 
-    /// <param name="passthroughEnabled">True si Passthrough está activado (MR), False si está desactivado (VR)</param>
     private void OnPassthroughChanged(bool passthroughEnabled)
     {
         if (mainCamera == null)
@@ -83,7 +73,6 @@ public class CameraCullingMaskController : MonoBehaviour
             SetLayerVisibility(mundoRealLayer, true);
             SetLayerVisibility(mundoVirtualLayer, false);
             SetLayerObjectsActive<VRSiempreActivo>(mundoVirtualLayer, false);
-            Debug.Log("CameraCullingMaskController: Modo MR - Mundo_Real activo, Mundo_Virtual desactivado.");
         }
         else
         {
@@ -92,15 +81,11 @@ public class CameraCullingMaskController : MonoBehaviour
             SetLayerObjectsActive(mundoVirtualLayer, true);
             SetLayerVisibility(mundoVirtualLayer, true);
 
-            // Reposicionar al jugador en el spawn VR para evitar el salto en el primer teleport
             vrSpawnController?.TeletransportarAlSpawnVR();
 
-            Debug.Log("CameraCullingMaskController: Modo VR - Mundo_Virtual activo, Mundo_Real desactivado.");
         }
     }
 
-    /// <param name="layer">Índice de la capa</param>
-    /// <param name="visible">True para mostrar, False para ocultar</param>
     private void SetLayerVisibility(int layer, bool visible)
     {
         if (layer == -1)
@@ -138,7 +123,6 @@ public class CameraCullingMaskController : MonoBehaviour
 
             if (!active && go.GetComponent<T>() != null)
             {
-                Debug.Log($"[CameraCullingMask] '{go.name}' tiene marcador '{typeof(T).Name}' → permanece activo.");
                 continue;
             }
 
@@ -146,20 +130,11 @@ public class CameraCullingMaskController : MonoBehaviour
         }
     }
 
-    /// <param name="enableMR">True para MR, False para VR</param>
     public void SetMode(bool enableMR)
     {
         OnPassthroughChanged(enableMR);
     }
 
-    /// <summary>
-    /// Cambio de modo "ligero": solo ajusta el culling mask de la cámara
-    /// y el flag de GameModeManager, SIN activar/desactivar GameObjects
-    /// ni teleportar al jugador.
-    /// Útil cuando otro manager (ej. KnockPuzzleManager) necesita controlar
-    /// manualmente qué objetos se activan.
-    /// </summary>
-    /// <param name="enableMR">True para MR, False para VR</param>
     public void SetModeSoloVisual(bool enableMR)
     {
         if (mainCamera == null) return;
@@ -170,13 +145,11 @@ public class CameraCullingMaskController : MonoBehaviour
         {
             SetLayerVisibility(mundoRealLayer, true);
             SetLayerVisibility(mundoVirtualLayer, false);
-            Debug.Log("CameraCullingMaskController: Modo visual MR (solo culling mask).");
         }
         else
         {
             SetLayerVisibility(mundoRealLayer, false);
             SetLayerVisibility(mundoVirtualLayer, true);
-            Debug.Log("CameraCullingMaskController: Modo visual VR (solo culling mask).");
         }
     }
 }

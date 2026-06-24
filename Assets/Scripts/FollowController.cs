@@ -5,45 +5,43 @@ using Unity.XR.CoreUtils;
 public class FollowController : MonoBehaviour
 {
     [Header("Controlador a seguir")]
-    [Tooltip("LeftHand = mando izquierdo, RightHand = mando derecho")]
+    [Tooltip("LeftHand, RightHand")]
     public XRNode controllerNode = XRNode.LeftHand;
 
     [Header("Offset respecto al controlador (metros)")]
     public Vector3 positionOffset = new Vector3(0f, 0.05f, 0.05f);
     public Vector3 rotationOffset = new Vector3(0f, 0f, 0f);
 
-    [Header("Suavizado (0 = instantáneo, sin vibrado)")]
+    [Header("Suavizado")]
     [Range(0f, 20f)]
     public float smoothSpeed = 0f;
 
-    [Header("Visibilidad automática - Gesto de palma")]
-    [Tooltip("Activa el mostrar/ocultar automático según el gesto")]
+    [Header("Visibilidad automática")]
+    [Tooltip("Activa el mostrar/ocultar del objeto")]
     public bool autoHide = true;
 
-    [Tooltip("GameObject raíz del menú a mostrar/ocultar (normalmente 'Spatial Panel Scroll')")]
+    [Tooltip("Objeto a mostrar/ocultar")]
     public GameObject menuRoot;
 
-    [Tooltip("Eje local del controlador que define la dirección de la palma.\n" +
-             "Meta Quest izquierdo: (-1,0,0) para gesto de muñeca lado-a-lado.\n" +
-             "Si el gesto está invertido, prueba (1,0,0).")]
+    [Tooltip("Eje local del controlador que define la dirección de la palma.")]
     public Vector3 palmLocalAxis = new Vector3(-1f, 0f, 0f);
 
-    [Tooltip("Ángulo máximo (grados) entre la palma y la dirección a la cámara para mostrar el menú")]
+    [Tooltip("Ángulo máximo entre la palma y la dirección a la cámara para mostrar el objeto")]
     [Range(10f, 170f)]
     public float palmAngleThreshold = 90f;
 
-    [Tooltip("Segundos de retardo antes de ocultar (evita parpadeo)")]
+    [Tooltip("Segundos de retardo antes de ocultar")]
     [Range(0f, 1f)]
     public float hideDelay = 0.1f;
 
     [Header("Desactivar HandMenu conflictivo")]
-    [Tooltip("Desactiva el componente HandMenu/LazyFollow del padre para evitar vibrado")]
+    [Tooltip("Desactiva el componente HandMenu/LazyFollow del padre")]
     public bool disableParentHandMenu = true;
 
     
     private Transform _xrOriginTransform;
-    private float     _hideTimer = 0f;
-    private bool      _menuVisible = false;
+    private float _hideTimer = 0f;
+    private bool _menuVisible = false;
 
     void Start()
     {
@@ -51,7 +49,6 @@ public class FollowController : MonoBehaviour
         if (xrOrigin != null)
             _xrOriginTransform = xrOrigin.transform;
         else
-            Debug.LogWarning("[FollowController] No se encontró XROrigin en la escena.");
 
         if (disableParentHandMenu && transform.parent != null)
         {
@@ -61,7 +58,6 @@ public class FollowController : MonoBehaviour
                 if (t.Contains("HandMenu") || t.Contains("LazyFollow"))
                 {
                     mb.enabled = false;
-                    Debug.Log($"[FollowController] Desactivado: {t}");
                 }
             }
         }
@@ -95,7 +91,7 @@ public class FollowController : MonoBehaviour
             worldRot  = localRot;
         }
 
-        Vector3    targetPos = worldPos + worldRot * positionOffset;
+        Vector3 targetPos = worldPos + worldRot * positionOffset;
         Quaternion targetRot = worldRot * Quaternion.Euler(rotationOffset);
 
         if (smoothSpeed <= 0f)

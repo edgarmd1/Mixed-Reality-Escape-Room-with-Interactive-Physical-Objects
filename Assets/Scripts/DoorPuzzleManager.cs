@@ -16,11 +16,8 @@ public class DoorPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Sonido al abrir el portal (todos los tablones rotos)")]
     private AudioSource sonidoPortalAbierto;
 
-    [SerializeField, Tooltip("Audio que le indica al jugador que debe devolver el hacha a la bandeja")]
+    [SerializeField, Tooltip("Audio que le indica al jugador que debe devolver el hacha a su sitio")]
     private AudioSource audioDevuelveHacha;
-
-    [SerializeField, Tooltip("Bandeja virtual donde el jugador debe depositar el hacha antes de que suene el teléfono")]
-    private BandejaHacha bandejaHacha;
 
     [SerializeField, Tooltip("CamaraInteractable que se desbloquea al romper todos los tablones")]
     private CamaraInteractable camaraInteractable;
@@ -53,7 +50,6 @@ public class DoorPuzzleManager : MonoBehaviour
             foreach (var t in tablones)
                 if (t != null) t.gameObject.SetActive(false);
             camaraInteractable?.HabilitarGrab();
-            Debug.Log("[DoorPuzzle] Puzzle ya completado.");
             return;
         }
 
@@ -71,7 +67,6 @@ public class DoorPuzzleManager : MonoBehaviour
             {
                 tablones[i].gameObject.SetActive(false);
                 _tablonesRotos++;
-                Debug.Log($"[DoorPuzzle] Tablero {i} restaurado como ya roto.");
             }
         }
 
@@ -80,8 +75,6 @@ public class DoorPuzzleManager : MonoBehaviour
             StartCoroutine(CompletarPuzzle());
             return;
         }
-
-        Debug.Log($"[DoorPuzzle] Puzzle iniciado – {_tablonesRotos}/{tablones.Length} tablones ya rotos.");
     }
 
     public void NotificarTablaRota()
@@ -89,7 +82,6 @@ public class DoorPuzzleManager : MonoBehaviour
         if (_puzzleCompletado) return;
 
         _tablonesRotos++;
-        Debug.Log($"[DoorPuzzle] Tablones rotos: {_tablonesRotos}/{tablones.Length}");
 
         if (_tablonesRotos >= tablones.Length)
             StartCoroutine(CompletarPuzzle());
@@ -112,20 +104,7 @@ public class DoorPuzzleManager : MonoBehaviour
 
         if (audioDevuelveHacha != null)
         {
-            Debug.Log($"[DoorPuzzle] Reproduciendo audio 'devuelve hacha': {audioDevuelveHacha.clip?.name}");
             audioDevuelveHacha.Play();
-        }
-        else
-        {
-            Debug.LogWarning("[DoorPuzzle] audioDevuelveHacha no asignado.");
-        }
-
-        Debug.Log("[DoorPuzzle] ¡Tablones rotos! El teléfono se activará desde la vitrina, no desde aquí.");
-
-        if (bandejaHacha != null)
-        {
-            bandejaHacha.Activar();
-            Debug.Log("[DoorPuzzle] Bandeja activada.");
         }
 
         camaraInteractable?.HabilitarGrab();
@@ -143,7 +122,6 @@ public class DoorPuzzleManager : MonoBehaviour
         {
             foreach (var t in tablones)
                 if (t != null) t.gameObject.SetActive(false);
-            Debug.Log("[DoorPuzzle] RestaurarEstado: puzzle completado, todos los tablones ocultos.");
             return;
         }
 
@@ -152,7 +130,6 @@ public class DoorPuzzleManager : MonoBehaviour
             if (idx >= 0 && idx < tablones.Length && tablones[idx] != null)
             {
                 tablones[idx].gameObject.SetActive(false);
-                Debug.Log($"[DoorPuzzle] RestaurarEstado: tablero {idx} re-ocultado.");
             }
         }
     }

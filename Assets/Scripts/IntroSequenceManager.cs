@@ -48,7 +48,7 @@ public class IntroSequenceManager : MonoBehaviour
     [SerializeField] private GameObject portalAscensor;
     [SerializeField] private DoorPuzzleManager doorPuzzleManager;
 
-    [Header("Jumpscare ascensor")]
+    [Header("Ascensor")]
     [SerializeField, Tooltip("GameObjects")]
     private GameObject[] objetosJumpscare;
     [SerializeField, Tooltip("Controller de la polaroid")]
@@ -110,7 +110,6 @@ public class IntroSequenceManager : MonoBehaviour
         if (doorPuzzleManager != null)
             doorPuzzleManager.IniciarPuzzle();
         _secuenciaFinalizada = true;
-        Debug.Log("[Intro] MODO DEMO: puzzle de puerta activado directamente.");
     }
 
     private IEnumerator SecuenciaIntro()
@@ -184,13 +183,8 @@ public class IntroSequenceManager : MonoBehaviour
 
         if (audioFastidio != null && audioFastidio.clip != null)
         {
-            Debug.Log($"[IntroSequence] Reproduciendo audio Fastidio ({audioFastidio.clip.length:F1}s).");
             audioFastidio.Play();
             yield return new WaitForSeconds(audioFastidio.clip.length);
-        }
-        else if (audioFastidio == null)
-        {
-            Debug.LogWarning("[IntroSequence] audioFastidio no asignado en el Inspector.");
         }
 
 
@@ -199,8 +193,6 @@ public class IntroSequenceManager : MonoBehaviour
 
         if (vitrineManager != null)
             vitrineManager.Activar();
-        else
-            Debug.LogWarning("[IntroSequence] vitrineManager no asignado.");
 
         _secuenciaFinalizada = true;
     }

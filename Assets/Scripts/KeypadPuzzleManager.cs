@@ -23,7 +23,7 @@ public class KeypadPuzzleManager : MonoBehaviour
 
     [Header("Combinación")]
     [SerializeField, Tooltip("Combinación numérica correcta")]
-    private string combinacionCorrecta = "2026";
+    private string combinacionCorrecta = "1351";
 
     [Header("Arduino")]
     [SerializeField] private ArduinoLuz arduinoLuz;
@@ -69,7 +69,7 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Tiempo que el fantasma espera junto al armario antes de empezar a moverse")]
     private float pausaFantasmaEnArmario = 1.5f;
 
-    [Header("Puzzle siguiente")]
+    [Header("Referencia sin usar")]
     [SerializeField, Tooltip("KnockPuzzleManager que se activa al coger la llave")]
     private KnockPuzzleManager knockPuzzleManager;
 
@@ -95,9 +95,9 @@ public class KeypadPuzzleManager : MonoBehaviour
     void Awake()
     {
         if (camaraEnDestino != null) camaraEnDestino.SetActive(false);
-        if (camaraPortada   != null) camaraPortada.SetActive(false);
-        if (fantasmaRoot    != null) fantasmaRoot.SetActive(false);
-        if (armarioAbierto  != null) armarioAbierto.SetActive(false);
+        if (camaraPortada != null) camaraPortada.SetActive(false);
+        if (fantasmaRoot != null) fantasmaRoot.SetActive(false);
+        if (armarioAbierto != null) armarioAbierto.SetActive(false);
     }
 
     void Start()
@@ -136,7 +136,6 @@ public class KeypadPuzzleManager : MonoBehaviour
         if (estadoActual != EstadoKeypad.Inactivo) return;
 
         estadoActual = EstadoKeypad.EsperandoCombo;
-        Debug.Log($"[KeypadPuzzle] Puzzle iniciado – esperando combinación '{combinacionCorrecta}' en el keypad.");
     }
 
     public void OnCamaraCogida()
@@ -144,7 +143,6 @@ public class KeypadPuzzleManager : MonoBehaviour
         if (estadoActual != EstadoKeypad.CamaraDisponible) return;
 
         estadoActual = EstadoKeypad.PuzzleCompletado;
-        Debug.Log("[KeypadPuzzle] ¡Cámara cogida! Puzzle de cámara completado.");
 
         if (knockPuzzleManager != null)
             knockPuzzleManager.IniciarPuzzleGolpes();
@@ -157,17 +155,13 @@ public class KeypadPuzzleManager : MonoBehaviour
     {
         if (estadoActual != EstadoKeypad.EsperandoCombo) return;
 
-        Debug.Log($"[KeypadPuzzle] Combo recibido del Arduino: '{combo}'");
-
         if (combo == combinacionCorrecta)
         {
-            Debug.Log("[KeypadPuzzle] ¡Combinación correcta!");
             audioExito?.Play();
             StartCoroutine(SecuenciaExito());
         }
         else
         {
-            Debug.Log($"[KeypadPuzzle] Combinación incorrecta ('{combo}'). Inténtalo de nuevo.");
             audioError?.Play();
         }
     }
@@ -179,24 +173,20 @@ public class KeypadPuzzleManager : MonoBehaviour
         if (armarioCerrado != null)
         {
             armarioCerrado.SetActive(false);
-            Debug.Log("[KeypadPuzzle] Armario cerrado desactivado.");
         }
         if (armarioAbierto != null)
         {
             armarioAbierto.SetActive(true);
-            Debug.Log("[KeypadPuzzle] Armario abierto activado.");
         }
 
         if (camaraEnVitrina != null)
         {
             camaraEnVitrina.SetActive(true);
-            Debug.Log("[KeypadPuzzle] Cámara visible en el armario.");
         }
 
         yield return new WaitForSeconds(1.0f);
 
         estadoActual = EstadoKeypad.EsperandoGiro;
-        Debug.Log($"[KeypadPuzzle] Esperando proximidad del jugador a la cámara (≤ {distanciaActivacion:F1} m).");
     }
 
     private float _logTimerCamara = 0f;
@@ -213,19 +203,16 @@ public class KeypadPuzzleManager : MonoBehaviour
         if (_logTimerCamara >= 1f)
         {
             _logTimerCamara = 0f;
-            Debug.Log($"[KeypadPuzzle] Dist jugador→cámara: {dist:F2} m (umbral: {distanciaActivacion:F1} m) | estado: {estadoActual}");
         }
 #endif
 
         if (dist <= distanciaActivacion)
         {
-            Debug.Log($"[KeypadPuzzle] Jugador a {dist:F2} m de la cámara. Activando pasillo y fantasma.");
             estadoActual = EstadoKeypad.GemelasMoviendose;
 
             if (pasilloRoot != null)
             {
                 pasilloRoot.SetActive(true);
-                Debug.Log("[KeypadPuzzle] Pasillo activado.");
             }
 
             StartCoroutine(SecuenciaFantasma());
@@ -237,28 +224,24 @@ public class KeypadPuzzleManager : MonoBehaviour
     {
         if (waypointsFantasma == null || waypointsFantasma.Count == 0)
         {
-            Debug.LogWarning("[KeypadPuzzle] No hay waypoints asignados para el fantasma. Saltando animación.");
             FinalizarSecuenciaFantasma();
             yield break;
         }
 
         if (fantasmaRoot == null)
         {
-            Debug.LogWarning("[KeypadPuzzle] fantasmaRoot no asignado. Saltando animación.");
             FinalizarSecuenciaFantasma();
             yield break;
         }
 
         fantasmaRoot.transform.position = waypointsFantasma[0].position;
         fantasmaRoot.SetActive(true);
-        Debug.Log("[KeypadPuzzle] Fantasma aparecido junto al armario.");
 
         yield return new WaitForSeconds(pausaFantasmaEnArmario);
 
         if (camaraEnVitrina != null)
         {
             camaraEnVitrina.SetActive(false);
-            Debug.Log("[KeypadPuzzle] Cámara recogida por el fantasma.");
         }
         if (camaraPortada != null)
             camaraPortada.SetActive(true);
@@ -267,7 +250,6 @@ public class KeypadPuzzleManager : MonoBehaviour
         {
             audioFantasma.loop = true;
             audioFantasma.Play();
-            Debug.Log("[KeypadPuzzle] Audio del fantasma iniciado.");
         }
 
         if (dmxController != null)
@@ -309,7 +291,6 @@ public class KeypadPuzzleManager : MonoBehaviour
         if (dmxController != null)
             dmxController.Apagar();
 
-        Debug.Log("[KeypadPuzzle] Fantasma llegó al destino.");
         FinalizarSecuenciaFantasma();
     }
 
@@ -324,7 +305,6 @@ public class KeypadPuzzleManager : MonoBehaviour
             camaraEnDestino.SetActive(true);
 
         estadoActual = EstadoKeypad.CamaraDisponible;
-        Debug.Log("[KeypadPuzzle] Cámara disponible en el punto destino (pasillo).");
     }
 
     private IEnumerator CoroutineParpadeoRojoDMX()
@@ -347,7 +327,6 @@ public class KeypadPuzzleManager : MonoBehaviour
 
         if (kb.f4Key.wasPressedThisFrame)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) F4 → IniciarPuzzle().");
             IniciarPuzzle();
         }
 
@@ -355,46 +334,38 @@ public class KeypadPuzzleManager : MonoBehaviour
         {
             if (estadoActual == EstadoKeypad.Inactivo)
             {
-                Debug.Log("[KeypadPuzzle] (Editor) F5 → puzzle estaba Inactivo, llamando IniciarPuzzle() primero.");
                 IniciarPuzzle();
             }
 
             if (estadoActual == EstadoKeypad.EsperandoCombo)
             {
-                Debug.Log("[KeypadPuzzle] (Editor) F5 → Simulando combo correcto.");
                 OnComboArduino(combinacionCorrecta);
             }
             else
             {
-                Debug.Log($"[KeypadPuzzle] (Editor) F5 ignorado – estado actual: {estadoActual}");
+                
             }
         }
 
         if (kb.f6Key.wasPressedThisFrame && estadoActual == EstadoKeypad.EsperandoCombo)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) F6 → Simulando combo incorrecto.");
             OnComboArduino("0000");
         }
 
         if (kb.f7Key.wasPressedThisFrame && estadoActual == EstadoKeypad.CamaraDisponible)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) F7 → Simulando coger la cámara.");
             OnCamaraCogida();
         }
 
         if (kb.f9Key.wasPressedThisFrame)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) F9 → Simulando inserción de llave (KeyInserter).");
             var inserter = FindObjectOfType<KeyInserter>();
             if (inserter != null)
                 inserter.SimularInsercion();
-            else
-                Debug.LogWarning("[KeypadPuzzle] F9: No se encontró KeyInserter en la escena.");
         }
 
         if (kb.f8Key.wasPressedThisFrame && estadoActual == EstadoKeypad.EsperandoGiro)
         {
-            Debug.Log("[KeypadPuzzle] (Editor) F8 → Simulando proximidad a la cámara.");
             estadoActual = EstadoKeypad.GemelasMoviendose;
             if (pasilloRoot != null) pasilloRoot.SetActive(true);
             StartCoroutine(SecuenciaFantasma());

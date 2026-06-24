@@ -3,6 +3,8 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 [RequireComponent(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable))]
 public class LlaveInteractable : MonoBehaviour
+
+//old
 {
     [Header("Al coger la llave")]
     [SerializeField, Tooltip("Padre que contiene la pared y la puerta trasera (desactivado por defecto)")]
@@ -37,8 +39,6 @@ public class LlaveInteractable : MonoBehaviour
         if (_llaveCogida) return;
         _llaveCogida = true;
 
-        Debug.Log("[LlaveInteractable] Llave cogida por el jugador.");
-
         if (puertaTraseraRoot != null)
         {
             puertaTraseraRoot.SetActive(true);
@@ -47,30 +47,21 @@ public class LlaveInteractable : MonoBehaviour
             string parentInfo = par != null
                 ? par.name + " (activeInHierarchy=" + par.gameObject.activeInHierarchy + ")"
                 : "(sin padre)";
-
-            Debug.Log("[LlaveInteractable] Puerta trasera SetActive(true) llamado.");
-            Debug.Log("[LlaveInteractable] activeSelf=" + puertaTraseraRoot.activeSelf
-                      + "  activeInHierarchy=" + puertaTraseraRoot.activeInHierarchy);
-            Debug.Log("[LlaveInteractable] layer=" + LayerMask.LayerToName(puertaTraseraRoot.layer));
-            Debug.Log("[LlaveInteractable] parent=" + parentInfo);
-            Debug.Log("[LlaveInteractable] posicion=" + puertaTraseraRoot.transform.position);
         }
         else
         {
-            Debug.LogWarning("[LlaveInteractable] 'puertaTraseraRoot' no asignado – la pared trasera no aparecerá.");
+          
         }
 
         if (audioPortazo != null)
             audioPortazo.Play();
-        else
-            Debug.LogWarning("[LlaveInteractable] 'audioPortazo' no asignado – sin sonido de portazo.");
+
 
         if (keypadManager == null)
             keypadManager = FindObjectOfType<KeypadPuzzleManager>();
 
         if (keypadManager != null)
             keypadManager.OnCamaraCogida();
-        else
-            Debug.LogWarning("[LlaveInteractable] No se encontró KeypadPuzzleManager.");
+    
     }
 }

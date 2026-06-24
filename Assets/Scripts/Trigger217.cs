@@ -27,7 +27,6 @@ public class Trigger217 : MonoBehaviour
         if (PuntoEnBox(cam.transform.position))
         {
             _activado = true;
-            Debug.Log($"[Trigger217] Jugador dentro de la zona – cargando escena '{nombreEscena217}'.");
             StartCoroutine(CargarHabitacion217());
         }
     }
@@ -46,7 +45,6 @@ public class Trigger217 : MonoBehaviour
         Habitacion217Manager manager = Habitacion217Manager.Instance;
         if (manager == null)
         {
-            Debug.LogError("[Trigger217] No se encontró Habitacion217Manager en la escena 217.");
             yield break;
         }
 
@@ -63,7 +61,6 @@ public class Trigger217 : MonoBehaviour
                     manager.SpawnInicio.position.z - camOffset.z
                 );
                 xrOrigin.transform.rotation = Quaternion.Euler(0f, manager.SpawnInicio.eulerAngles.y, 0f);
-                Debug.Log($"[Trigger217] Jugador teleportado a {xrOrigin.transform.position}.");
             }
         }
     }

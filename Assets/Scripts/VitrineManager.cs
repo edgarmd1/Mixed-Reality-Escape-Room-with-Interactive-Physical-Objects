@@ -65,13 +65,11 @@ public class VitrineManager : MonoBehaviour
         if (_logTimer >= 1f)
         {
             _logTimer = 0f;
-            Debug.Log($"[Vitrine] Distancia jugador→vitrina: {dist:F2} m (umbral: {distanciaActivacion:F2} m)");
         }
 #endif
 
         if (dist <= distanciaActivacion)
         {
-            Debug.Log($"[Vitrine] Jugador a {dist:F2} m de la vitrina. Iniciando audio de contexto.");
             StartCoroutine(SecuenciaAudioContexto());
         }
     }
@@ -80,7 +78,6 @@ public class VitrineManager : MonoBehaviour
     {
         if (estadoActual != EstadoVitrine.Inactivo) return;
         estadoActual = EstadoVitrine.Listo;
-        Debug.Log("[Vitrine] Sistema activado – esperando proximidad del jugador.");
     }
 
     private IEnumerator SecuenciaAudioContexto()
@@ -89,17 +86,11 @@ public class VitrineManager : MonoBehaviour
 
         if (audioContexto != null && audioContexto.clip != null)
         {
-            Debug.Log($"[Vitrine] Reproduciendo audio de contexto: {audioContexto.clip.name}");
             audioContexto.Play();
             yield return new WaitUntil(() => audioContexto == null || !audioContexto.isPlaying);
         }
-        else
-        {
-            Debug.LogWarning("[Vitrine] audioContexto no asignado");
-        }
 
         estadoActual = EstadoVitrine.EsperandoTelefono;
-        Debug.Log($"[Vitrine] Audio terminado. Esperando {pausaAntesTelefono:F1} s antes de activar el teléfono.");
         yield return new WaitForSeconds(pausaAntesTelefono);
 
         ActivarTelefono();
@@ -112,11 +103,6 @@ public class VitrineManager : MonoBehaviour
         if (telefonoManager != null)
         {
             telefonoManager.IniciarTelefono();
-            Debug.Log("[Vitrine] Teléfono activado.");
-        }
-        else
-        {
-            Debug.LogWarning("[Vitrine] telefonoManager no asignado");
         }
     }
 
@@ -130,12 +116,10 @@ public class VitrineManager : MonoBehaviour
         {
             if (estadoActual == EstadoVitrine.Inactivo)
             {
-                Debug.Log("[Vitrine] (Editor) V → Forzando activación desde Inactivo.");
                 Activar();
             }
             else if (estadoActual == EstadoVitrine.Listo)
             {
-                Debug.Log("[Vitrine] (Editor) V → Simulando proximidad a la vitrina.");
                 StartCoroutine(SecuenciaAudioContexto());
             }
         }

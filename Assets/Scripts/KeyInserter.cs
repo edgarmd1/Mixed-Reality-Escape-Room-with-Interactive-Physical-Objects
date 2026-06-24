@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class KeyInserter : MonoBehaviour
 {
+    //no se usa, es anterior de una de las pruebas
+
     [Header("Llave")]
     [SerializeField, Tooltip("XRGrabInteractable de la llave")]
     private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable llaveInteractable;

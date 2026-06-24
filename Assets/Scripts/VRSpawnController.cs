@@ -28,14 +28,11 @@ public class VRSpawnController : MonoBehaviour
     {
         if (xrOrigin == null)
         {
-            Debug.LogError("[VRSpawnController] No se encontró XROrigin.");
             return;
         }
 
         if (puntoSpawnVR == null)
         {
-            Debug.LogWarning("[VRSpawnController] No hay punto de spawn VR asignado. " +
-                             "Asigna un Transform en el Inspector.");
             return;
         }
 
@@ -47,7 +44,6 @@ public class VRSpawnController : MonoBehaviour
         Camera cam = xrOrigin.Camera;
         if (cam == null)
         {
-            Debug.LogError("[VRSpawnController] XROrigin no tiene cámara asignada.");
             yield break;
         }
 
@@ -59,12 +55,6 @@ public class VRSpawnController : MonoBehaviour
             tiempoEspera += Time.deltaTime;
             yield return null;
         }
-
-        if (tiempoEspera >= timeoutTracking)
-            Debug.LogWarning("[VRSpawnController] Timeout esperando tracking. " +
-                             "Aplicando spawn con el offset actual.");
-        else
-            Debug.Log($"[VRSpawnController] Tracking listo. Offset cámara: {cam.transform.localPosition}");
 
         AplicarSpawn(cam);
     }
@@ -83,8 +73,5 @@ public class VRSpawnController : MonoBehaviour
 
         float rotacionY = puntoSpawnVR.eulerAngles.y;
         xrOrigin.transform.rotation = Quaternion.Euler(0f, rotacionY, 0f);
-
-        Debug.Log($"[VRSpawnController] Spawn aplicado → XROrigin: {nuevaPosicion} | " +
-                  $"Spawn: {puntoSpawnVR.position} | CamOffset: {camOffsetLocal}");
     }
 }

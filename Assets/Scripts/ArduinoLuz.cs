@@ -105,7 +105,6 @@ public class ArduinoLuz : MonoBehaviour
         if (_telefonoDescolgadoPulso)
         {
             _senalTelefono = false;
-            Debug.Log("[ArduinoLuz] Señal PHONE recibida – teléfono descolgado (pulso).");
         }
 
         if (_senalKnock)
@@ -114,12 +113,7 @@ public class ArduinoLuz : MonoBehaviour
             if (Time.time - _ultimoKnockTime >= debounceKnock)
             {
                 _ultimoKnockTime = Time.time;
-                Debug.Log("[ArduinoLuz] Señal KNOCK recibida – golpe detectado.");
                 OnKnockDetected?.Invoke();
-            }
-            else
-            {
-                Debug.Log($"[ArduinoLuz] KNOCK ignorado (debounce: {Time.time - _ultimoKnockTime:F3}s < {debounceKnock}s).");
             }
         }
 
@@ -127,7 +121,6 @@ public class ArduinoLuz : MonoBehaviour
         {
             string combo = _comboRecibido;
             _comboRecibido = null;
-            Debug.Log($"[ArduinoLuz] Combo recibido del keypad: '{combo}'");
             OnComboRecibido?.Invoke(combo);
         }
     }
@@ -143,7 +136,6 @@ public class ArduinoLuz : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[ArduinoLuz] OnLuzDetectada sin suscriptores");
             CompletarPuzzle();
             cameraCullingMaskController?.SetMode(false);
         }

@@ -49,22 +49,14 @@ public class PomoInteractable : MonoBehaviour
         if (_abierta) return;
         _abierta = true;
 
-        Debug.Log("[PomoInteractable] Pomo tocado.");
-
         if (puertaCerrada != null)
             puertaCerrada.SetActive(false);
-        else
-            Debug.LogWarning("[PomoInteractable] puertaCerrada no asignado.");
 
         if (puertaAbierta != null)
             puertaAbierta.SetActive(true);
-        else
-            Debug.LogWarning("[PomoInteractable] puertaAbierta no asignado.");
 
         if (audioApertura != null)
             audioApertura.Play();
-        else
-            Debug.LogWarning("[PomoInteractable] audioApertura no asignado.");
     }
 
 #if UNITY_EDITOR

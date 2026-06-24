@@ -90,8 +90,6 @@ public class PolaroidJumpscareController : MonoBehaviour
             arduinoLuz.OnUmbralSuperado += MostrarPolaroid;
             arduinoLuz.OnLuzDetectada   += IniciarVuelo;
         }
-        else
-            Debug.LogWarning("[PolaroidJumpscare] ArduinoLuz no asignado.");
     }
 
     void OnDestroy()
@@ -108,7 +106,6 @@ public class PolaroidJumpscareController : MonoBehaviour
         if (_polaroidVisible || _vueloActivo || polaroidTransform == null) return;
         _polaroidVisible = true;
         polaroidTransform.gameObject.SetActive(true);
-        Debug.Log("[PolaroidJumpscare] Polaroid virtual visible.");
     }
 
     public void OcultarPolaroid()
@@ -117,13 +114,11 @@ public class PolaroidJumpscareController : MonoBehaviour
         RefrescarPosicionOriginal();
         _polaroidVisible = false;
         polaroidTransform.gameObject.SetActive(false);
-        Debug.Log("[PolaroidJumpscare] Polaroid virtual oculta. Posición original actualizada.");
     }
 
     public void RefrescarPosicionOriginal()
     {
         CapturarEstadoOriginal();
-        Debug.Log($"[PolaroidJumpscare] Posición original actualizada: {_posicionOriginal}");
     }
 
     private void CapturarEstadoOriginal()
@@ -156,7 +151,6 @@ public class PolaroidJumpscareController : MonoBehaviour
     {
         if (polaroidTransform == null)
         {
-            Debug.LogWarning("[PolaroidJumpscare] polaroidTransform no asignado");
             FallbackActivarVR();
             yield break;
         }
@@ -164,7 +158,6 @@ public class PolaroidJumpscareController : MonoBehaviour
         Camera cam = Camera.main;
         if (cam == null)
         {
-            Debug.LogWarning("[PolaroidJumpscare] No se encontró Camera.main");
             FallbackActivarVR();
             yield break;
         }
@@ -184,8 +177,6 @@ public class PolaroidJumpscareController : MonoBehaviour
 
         float tiempo = 0f;
 
-        Debug.Log("[PolaroidJumpscare] Iniciando vuelo de la polaroid.");
-
         while (tiempo < duracionVuelo)
         {
             tiempo += Time.deltaTime;
@@ -202,8 +193,6 @@ public class PolaroidJumpscareController : MonoBehaviour
 
         polaroidTransform.gameObject.SetActive(false);
         _polaroidVisible = false;
-        Debug.Log("[PolaroidJumpscare] Vuelo completado. Activando VR.");
-
         arduinoLuz?.CompletarPuzzle();
         cameraCullingMaskController?.SetMode(false);
     }
@@ -212,7 +201,6 @@ public class PolaroidJumpscareController : MonoBehaviour
     {
         if (polaroidTransform == null || polaroidRenderer == null)
         {
-            Debug.LogWarning("[PolaroidJumpscare] polaroidTransform/Renderer no asignado.");
             yield break;
         }
 
@@ -230,8 +218,6 @@ public class PolaroidJumpscareController : MonoBehaviour
         if (audioQuemado != null)
             audioQuemado.Play();
 
-        Debug.Log("[PolaroidJumpscare] Iniciando quemado.");
-
         float tiempo = 0f;
         while (tiempo < duracionQuemado)
         {
@@ -248,8 +234,6 @@ public class PolaroidJumpscareController : MonoBehaviour
 
         if (_materialOriginal != null)
             polaroidRenderer.material = _materialOriginal;
-
-        Debug.Log("[PolaroidJumpscare] Quemado completado.");
     }
 
     private void FallbackActivarVR()

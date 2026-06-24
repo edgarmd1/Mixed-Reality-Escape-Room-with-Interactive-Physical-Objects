@@ -19,7 +19,6 @@ public class PortalKnockTrigger : MonoBehaviour
 
         if (esJugador)
         {
-            Debug.Log($"[PortalKnockTrigger] Jugador entró en el portal ({other.gameObject.name}).");
             knockPuzzleManager.OnJugadorEntraPortal();
         }
     }

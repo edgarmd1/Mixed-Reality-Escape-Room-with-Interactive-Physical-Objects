@@ -15,9 +15,9 @@ public class AxeGrabController : MonoBehaviour
     [Header("Detección de impacto")]
     [SerializeField] private Transform puntoImpacto;
     [SerializeField] private Transform ejeHoja;
-    [SerializeField] private float umbralVelocidad     = 1.2f;
-    [SerializeField] private float umbralAnguloHoja    = 65f;
-    [SerializeField] private float radioImpacto        = 0.18f;
+    [SerializeField] private float umbralVelocidad = 1.2f;
+    [SerializeField] private float umbralAnguloHoja = 65f;
+    [SerializeField] private float radioImpacto = 0.18f;
     [SerializeField] private float cooldownEntreGolpes = 0.55f;
     [SerializeField] private LayerMask layerTableros;
 
@@ -37,27 +37,27 @@ public class AxeGrabController : MonoBehaviour
 
     private const string PREFS_KEY = "Hacha_PosicionReposo";
 
-    private Vector3    _posReposo;
+    private Vector3 _posReposo;
     private Quaternion _rotReposo;
-    private bool       _tienePosReposo = false;
+    private bool _tienePosReposo = false;
 
     private InputDevice _mando;
-    private bool        _mandoEnMano;
-    private float       _tiempoUltimoGolpe = -999f;
-    private Vector3     _posAnterior;
-    private float       _velocidadActual;
+    private bool _mandoEnMano;
+    private float _tiempoUltimoGolpe = -999f;
+    private Vector3 _posAnterior;
+    private float _velocidadActual;
 
     public bool EstaEnMano => _mandoEnMano;
 
     private Unity.XR.CoreUtils.XROrigin _xrOrigin;
     private Rigidbody _rb;
-    private Collider  _propioCollider;
-    private float     _tiempoUltimoAudioVitrina = -999f;
+    private Collider _propioCollider;
+    private float _tiempoUltimoAudioVitrina = -999f;
 
     void Awake()
     {
-        _xrOrigin       = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
-        _rb             = GetComponent<Rigidbody>();
+        _xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+        _rb = GetComponent<Rigidbody>();
         _propioCollider = GetComponent<Collider>();
         CargarPosicionReposo();
         _posAnterior = transform.position;
@@ -67,14 +67,14 @@ public class AxeGrabController : MonoBehaviour
 
     void OnEnable()
     {
-        InputDevices.deviceConnected    += OnDeviceConnected;
+        InputDevices.deviceConnected += OnDeviceConnected;
         InputDevices.deviceDisconnected += OnDeviceDisconnected;
         BuscarMandoDerecho();
     }
 
     void OnDisable()
     {
-        InputDevices.deviceConnected    -= OnDeviceConnected;
+        InputDevices.deviceConnected -= OnDeviceConnected;
         InputDevices.deviceDisconnected -= OnDeviceDisconnected;
     }
 
@@ -103,14 +103,14 @@ public class AxeGrabController : MonoBehaviour
 
     private void GuardarPosicionReposo()
     {
-        _posReposo      = transform.position;
-        _rotReposo      = transform.rotation;
+        _posReposo = transform.position;
+        _rotReposo = transform.rotation;
         _tienePosReposo = true;
 
         if (_mando.isValid && _mando.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 ctrlLocal))
         {
-            _controllerRestLocalPos  = ctrlLocal;
-            _tieneControllerRestPos  = true;
+            _controllerRestLocalPos = ctrlLocal;
+            _tieneControllerRestPos = true;
             PlayerPrefs.SetFloat(PREFS_KEY + "_CtrlX", ctrlLocal.x);
             PlayerPrefs.SetFloat(PREFS_KEY + "_CtrlY", ctrlLocal.y);
             PlayerPrefs.SetFloat(PREFS_KEY + "_CtrlZ", ctrlLocal.z);
@@ -266,8 +266,8 @@ public class AxeGrabController : MonoBehaviour
 
     private const float UMBRAL_DISTANCIA_AGARRE = 0.12f;
     private Vector3 _controllerRestLocalPos;
-    private bool    _tieneControllerRestPos = false;
-    private bool    _estabaGripando         = false;
+    private bool _tieneControllerRestPos = false;
+    private bool _estabaGripando = false;
 
     private bool ControllerHaMovidoDeReposo()
     {
@@ -291,7 +291,7 @@ public class AxeGrabController : MonoBehaviour
         if (!_mando.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 localPos)) return;
         if (!_mando.TryGetFeatureValue(CommonUsages.deviceRotation, out Quaternion localRot)) return;
 
-        Vector3    mandoPos;
+        Vector3 mandoPos;
         Quaternion mandoRot;
 
         if (_xrOrigin != null)
@@ -306,7 +306,7 @@ public class AxeGrabController : MonoBehaviour
         }
 
         Quaternion targetRot = mandoRot * Quaternion.Euler(rotationOffset);
-        Vector3    targetPos = mandoPos - targetRot * gripLocalPosition;
+        Vector3 targetPos = mandoPos - targetRot * gripLocalPosition;
 
         targetPos = ResolverPenetracion(targetPos, targetRot);
 
@@ -323,7 +323,7 @@ public class AxeGrabController : MonoBehaviour
     private Vector3 ResolverPenetracion(Vector3 pos, Quaternion rot)
     {
         if (_propioCollider == null) return pos;
-        Collider[] vecinos = Physics.OverlapSphere(pos, radioImpacto * 3f, layerVitrina,
+        Collider[] vecinos = Physics.OverlapSphere(pos, radioImpacto * 1.5f, layerVitrina,
                                                    QueryTriggerInteraction.Ignore);
         bool tocaVitrina = false;
 
@@ -331,6 +331,8 @@ public class AxeGrabController : MonoBehaviour
         {
             if (otro == _propioCollider) continue;
             if (((1 << otro.gameObject.layer) & layerTableros) != 0) continue;
+            
+            if (otro is MeshCollider meshCollider && !meshCollider.convex) continue;
 
             if (Physics.ComputePenetration(
                     _propioCollider, pos, rot,

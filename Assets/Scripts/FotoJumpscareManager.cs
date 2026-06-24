@@ -27,7 +27,7 @@ public class FotoJumpscareManager : MonoBehaviour
     [SerializeField, Tooltip("Sonido que suena al activarse el objeto de susto")]
     private AudioSource audioSusto;
 
-    [Header("Susto (en habitación 217)")]
+    [Header("Susto (en habitación 217 osea el baño)")]
     [SerializeField, Tooltip("GameObject zombie 2")]
     private GameObject objetoSusto;
     [SerializeField, Tooltip("GameObject zombie 1")]
@@ -59,8 +59,8 @@ public class FotoJumpscareManager : MonoBehaviour
     [SerializeField, Tooltip("Video final al volver a MR")]
     private GameObject videoFinal;
 
-    private bool _iniciado       = false;
-    private bool _fotoDisparada  = false;
+    private bool _iniciado = false;
+    private bool _fotoDisparada = false;
     private Material _overlayMat;
     private XRSimpleInteractable _visorInteractable;
 
@@ -91,7 +91,6 @@ public class FotoJumpscareManager : MonoBehaviour
 
     private IEnumerator SecuenciaCompleta(GameObject camaraGO)
     {
-        Debug.Log("[FotoJumpscare] Iniciando secuencia de foto.");
 
         if (visorFoto != null)
         {
@@ -122,14 +121,12 @@ public class FotoJumpscareManager : MonoBehaviour
 
         yield return StartCoroutine(FlashBlancoCoroutine());
         if (audioShutter != null) audioShutter.Play();
-        else Debug.LogWarning("[FotoJumpscare] audioShutter no asignado.");
 
         yield return new WaitForSeconds(0.2f);
 
         if (camaraGO != null)
         {
             camaraGO.SetActive(false);
-            Debug.Log("[FotoJumpscare] Cámara prop desactivada.");
         }
 
         yield return new WaitForSeconds(0.3f);
@@ -137,11 +134,6 @@ public class FotoJumpscareManager : MonoBehaviour
         if (objetoSusto != null)
         {
             objetoSusto.SetActive(true);
-            Debug.Log("[FotoJumpscare] Objeto de susto activado.");
-        }
-        else
-        {
-            Debug.LogWarning("[FotoJumpscare] objetoSusto no asignado.");
         }
 
         if (zombie1 != null)
@@ -163,14 +155,12 @@ public class FotoJumpscareManager : MonoBehaviour
         if (objetoSusto != null) objetoSusto.SetActive(false);
 
         cameraCulling?.SetMode(true);
-        Debug.Log("[FotoJumpscare] De vuelta al mundo real.");
 
         yield return StartCoroutine(FadeOverlayCoroutine(0f, 1.5f));
 
         if (habitacion217Root != null)
         {
             habitacion217Root.SetActive(false);
-            Debug.Log("[FotoJumpscare] Habitación 217 desactivada.");
         }
 
         if (_overlayMat != null)
@@ -179,10 +169,7 @@ public class FotoJumpscareManager : MonoBehaviour
         if (videoFinal != null)
         {
             videoFinal.SetActive(true);
-            Debug.Log("[FotoJumpscare] Vídeo final activado.");
         }
-
-        Debug.Log("[FotoJumpscare] Secuencia final completada.");
     }
 
     private void OnVisorHovered(HoverEnterEventArgs _)   => _fotoDisparada = true;

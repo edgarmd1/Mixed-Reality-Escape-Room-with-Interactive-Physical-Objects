@@ -102,7 +102,7 @@ public class DMXController : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"[DMX] Error enviando: {e.Message}");
+
         }
     }
 

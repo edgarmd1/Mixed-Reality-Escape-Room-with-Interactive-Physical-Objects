@@ -9,46 +9,42 @@ using UnityEngine.XR.Hands;
 public class CamaraAutoGrabHelper : MonoBehaviour
 {
     [Header("Ajustes de Agarre")]
-    [SerializeField, Tooltip("Distancia en metros desde la mano (Palm/Wrist) para activar el pegado automático.")]
+    [SerializeField, Tooltip("Distancia en metros desde la mano.")]
     private float distanciaGrab = 0.15f;
 
-    [SerializeField, Tooltip("Tiempo mínimo que la cámara debe permanecer cogida antes de permitir soltarla con la mano abierta.")]
+    [SerializeField, Tooltip("Tiempo mínimo antes de soltar")]
     private float tiempoMinimoCogida = 0.5f;
 
     [Header("Umbral apertura de mano")]
-    [SerializeField, Tooltip(
-        "Fracción mínima de dedos abiertos (0–1) para soltar la cámara. " +
-        "0.8 = al menos 4 de 5 dedos extendidos.")]
+    [SerializeField, Tooltip("Fracción mínima de dedos abiertos")]
     private float umbralDedosAbiertos = 0.8f;
 
     [Header("Detección de controlador")]
-    [SerializeField, Tooltip(
-        "Si está activo, este componente auto-habilita el XRGrabInteractable " +
-        "cuando detecta que ningún mando físico tiene tracking (controller mode).")]
+    [SerializeField, Tooltip("Activa el modo controller si detecta un mando físico.")]
     private bool autoActivarSinMando = true;
 
-    private XRGrabInteractable  _grab;
-    private CamaraInteractable  _camaraInteractable;
+    private XRGrabInteractable _grab;
+    private CamaraInteractable _camaraInteractable;
     private Unity.XR.CoreUtils.XROrigin _xrOrigin;
     private XRHandSubsystem _handSubsystem;
     private static readonly List<XRHandSubsystem> s_Subsystems = new();
 
-    private Vector3    _localPosOffset;     
-    private Quaternion _localRotOffset;    
+    private Vector3 _localPosOffset;
+    private Quaternion _localRotOffset;
     private Handedness _activeHandedness = Handedness.Invalid;
-    private bool       _siguiendoMano    = false;
-    private float      _grabTime         = 0f;
+    private bool _siguiendoMano = false;
+    private float _grabTime = 0f;
 
-    private Vector3    _targetPosition;
+    private Vector3 _targetPosition;
     private Quaternion _targetRotation;
 
     private static readonly List<InputDevice> s_Devices = new();
 
     private void Awake()
     {
-        _grab               = GetComponent<XRGrabInteractable>();
+        _grab = GetComponent<XRGrabInteractable>();
         _camaraInteractable = GetComponent<CamaraInteractable>();
-        _xrOrigin           = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+        _xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
     }
 
     private void OnEnable()
@@ -72,12 +68,10 @@ public class CamaraAutoGrabHelper : MonoBehaviour
             bool hayMando = HayMandoActivo();
             if (hayMando && !_grab.enabled)
             {
-                Debug.Log("[CamaraAutoGrab] Mando detectado → activando XRGrabInteractable.");
                 _grab.enabled = true;
             }
             else if (!hayMando && _grab.enabled && !_siguiendoMano)
             {
-                Debug.Log("[CamaraAutoGrab] Sin mando (hand tracking) → desactivando XRGrabInteractable para evitar conflictos.");
                 _grab.enabled = false;
             }
         }
@@ -130,7 +124,6 @@ public class CamaraAutoGrabHelper : MonoBehaviour
 
             if (Time.time - _grabTime > tiempoMinimoCogida && ManoCasiAbierta(hand))
             {
-                Debug.Log("[CamaraAutoGrab] 🖐 Mano abierta → soltando cámara.");
                 ResetearEstado();
                 _camaraInteractable?.NotificarSoltadaPorMano();
             }
@@ -166,8 +159,6 @@ public class CamaraAutoGrabHelper : MonoBehaviour
 
                 _targetPosition = transform.position;
                 _targetRotation = transform.rotation;
-
-                Debug.Log($"[CamaraAutoGrab] ✋ Mano {handedness} cerca ({dist:F3}m) → pegada automáticamente sin gesto.");
 
                 _camaraInteractable?.NotificarCogidaPorMano();
             }
@@ -210,7 +201,7 @@ public class CamaraAutoGrabHelper : MonoBehaviour
 
     private bool ManoCasiAbierta(XRHand hand)
     {
-        int total    = 0;
+        int total = 0;
         int abiertos = 0;
 
         ComprobarDedoAbierto(hand, XRHandJointID.IndexTip,  XRHandJointID.IndexProximal,  ref total, ref abiertos);
@@ -244,9 +235,9 @@ public class CamaraAutoGrabHelper : MonoBehaviour
 
     private void ResetearEstado()
     {
-        _siguiendoMano    = false;
+        _siguiendoMano = false;
         _activeHandedness = Handedness.Invalid;
-        _grabTime         = 0f;
+        _grabTime = 0f;
     }
 
     private static XRHand ObtenerMano(XRHandSubsystem subsystem, Handedness handedness)

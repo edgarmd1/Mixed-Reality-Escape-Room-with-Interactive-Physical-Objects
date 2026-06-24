@@ -32,15 +32,14 @@ public class ObjectCalibrationManager : MonoBehaviour
     [SerializeField, Tooltip("Lista de objetos que se pueden calibrar")]
     private List<CalibratableObject> calibratableObjects = new List<CalibratableObject>();
 
-    [SerializeField, Tooltip("XR Origin de la escena. Necesario para anclar objetos al suelo. " +
-                             "Si se deja vacío se busca automáticamente.")]
+    [SerializeField, Tooltip("XR Origin de la escena.")]
     private XROrigin xrOrigin;
 
     [Header("Velocidades de calibración")]
-    [SerializeField, Tooltip("Velocidad de traslación (m/s)")]
+    [SerializeField, Tooltip("Velocidad de traslación")]
     private float velocidadMovimiento = 0.8f;
 
-    [SerializeField, Tooltip("Velocidad de rotación (grados/s)")]
+    [SerializeField, Tooltip("Velocidad de rotación")]
     private float velocidadRotacion = 60f;
 
     [Header("Estado")]
@@ -90,8 +89,6 @@ public class ObjectCalibrationManager : MonoBehaviour
     {
         if (xrOrigin == null || xrOrigin.Camera == null)
         {
-            Debug.LogWarning("[ObjectCalibration] No se encontró XROrigin/cámara. " +
-                             "Usando Y=0 como suelo.");
             _floorWorldY = 0f;
             _floorReady = true;
             LoadAllPositions();
@@ -114,8 +111,6 @@ public class ObjectCalibrationManager : MonoBehaviour
         _floorWorldY = cameraWorldY - cameraLocalY;
 
         _floorReady = true;
-        Debug.Log($"[ObjectCalibration] Suelo detectado en Y={_floorWorldY:F3} " +
-                  $"(cámara mundo={cameraWorldY:F3}, local={cameraLocalY:F3})");
 
         LoadAllPositions();
     }
@@ -170,26 +165,19 @@ public class ObjectCalibrationManager : MonoBehaviour
 
     public void SelectObject(int index)
     {
-        Debug.Log($"ObjectCalibrationManager: SelectObject llamado con índice: {index}");
-        
         if (index < 0 || index >= calibratableObjects.Count)
         {
-            Debug.LogError($"ObjectCalibrationManager: Índice {index} fuera de rango (0-{calibratableObjects.Count - 1}).");
             return;
         }
 
         selectedObjectIndex = index;
         selectedObjectName = calibratableObjects[index].name;
-        Debug.Log($"ObjectCalibrationManager: ✅ Objeto seleccionado: '{selectedObjectName}' (índice {index})");
     }
 
     public void StartCalibration()
     {
-        Debug.Log($"ObjectCalibrationManager: StartCalibration llamado. Índice seleccionado: {selectedObjectIndex}");
-
         if (calibratableObjects.Count == 0)
         {
-            Debug.LogError("ObjectCalibrationManager: No hay objetos para calibrar.");
             return;
         }
 
@@ -202,8 +190,6 @@ public class ObjectCalibrationManager : MonoBehaviour
         _eulerY = currentAngles.y;
         
         if (_eulerX > 180f) _eulerX -= 360f;
-
-        Debug.Log($"ObjectCalibrationManager: ✅ Calibrando '{currentObject.name}' (Transform: {currentObject.objectTransform.name})");
         
         isCalibrating = true;
     }
@@ -212,13 +198,11 @@ public class ObjectCalibrationManager : MonoBehaviour
     {
         if (!isCalibrating || currentObject == null)
         {
-            Debug.LogWarning("ObjectCalibrationManager: No hay calibración activa.");
             return;
         }
 
         SavePosition(currentObject);
         isCalibrating = false;
-        Debug.Log($"ObjectCalibrationManager: '{currentObject.name}' calibrado y guardado.");
 
         currentObject.onStopCalibration?.Invoke();
         currentObject = null;
@@ -239,8 +223,6 @@ public class ObjectCalibrationManager : MonoBehaviour
         PlayerPrefs.SetFloat(prefix + "RotW", rot.w);
         PlayerPrefs.SetInt(prefix + "HasPos", 1);
         PlayerPrefs.Save();
-
-        Debug.Log($"ObjectCalibrationManager: Guardado '{obj.name}' - Pos: {pos}");
     }
 
     private void LoadPosition(CalibratableObject obj)
@@ -254,12 +236,9 @@ public class ObjectCalibrationManager : MonoBehaviour
                 Vector3 p = obj.objectTransform.position;
                 p.y = _floorWorldY + obj.offsetYSobreSuelo;
                 obj.objectTransform.position = p;
-                Debug.Log($"ObjectCalibrationManager: '{obj.name}' sin posición guardada, " +
-                          $"Y anclada al suelo: {p.y:F3}");
             }
             else
             {
-                Debug.Log($"ObjectCalibrationManager: '{obj.name}' no tiene posición guardada.");
             }
             return;
         }
@@ -281,14 +260,10 @@ public class ObjectCalibrationManager : MonoBehaviour
         {
             float yOriginal = pos.y;
             pos.y = _floorWorldY + obj.offsetYSobreSuelo;
-            Debug.Log($"ObjectCalibrationManager: '{obj.name}' Y anclada al suelo: " +
-                      $"{yOriginal:F3} → {pos.y:F3} (suelo={_floorWorldY:F3}, offset={obj.offsetYSobreSuelo:F3})");
         }
 
         obj.objectTransform.position = pos;
         obj.objectTransform.rotation = rot;
-
-        Debug.Log($"ObjectCalibrationManager: '{obj.name}' cargado - Pos: {pos}");
     }
 
     private void LoadAllPositions()
@@ -314,7 +289,6 @@ public class ObjectCalibrationManager : MonoBehaviour
             PlayerPrefs.DeleteKey(prefix + "HasPos");
         }
         PlayerPrefs.Save();
-        Debug.Log("ObjectCalibrationManager: Todas las posiciones borradas.");
     }
 
     public List<string> GetObjectNames()

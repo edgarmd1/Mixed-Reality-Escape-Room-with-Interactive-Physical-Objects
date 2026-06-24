@@ -1,5 +1,7 @@
 using UnityEngine;
 
+//old, to remove
+
 public class MicKnockDetector : MonoBehaviour
 {
     [Header("Dispositivo de audio")]

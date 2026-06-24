@@ -13,8 +13,6 @@ public class ReturnToMRTrigger : MonoBehaviour
         _triggerZone.isTrigger = true;
 
         _knockPuzzle = FindObjectOfType<KnockPuzzleManager>();
-        if (_knockPuzzle == null)
-            Debug.LogWarning("[ReturnToMR] No se encontró KnockPuzzleManager en la escena.");
     }
 
     void Update()
@@ -27,7 +25,6 @@ public class ReturnToMRTrigger : MonoBehaviour
         if (PuntoEnBox(cam.transform.position))
         {
             _triggered = true;
-            Debug.Log("[ReturnToMR] Cámara del jugador dentro de la zona de retorno.");
             _knockPuzzle.OnVolverAMR();
         }
     }
