@@ -15,7 +15,7 @@ public class PortalKnockTrigger : MonoBehaviour
 
         bool esJugador = other.CompareTag(tagJugador) ||
                          other.GetComponent<Camera>() != null ||
-                         other.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>() != null;
+                         other.GetComponentInParent<OVRCameraRig>() != null;
 
         if (esJugador)
         {

@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.XR;
-using Unity.XR.CoreUtils;
+
 
 public class FollowController : MonoBehaviour
 {
@@ -47,11 +47,11 @@ public class FollowController : MonoBehaviour
 
     void Start()
     {
-        XROrigin xrOrigin = FindObjectOfType<XROrigin>();
-        if (xrOrigin != null)
-            _xrOriginTransform = xrOrigin.transform;
+        OVRCameraRig ovrCameraRig = FindObjectOfType<OVRCameraRig>();
+        if (ovrCameraRig != null)
+            _xrOriginTransform = ovrCameraRig.transform;
         else
-            Debug.LogWarning("[FollowController] No se encontró XROrigin en la escena.");
+            Debug.LogWarning("[FollowController] No se encontró OVRCameraRig en la escena.");
 
         if (disableParentHandMenu && transform.parent != null)
         {

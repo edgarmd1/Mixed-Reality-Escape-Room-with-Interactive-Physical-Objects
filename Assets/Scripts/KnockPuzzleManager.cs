@@ -185,11 +185,11 @@ public class KnockPuzzleManager : MonoBehaviour
         estadoActual = EstadoPuzzle.TransicionAVR;
         Debug.Log("[KnockPuzzle] Transición MR → VR (activando pasillo en escena).");
 
-        var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
-        if (xrOrigin != null)
+        var ovrCameraRig = FindObjectOfType<OVRCameraRig>();
+        if (ovrCameraRig != null)
         {
-            _posicionMRGuardada = xrOrigin.transform.position;
-            _rotacionMRGuardada = xrOrigin.transform.rotation;
+            _posicionMRGuardada = ovrCameraRig.transform.position;
+            _rotacionMRGuardada = ovrCameraRig.transform.rotation;
         }
 
         yield return StartCoroutine(FadeOverlay(1f, duracionFade * 0.5f));
@@ -199,7 +199,7 @@ public class KnockPuzzleManager : MonoBehaviour
         cameraCulling?.SetModeSoloVisual(false);
 
         yield return null;
-        TeleportarASpawn(xrOrigin, pasilloManager?.SpawnInicio);
+        TeleportarASpawn(ovrCameraRig, pasilloManager?.SpawnInicio);
 
         yield return new WaitForSeconds(0.2f);
         yield return StartCoroutine(FadeOverlay(0f, duracionFade * 0.5f));
@@ -224,11 +224,11 @@ public class KnockPuzzleManager : MonoBehaviour
 
         DesactivarPasillo();
 
-        var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
-        if (xrOrigin != null)
+        var ovrCameraRig = FindObjectOfType<OVRCameraRig>();
+        if (ovrCameraRig != null)
         {
-            xrOrigin.transform.position = _posicionMRGuardada;
-            xrOrigin.transform.rotation = _rotacionMRGuardada;
+            ovrCameraRig.transform.position = _posicionMRGuardada;
+            ovrCameraRig.transform.rotation = _rotacionMRGuardada;
             Debug.Log($"[KnockPuzzle] Posición MR restaurada: {_posicionMRGuardada}");
         }
 
@@ -258,9 +258,9 @@ public class KnockPuzzleManager : MonoBehaviour
 
         cameraCulling?.SetModeSoloVisual(false);
 
-        var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+        var ovrCameraRig = FindObjectOfType<OVRCameraRig>();
         yield return null;
-        TeleportarASpawn(xrOrigin, pasilloManager?.SpawnInicio);
+        TeleportarASpawn(ovrCameraRig, pasilloManager?.SpawnInicio);
 
         yield return new WaitForSeconds(0.2f);
 
@@ -272,21 +272,21 @@ public class KnockPuzzleManager : MonoBehaviour
         Debug.Log("[KnockPuzzle] ¡Puerta 217 abierta! Puzzle completado.");
     }
 
-    private void TeleportarASpawn(Unity.XR.CoreUtils.XROrigin xrOrigin, Transform spawn)
+    private void TeleportarASpawn(OVRCameraRig ovrCameraRig, Transform spawn)
     {
-        if (xrOrigin == null || spawn == null) return;
+        if (ovrCameraRig == null || spawn == null) return;
 
-        Camera cam = xrOrigin.Camera;
+        Camera cam = ovrCameraRig.centerEyeAnchor != null ? ovrCameraRig.centerEyeAnchor.GetComponent<Camera>() : null;
         if (cam != null)
         {
             Vector3 camOffset = cam.transform.localPosition;
-            xrOrigin.transform.position = new Vector3(
+            ovrCameraRig.transform.position = new Vector3(
                 spawn.position.x - camOffset.x,
                 spawn.position.y - camOffset.y,
                 spawn.position.z - camOffset.z
             );
-            xrOrigin.transform.rotation = Quaternion.Euler(0f, spawn.eulerAngles.y, 0f);
-            Debug.Log($"[KnockPuzzle] Teleportado a spawn: {xrOrigin.transform.position}");
+            ovrCameraRig.transform.rotation = Quaternion.Euler(0f, spawn.eulerAngles.y, 0f);
+            Debug.Log($"[KnockPuzzle] Teleportado a spawn: {ovrCameraRig.transform.position}");
         }
     }
 

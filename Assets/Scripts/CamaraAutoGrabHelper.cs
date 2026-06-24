@@ -29,7 +29,7 @@ public class CamaraAutoGrabHelper : MonoBehaviour
 
     private XRGrabInteractable  _grab;
     private CamaraInteractable  _camaraInteractable;
-    private Unity.XR.CoreUtils.XROrigin _xrOrigin;
+    private OVRCameraRig _xrOrigin;
     private XRHandSubsystem _handSubsystem;
     private static readonly List<XRHandSubsystem> s_Subsystems = new();
 
@@ -48,7 +48,7 @@ public class CamaraAutoGrabHelper : MonoBehaviour
     {
         _grab               = GetComponent<XRGrabInteractable>();
         _camaraInteractable = GetComponent<CamaraInteractable>();
-        _xrOrigin           = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+        _xrOrigin           = FindObjectOfType<OVRCameraRig>();
     }
 
     private void OnEnable()

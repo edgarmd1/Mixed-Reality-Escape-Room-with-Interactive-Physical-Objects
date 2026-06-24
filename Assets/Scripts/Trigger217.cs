@@ -50,20 +50,20 @@ public class Trigger217 : MonoBehaviour
             yield break;
         }
 
-        var xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
-        if (xrOrigin != null && manager.SpawnInicio != null)
+        var ovrCameraRig = FindObjectOfType<OVRCameraRig>();
+        if (ovrCameraRig != null && manager.SpawnInicio != null)
         {
-            Camera camXR = xrOrigin.Camera;
+            Camera camXR = ovrCameraRig.centerEyeAnchor != null ? ovrCameraRig.centerEyeAnchor.GetComponent<Camera>() : null;
             if (camXR != null)
             {
                 Vector3 camOffset = camXR.transform.localPosition;
-                xrOrigin.transform.position = new Vector3(
+                ovrCameraRig.transform.position = new Vector3(
                     manager.SpawnInicio.position.x - camOffset.x,
                     manager.SpawnInicio.position.y - camOffset.y,
                     manager.SpawnInicio.position.z - camOffset.z
                 );
-                xrOrigin.transform.rotation = Quaternion.Euler(0f, manager.SpawnInicio.eulerAngles.y, 0f);
-                Debug.Log($"[Trigger217] Jugador teleportado a {xrOrigin.transform.position}.");
+                ovrCameraRig.transform.rotation = Quaternion.Euler(0f, manager.SpawnInicio.eulerAngles.y, 0f);
+                Debug.Log($"[Trigger217] Jugador teleportado a {ovrCameraRig.transform.position}.");
             }
         }
     }

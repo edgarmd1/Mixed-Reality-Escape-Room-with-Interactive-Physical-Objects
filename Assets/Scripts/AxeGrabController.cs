@@ -41,11 +41,11 @@ public class AxeGrabController : MonoBehaviour
 
     public bool EstaEnMano => _mandoEnMano;
 
-    private Unity.XR.CoreUtils.XROrigin _xrOrigin;
+    private OVRCameraRig _xrOrigin;
 
     void Awake()
     {
-        _xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+        _xrOrigin = FindObjectOfType<OVRCameraRig>();
         CargarPosicionReposo();
         _posAnterior = transform.position;
 

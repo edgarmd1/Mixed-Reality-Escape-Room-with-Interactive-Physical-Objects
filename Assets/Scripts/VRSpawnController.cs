@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using Unity.XR.CoreUtils;
 
 public class VRSpawnController : MonoBehaviour
 {
@@ -8,8 +7,8 @@ public class VRSpawnController : MonoBehaviour
     [Tooltip("Punto de spawn inicial en el mundo virtual.")]
     [SerializeField] private Transform puntoSpawnVR;
 
-    [Tooltip("XR Origin de la escena. Si se deja vacío se busca automáticamente.")]
-    [SerializeField] private XROrigin xrOrigin;
+    [Tooltip("OVR Camera Rig de la escena. Si se deja vacío se busca automáticamente.")]
+    [SerializeField] private OVRCameraRig ovrCameraRig;
 
     [Header("Tracking")]
     [Tooltip("Altura mínima")]
@@ -20,15 +19,15 @@ public class VRSpawnController : MonoBehaviour
 
     void Awake()
     {
-        if (xrOrigin == null)
-            xrOrigin = FindObjectOfType<XROrigin>();
+        if (ovrCameraRig == null)
+            ovrCameraRig = FindObjectOfType<OVRCameraRig>();
     }
     
     public void TeletransportarAlSpawnVR()
     {
-        if (xrOrigin == null)
+        if (ovrCameraRig == null)
         {
-            Debug.LogError("[VRSpawnController] No se encontró XROrigin.");
+            Debug.LogError("[VRSpawnController] No se encontró OVRCameraRig.");
             return;
         }
 
@@ -44,10 +43,16 @@ public class VRSpawnController : MonoBehaviour
 
     private IEnumerator EsperarYSpawnear()
     {
-        Camera cam = xrOrigin.Camera;
+        if (ovrCameraRig == null)
+        {
+            Debug.LogError("[VRSpawnController] OVRCameraRig es nulo en Coroutine.");
+            yield break;
+        }
+
+        Camera cam = ovrCameraRig.centerEyeAnchor != null ? ovrCameraRig.centerEyeAnchor.GetComponent<Camera>() : null;
         if (cam == null)
         {
-            Debug.LogError("[VRSpawnController] XROrigin no tiene cámara asignada.");
+            Debug.LogError("[VRSpawnController] OVRCameraRig no tiene cámara asignada en centerEyeAnchor.");
             yield break;
         }
 
@@ -79,12 +84,12 @@ public class VRSpawnController : MonoBehaviour
             puntoSpawnVR.position.z - camOffsetLocal.z
         );
 
-        xrOrigin.transform.position = nuevaPosicion;
+        ovrCameraRig.transform.position = nuevaPosicion;
 
         float rotacionY = puntoSpawnVR.eulerAngles.y;
-        xrOrigin.transform.rotation = Quaternion.Euler(0f, rotacionY, 0f);
+        ovrCameraRig.transform.rotation = Quaternion.Euler(0f, rotacionY, 0f);
 
-        Debug.Log($"[VRSpawnController] Spawn aplicado → XROrigin: {nuevaPosicion} | " +
+        Debug.Log($"[VRSpawnController] Spawn aplicado → OVRCameraRig: {nuevaPosicion} | " +
                   $"Spawn: {puntoSpawnVR.position} | CamOffset: {camOffsetLocal}");
     }
 }

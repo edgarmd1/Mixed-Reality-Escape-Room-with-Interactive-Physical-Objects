@@ -3,7 +3,7 @@ using UnityEngine.XR;
 using UnityEngine.Events;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.XR.CoreUtils;
+
 
 public class ObjectCalibrationManager : MonoBehaviour
 {
@@ -32,9 +32,9 @@ public class ObjectCalibrationManager : MonoBehaviour
     [SerializeField, Tooltip("Lista de objetos que se pueden calibrar")]
     private List<CalibratableObject> calibratableObjects = new List<CalibratableObject>();
 
-    [SerializeField, Tooltip("XR Origin de la escena. Necesario para anclar objetos al suelo. " +
+    [SerializeField, Tooltip("OVR Camera Rig de la escena. Necesario para anclar objetos al suelo. " +
                              "Si se deja vacío se busca automáticamente.")]
-    private XROrigin xrOrigin;
+    private OVRCameraRig ovrCameraRig;
 
     [Header("Velocidades de calibración")]
     [SerializeField, Tooltip("Velocidad de traslación (m/s)")]
@@ -64,8 +64,8 @@ public class ObjectCalibrationManager : MonoBehaviour
 
     void Awake()
     {
-        if (xrOrigin == null)
-            xrOrigin = FindObjectOfType<XROrigin>();
+        if (ovrCameraRig == null)
+            ovrCameraRig = FindObjectOfType<OVRCameraRig>();
     }
 
     void Start()
@@ -88,9 +88,10 @@ public class ObjectCalibrationManager : MonoBehaviour
 
     private IEnumerator EsperarSueloYCargar()
     {
-        if (xrOrigin == null || xrOrigin.Camera == null)
+        Camera cam = ovrCameraRig != null && ovrCameraRig.centerEyeAnchor != null ? ovrCameraRig.centerEyeAnchor.GetComponent<Camera>() : null;
+        if (ovrCameraRig == null || cam == null)
         {
-            Debug.LogWarning("[ObjectCalibration] No se encontró XROrigin/cámara. " +
+            Debug.LogWarning("[ObjectCalibration] No se encontró OVRCameraRig/cámara. " +
                              "Usando Y=0 como suelo.");
             _floorWorldY = 0f;
             _floorReady = true;
@@ -98,7 +99,6 @@ public class ObjectCalibrationManager : MonoBehaviour
             yield break;
         }
 
-        Camera cam = xrOrigin.Camera;
         yield return null;
 
         float timeout = 5f;
