@@ -3910,9 +3910,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 974f9d3885c993b41a748a8564e76429, type: 3}
       insertIndex: -1
       addedObject: {fileID: 681846485}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 974f9d3885c993b41a748a8564e76429, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 681846488}
   m_SourcePrefab: {fileID: 100100000, guid: 974f9d3885c993b41a748a8564e76429, type: 3}
 --- !u!4 &681846477 stripped
 Transform:
@@ -4138,22 +4135,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   requireAllFingers: 0
---- !u!114 &681846488
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 681846478}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a8761baeddb7c434e948927bc0eaf5e5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  distanciaGrab: 0.15
-  tiempoMinimoCogida: 0.5
-  umbralDedosAbiertos: 0.8
-  autoActivarSinMando: 1
 --- !u!23 &711189281 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 8734857075465242673, guid: 387e7761948c3d54a8e768c7ea3fbaa9, type: 3}
