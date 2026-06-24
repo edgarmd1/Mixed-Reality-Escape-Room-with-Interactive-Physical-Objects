@@ -3,18 +3,16 @@ using UnityEngine.XR;
 
 public class AxeGrabController : MonoBehaviour
 {
-    [Header("── Agarre ──")]
+    [Header("Agarrar")]
 
-    [SerializeField, Tooltip(
-        "rotacion del mando respecto al hacha")]
+    [SerializeField, Tooltip("rotacion del mando respecto al hacha")]
     private Vector3 rotationOffset = new Vector3(90f, 180f, 0f);
 
-    [SerializeField, Tooltip(
-        "Posición del punto de agarre en el espacio local del hacha")]
+    [SerializeField, Tooltip("Posición del punto de agarre en el espacio local del hacha")]
     private Vector3 gripLocalPosition = Vector3.zero;
 
 
-    [Header("── Detección de impacto ──")]
+    [Header("Detección de impacto")]
     [SerializeField] private Transform puntoImpacto;
     [SerializeField] private Transform ejeHoja;
     [SerializeField] private float umbralVelocidad     = 1.2f;
@@ -23,9 +21,19 @@ public class AxeGrabController : MonoBehaviour
     [SerializeField] private float cooldownEntreGolpes = 0.55f;
     [SerializeField] private LayerMask layerTableros;
 
-    [Header("── Haptic feedback ──")]
+    [Header("Haptic feedback")]
     [SerializeField, Range(0f, 1f)] private float hapticIntensidad = 0.6f;
     [SerializeField, Range(0.05f, 1f)] private float hapticDuracion = 0.25f;
+
+    [Header("Vitrina")]
+    [SerializeField, Tooltip("Audio vitrina")]
+    private AudioSource audioVitrineBloqueo;
+    [SerializeField, Tooltip("Collider vitrina")]
+    private Collider colliderVitrina;
+    [SerializeField, Tooltip("Cooldown vitrina")]
+    private float cooldownAudioVitrina = 4f;
+    [SerializeField, Tooltip("Capas")]
+    private LayerMask layerVitrina = ~0;
 
     private const string PREFS_KEY = "Hacha_PosicionReposo";
 
@@ -42,10 +50,15 @@ public class AxeGrabController : MonoBehaviour
     public bool EstaEnMano => _mandoEnMano;
 
     private Unity.XR.CoreUtils.XROrigin _xrOrigin;
+    private Rigidbody _rb;
+    private Collider  _propioCollider;
+    private float     _tiempoUltimoAudioVitrina = -999f;
 
     void Awake()
     {
-        _xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+        _xrOrigin       = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+        _rb             = GetComponent<Rigidbody>();
+        _propioCollider = GetComponent<Collider>();
         CargarPosicionReposo();
         _posAnterior = transform.position;
 
@@ -70,10 +83,10 @@ public class AxeGrabController : MonoBehaviour
         _velocidadActual = (transform.position - _posAnterior).magnitude / Time.deltaTime;
         _posAnterior = transform.position;
 
-        if (!_mandoEnMano)                                         return;
+        if (!_mandoEnMano) return;
         if (Time.time - _tiempoUltimoGolpe < cooldownEntreGolpes) return;
-        if (_velocidadActual < umbralVelocidad)                    return;
-        if (!InclinacionCorrecta())                                 return;
+        if (_velocidadActual < umbralVelocidad) return;
+        if (!InclinacionCorrecta()) return;
 
         ComprobarImpacto();
     }
@@ -112,15 +125,12 @@ public class AxeGrabController : MonoBehaviour
         PlayerPrefs.SetFloat(PREFS_KEY + "_RotW", _rotReposo.w);
         PlayerPrefs.SetInt  (PREFS_KEY + "_OK",   1);
         PlayerPrefs.Save();
-
-        Debug.Log($"[Hacha] Posición de reposo guardada: hacha={_posReposo}, ctrl_local={_controllerRestLocalPos}");
     }
 
     private void CargarPosicionReposo()
     {
         if (PlayerPrefs.GetInt(PREFS_KEY + "_OK", 0) == 0)
         {
-            Debug.Log("[Hacha] Sin posición de reposo guardada — usando posición de escena.");
             return;
         }
 
@@ -149,8 +159,6 @@ public class AxeGrabController : MonoBehaviour
 
         transform.position = _posReposo;
         transform.rotation = _rotReposo;
-
-        Debug.Log($"[Hacha] Posición de reposo cargada: {_posReposo}");
     }
 
     private void AplicarPosicionReposo()
@@ -160,14 +168,13 @@ public class AxeGrabController : MonoBehaviour
         transform.rotation = _rotReposo;
     }
 
-    [ContextMenu("Mostrar ejes del hacha (para configurar gripLocalPosition)")]
+    [ContextMenu("Mostrar ejes del hacha")]
     private void MostrarEjesHacha()
     {
         Debug.Log($"[Hacha] Ejes en mundo → " +
                   $"Derecha: {transform.right:F2} | " +
                   $"Arriba: {transform.up:F2} | " +
                   $"Adelante: {transform.forward:F2}");
-        Debug.Log("[Hacha] Para encontrar el eje del mango, mira cuál de los tres apunta a lo largo del palo del hacha.");
     }
 
     [ContextMenu("Borrar posición de reposo guardada")]
@@ -191,7 +198,6 @@ public class AxeGrabController : MonoBehaviour
         if (EsControllerDerecho(device))
         {
             _mando = device;
-            Debug.Log($"[Hacha] Mando derecho conectado: {device.name}");
         }
     }
 
@@ -201,7 +207,6 @@ public class AxeGrabController : MonoBehaviour
         {
             _mando = default;
             _mandoEnMano = false;
-            Debug.Log("[Hacha] Mando derecho desconectado.");
         }
     }
 
@@ -214,7 +219,6 @@ public class AxeGrabController : MonoBehaviour
             if (EsControllerDerecho(d))
             {
                 _mando = d;
-                Debug.Log($"[Hacha] Mando derecho encontrado: {d.name}");
                 return;
             }
         }
@@ -242,7 +246,6 @@ public class AxeGrabController : MonoBehaviour
         if (_estabaGripando && !griping && _mandoEnMano)
         {
             GuardarPosicionReposo();
-            Debug.Log("[Hacha] Grip soltado → posición de calibración guardada.");
         }
         _estabaGripando = griping;
 
@@ -257,7 +260,6 @@ public class AxeGrabController : MonoBehaviour
             if (ControllerHaMovidoDeReposo())
             {
                 _mandoEnMano = true;
-                Debug.Log("[Hacha] Mando cogido (movimiento detectado) → hacha activa.");
             }
         }
     }
@@ -282,7 +284,6 @@ public class AxeGrabController : MonoBehaviour
         if (!_mandoEnMano) return;
         _mandoEnMano = false;
         GuardarPosicionReposo();
-        Debug.Log("[Hacha] Mando soltado → posición de reposo guardada.");
     }
 
     private void ColocarEnMando()
@@ -305,11 +306,56 @@ public class AxeGrabController : MonoBehaviour
         }
 
         Quaternion targetRot = mandoRot * Quaternion.Euler(rotationOffset);
+        Vector3    targetPos = mandoPos - targetRot * gripLocalPosition;
 
-        Vector3 targetPos = mandoPos - targetRot * gripLocalPosition;
+        targetPos = ResolverPenetracion(targetPos, targetRot);
 
         transform.position = targetPos;
         transform.rotation = targetRot;
+
+        if (_rb != null)
+        {
+            _rb.position = targetPos;
+            _rb.rotation = targetRot;
+        }
+    }
+
+    private Vector3 ResolverPenetracion(Vector3 pos, Quaternion rot)
+    {
+        if (_propioCollider == null) return pos;
+        Collider[] vecinos = Physics.OverlapSphere(pos, radioImpacto * 3f, layerVitrina,
+                                                   QueryTriggerInteraction.Ignore);
+        bool tocaVitrina = false;
+
+        foreach (Collider otro in vecinos)
+        {
+            if (otro == _propioCollider) continue;
+            if (((1 << otro.gameObject.layer) & layerTableros) != 0) continue;
+
+            if (Physics.ComputePenetration(
+                    _propioCollider, pos, rot,
+                    otro, otro.transform.position, otro.transform.rotation,
+                    out Vector3 dir, out float dist))
+            {
+                pos += dir * dist;
+                
+                if (colliderVitrina != null && otro == colliderVitrina)
+                {
+                    tocaVitrina = true;
+                }
+            }
+        }
+
+        if (tocaVitrina && audioVitrineBloqueo != null)
+        {
+            if (Time.time - _tiempoUltimoAudioVitrina >= cooldownAudioVitrina)
+            {
+                _tiempoUltimoAudioVitrina = Time.time;
+                audioVitrineBloqueo.Play();
+            }
+        }
+
+        return pos;
     }
 
     private bool InclinacionCorrecta()
@@ -324,7 +370,6 @@ public class AxeGrabController : MonoBehaviour
     {
         if (puntoImpacto == null)
         {
-            Debug.LogWarning("[Hacha] 'PuntoImpacto' no asignado.");
             return;
         }
 
@@ -333,7 +378,6 @@ public class AxeGrabController : MonoBehaviour
         {
             if (col.TryGetComponent<TableroDestructible>(out var tablero) && !tablero.Roto)
             {
-                Debug.Log($"[Hacha] Impacto en {tablero.gameObject.name} — vel: {_velocidadActual:F2} m/s");
                 tablero.RecibirImpacto();
                 _tiempoUltimoGolpe = Time.time;
                 EnviarHapticFeedback();
