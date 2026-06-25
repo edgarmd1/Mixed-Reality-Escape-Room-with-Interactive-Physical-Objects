@@ -34,7 +34,8 @@ public class IntroSequenceManager : MonoBehaviour
 
     [SerializeField] private CameraCullingMaskController cameraCullingMask;
 
-    [SerializeField] private AudioSource audioMusica;
+    [SerializeField, Tooltip("Sonido de jumpscare")] 
+    private AudioSource audioJumpscare;
     [SerializeField, Tooltip("Efecto de sonido que se reproduce durante el parpadeo")]
     private AudioSource audioDuranteParpadeo;
 
@@ -43,15 +44,17 @@ public class IntroSequenceManager : MonoBehaviour
     private GameObject rootVideoTutorial;
     [SerializeField, Tooltip("Componente VideoPlayer dentro del tutorial")]
     private VideoPlayer videoTutorial;
-    [SerializeField, Tooltip("Segundo audio donde menciona la electricidad")]
-    private AudioSource audioInspector2;
-    [SerializeField, Tooltip("Objeto que se activa cuando se va la luz por completo")]
-    private GameObject objetoApareceOscuridad;
-    [SerializeField] private GameObject portalAscensor;
-    [SerializeField] private DoorPuzzleManager doorPuzzleManager;
+    [SerializeField, Tooltip("Audio del corte de luz")]
+    private AudioSource audioCorteLuz;
+    [SerializeField, Tooltip("Polaroid que aparece")]
+    private GameObject polaroidVirtual;
+    [SerializeField, Tooltip("Ascensor ensangrentado")] 
+    private GameObject portalAscensor;
+    [SerializeField, Tooltip("Manager")] 
+    private DoorPuzzleManager doorPuzzleManager;
 
-    [Header("Ascensor")]
-    [SerializeField, Tooltip("GameObjects")]
+    [Header("Fase del ascensor")]
+    [SerializeField, Tooltip("GameObjects a desactivar")]
     private GameObject[] objetosJumpscare;
     [SerializeField, Tooltip("Controller de la polaroid")]
     private PolaroidJumpscareController polaroidJumpscare;
@@ -83,8 +86,8 @@ public class IntroSequenceManager : MonoBehaviour
         if (portalAscensor != null)
             portalAscensor.SetActive(false);
 
-        if (objetoApareceOscuridad != null)
-            objetoApareceOscuridad.SetActive(false);
+        if (polaroidVirtual != null)
+            polaroidVirtual.SetActive(false);
 
         if (rootVideoTutorial != null)
             rootVideoTutorial.SetActive(false);
@@ -136,12 +139,12 @@ public class IntroSequenceManager : MonoBehaviour
 
         yield return StartCoroutine(CoroutineParpadeo()); 
 
-        if (objetoApareceOscuridad != null)
-            objetoApareceOscuridad.SetActive(true);
+        if (polaroidVirtual != null)
+            polaroidVirtual.SetActive(true);
 
-        if (audioInspector2 != null)
+        if (audioCorteLuz != null)
         {
-            audioInspector2.Play();
+            audioCorteLuz.Play();
         }
 
         yield return new WaitForSeconds(delayAntesPuzzleLuz);
@@ -151,8 +154,8 @@ public class IntroSequenceManager : MonoBehaviour
 
         yield return new WaitUntil(() => arduinoLuz == null || arduinoLuz.puzzleCompletado); 
 
-        if (objetoApareceOscuridad != null)
-            objetoApareceOscuridad.SetActive(false);
+        if (polaroidVirtual != null)
+            polaroidVirtual.SetActive(false);
 
         foreach (var obj in objetosJumpscare)
             if (obj != null) obj.SetActive(false);
@@ -162,8 +165,8 @@ public class IntroSequenceManager : MonoBehaviour
 
         yield return StartCoroutine(CoroutineFadeOverlay(0f, 0.4f)); 
 
-        if (audioMusica != null)
-            audioMusica.Play(); 
+        if (audioJumpscare != null)
+            audioJumpscare.Play(); 
 
         yield return StartCoroutine(CoroutineParpadeoRojo(duracionEnVR));
 
@@ -190,7 +193,6 @@ public class IntroSequenceManager : MonoBehaviour
             audioFastidio.Play();
             yield return new WaitForSeconds(audioFastidio.clip.length);
         }
-
 
         if (doorPuzzleManager != null)
             doorPuzzleManager.IniciarPuzzle();

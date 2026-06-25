@@ -11062,12 +11062,12 @@ MonoBehaviour:
   arduinoLuz: {fileID: 1924958761}
   dmxController: {fileID: 384763706}
   cameraCullingMask: {fileID: 530151974729343749}
-  audioMusica: {fileID: 1457197127}
+  audioJumpscare: {fileID: 1457197127}
   audioDuranteParpadeo: {fileID: 896351477}
   rootVideoTutorial: {fileID: 418137678}
   videoTutorial: {fileID: 418137677}
-  audioInspector2: {fileID: 912500677}
-  objetoApareceOscuridad: {fileID: 950626083}
+  audioCorteLuz: {fileID: 912500677}
+  polaroidVirtual: {fileID: 950626083}
   portalAscensor: {fileID: 139071901}
   doorPuzzleManager: {fileID: 1505812995}
   objetosJumpscare:

@@ -4,9 +4,9 @@
 //  PINES
 // ─────────────────────────────────────────────────────────────────────────────
 
-const int pinLDR  = A0;   // Sensor de luz (fotorresistor)
-const int pinTilt = 2;    // Tilt sensor del teléfono (PIN_PULLUP, LOW = descolgado)
-const int pinAccelZ = A3; // Acelerómetro eje Z
+const int pinLDR  = A0;
+const int pinTilt = 2;
+const int pinAccelZ = A3;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  KEYPAD 4×4
@@ -22,8 +22,8 @@ char teclas[FILAS][COLS] = {
   { '*', '0', '#', 'D' }
 };
 
-byte pinesFila[FILAS] = {  7,  8,  9, 10 };   // ← filas
-byte pinesCol[COLS]   = {  3,  4,  5,  6 };   // ← columnas
+byte pinesFila[FILAS] = {  7,  8,  9, 10 };
+byte pinesCol[COLS]   = {  3,  4,  5,  6 };
 
 
 Keypad keypad = Keypad(makeKeymap(teclas), pinesFila, pinesCol, FILAS, COLS);
@@ -36,7 +36,7 @@ String     entradaActual = "";
 // ─────────────────────────────────────────────────────────────────────────────
 
 unsigned long ultimaVezPHONE = 0;
-const int     tiempoEspera   = 500;  // ms de debounce para no repetir la señal
+const int     tiempoEspera   = 500;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  ACELERÓMETRO / KNOCK
@@ -51,7 +51,7 @@ unsigned long ultimoKnock = 0;
 //  LDR – temporización sin delay()
 // ─────────────────────────────────────────────────────────────────────────────
 
-const unsigned long INTERVALO_LDR = 50;  // mismo intervalo que el delay(50) original
+const unsigned long INTERVALO_LDR = 50;
 unsigned long ultimaLectura = 0;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ void setup() {
   Serial.begin(9600);
   pinMode(pinTilt, INPUT_PULLUP);
 
-  // Calibrar eje Z del acelerómetro en reposo (promedio de varias lecturas)
+  // Calibrar eje Z del acelerómetro en reposo
   long sumaZ = 0;
   const int muestras = 50;
   for (int i = 0; i < muestras; i++) {
@@ -139,7 +139,7 @@ void leerLDR() {
   ultimaLectura = ahora;
 
   int valorLuz = analogRead(pinLDR);
-  Serial.println(valorLuz);  // Unity lee esto como entero
+  Serial.println(valorLuz);
 }
 
 // --- Teléfono (tilt) ---
@@ -163,7 +163,7 @@ void leerKnock() {
   if (magnitud > umbralGolpe) {
     unsigned long ahora = millis();
     if (ahora - ultimoKnock > debounceKnock) {
-      //Serial.println("KNOCK");   // ← descomentar cuando esté listo
+      //Serial.println("KNOCK");   //todo
       ultimoKnock = ahora;
     }
   }

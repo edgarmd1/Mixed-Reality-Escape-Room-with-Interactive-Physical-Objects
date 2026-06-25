@@ -27,7 +27,7 @@ public class CamaraInteractable : MonoBehaviour
     [SerializeField, Tooltip("Camara en Mano")]
     private GameObject camaraMano;
 
-    [SerializeField, Tooltip("Transform de la mano derecha (al que se emparentará la cámara al cogerla)")]
+    [SerializeField, Tooltip("Transform de la mano derecha (al que se emparentará la cámara al cogerla).")] //todo: implementar mano izquierda tb
     private Transform transformManoDerecha;
 
     [Header("Final")]
