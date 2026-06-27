@@ -46,14 +46,21 @@ public class ArduinoLuz : MonoBehaviour
         if (cameraCullingMaskController == null)
             cameraCullingMaskController = FindObjectOfType<CameraCullingMaskController>();
 
-        if (!puerto.IsOpen)
+        try
         {
-            puerto.ReadTimeout = 500;
-            puerto.Open();
-        }
+            if (!puerto.IsOpen)
+            {
+                puerto.ReadTimeout = 500;
+                puerto.Open();
+            }
 
-        hiloSerie = new Thread(LeerSerie) { IsBackground = true };
-        hiloSerie.Start();
+            hiloSerie = new Thread(LeerSerie) { IsBackground = true };
+            hiloSerie.Start();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[ArduinoLuz] Error al abrir el puerto serie: {e.Message}");
+        }
     }
 
     void LeerSerie()

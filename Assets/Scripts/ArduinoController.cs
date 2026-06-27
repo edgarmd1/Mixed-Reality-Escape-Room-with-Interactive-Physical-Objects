@@ -3,7 +3,7 @@ using System.IO.Ports;
 
 public class ArduinoController : MonoBehaviour
 {
-    SerialPort stream = new SerialPort("COM4", 9600);
+    SerialPort stream = new SerialPort("COM20", 9600);
     public Transform controllerTransform;
     public Transform arduinoTarget;
     public float activationDistance = 0.2f;

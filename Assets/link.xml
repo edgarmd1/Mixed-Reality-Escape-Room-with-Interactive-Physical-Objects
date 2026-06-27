@@ -1,0 +1,6 @@
+<linker>
+    <!-- Preserve System.IO.Ports to prevent IL2CPP stripping the SerialPort class -->
+    <assembly fullname="System">
+        <namespace fullname="System.IO.Ports" preserve="all"/>
+    </assembly>
+</linker>
