@@ -69,8 +69,8 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("Tiempo que el fantasma espera junto al armario antes de empezar a moverse")]
     private float pausaFantasmaEnArmario = 1.5f;
 
-    [Header("Referencia sin usar")]
-    [SerializeField, Tooltip("KnockPuzzleManager que se activa al coger la llave")]
+    [Header("Referencia sin usar por falta de tiempo")]
+    [SerializeField, Tooltip("KnockPuzzleManager que se activa al coger la llave (old)")]
     private KnockPuzzleManager knockPuzzleManager;
 
     [Header("Audio")]

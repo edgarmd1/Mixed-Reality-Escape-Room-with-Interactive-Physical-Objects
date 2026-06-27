@@ -226,7 +226,7 @@ public class AxeGrabController : MonoBehaviour
 
     private bool EsControllerDerecho(InputDevice device)
     {
-        return (device.characteristics & InputDeviceCharacteristics.Right)      != 0
+        return (device.characteristics & InputDeviceCharacteristics.Right) != 0
             && (device.characteristics & InputDeviceCharacteristics.Controller) != 0;
     }
 
