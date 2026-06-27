@@ -52,12 +52,9 @@ public class TelefonoManager : MonoBehaviour
     private bool LeerDescolgado()
     {
         bool resultado = false;
-
-#if UNITY_EDITOR
         var kb = UnityEngine.InputSystem.Keyboard.current;
         if (kb != null && kb.tKey.wasPressedThisFrame) resultado = true;
         if (kb != null && kb.rKey.wasPressedThisFrame) resultado = true;
-#endif
 
         if (arduinoLuz != null && arduinoLuz.TelefonoDescolgado)
             resultado = true;

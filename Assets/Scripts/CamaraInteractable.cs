@@ -167,7 +167,9 @@ public class CamaraInteractable : MonoBehaviour
 
                 if (transformManoDerecha != null)
                 {
-                    camaraMano.transform.SetParent(transformManoDerecha, true);
+                    camaraMano.transform.SetParent(transformManoDerecha, false);
+                    camaraMano.transform.localPosition = Vector3.zero;
+                    camaraMano.transform.localRotation = Quaternion.Euler(0f, -28.34f, 54.30f);
                 }
 
                 camaraMano.SetActive(true);
