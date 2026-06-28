@@ -3527,8 +3527,8 @@ Transform:
   m_GameObject: {fileID: 612102024}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 8.42, y: 2.453, z: 11.72}
-  m_LocalScale: {x: 0.1501, y: 3.1864216, z: 3.9283}
+  m_LocalPosition: {x: 9.04, y: 2.453, z: 11.72}
+  m_LocalScale: {x: 0.1501, y: 3.1864216, z: 5.23171}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1561639340}
@@ -7802,8 +7802,8 @@ Transform:
   m_GameObject: {fileID: 1448483231}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 2.564, y: 2.422, z: 11.72}
-  m_LocalScale: {x: 0.1501, y: 3.1864216, z: 3.9283}
+  m_LocalPosition: {x: 1.888, y: 2.422, z: 11.72}
+  m_LocalScale: {x: 0.1501, y: 3.1864216, z: 5.23171}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1561639340}
@@ -11154,7 +11154,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47ddec1ffbb566d438af92816cb20c50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  umbralActivacion: 100
+  umbralActivacion: 500
   puzzleCompletado: 0
   habilitado: 0
   cameraCullingMaskController: {fileID: 0}
