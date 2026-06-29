@@ -52,6 +52,7 @@ public class CamaraInteractable : MonoBehaviour
     private Rigidbody _rb;
     private CamaraAutoGrabHelper _autoGrab;
     private bool _grabHabilitado = false;
+    public bool GrabHabilitado => _grabHabilitado;
     
     private System.Collections.Generic.List<Renderer> _renderersOcultados = new System.Collections.Generic.List<Renderer>();
 
@@ -108,6 +109,7 @@ public class CamaraInteractable : MonoBehaviour
 
     private void OnTocada(HoverEnterEventArgs args)
     {
+        if (!_grabHabilitado) return;
         if (!_camaraCogida)
         {
             LogicaCogida();
@@ -265,6 +267,11 @@ public class CamaraInteractable : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void PrehabilitarGrab()
+    {
+        _grabHabilitado = true;
     }
 
     public void HabilitarGrab()

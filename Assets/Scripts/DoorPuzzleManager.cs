@@ -49,7 +49,7 @@ public class DoorPuzzleManager : MonoBehaviour
             _tablonesRotos = tablones.Length;
             foreach (var t in tablones)
                 if (t != null) t.gameObject.SetActive(false);
-            camaraInteractable?.HabilitarGrab();
+            camaraInteractable?.PrehabilitarGrab();
             return;
         }
 
@@ -107,7 +107,7 @@ public class DoorPuzzleManager : MonoBehaviour
             audioDevuelveHacha.Play();
         }
 
-        camaraInteractable?.HabilitarGrab();
+        camaraInteractable?.PrehabilitarGrab();
     }
 
     public bool PuzzleCompletado => _puzzleCompletado;

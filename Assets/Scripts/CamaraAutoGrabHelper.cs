@@ -145,6 +145,8 @@ public class CamaraAutoGrabHelper : MonoBehaviour
     {
         if (!hand.isTracked) return;
 
+        if (_camaraInteractable != null && !_camaraInteractable.GrabHabilitado) return;
+
         if (TryObtenerPosicionMano(hand, out Vector3 worldPalmPos, out Quaternion worldPalmRot))
         {
             float dist = Vector3.Distance(worldPalmPos, transform.position);

@@ -8,6 +8,9 @@ public class Trigger217 : MonoBehaviour
     [SerializeField, Tooltip("escena")]
     private string nombreEscena217 = "217";
 
+    [SerializeField, Tooltip("KeypadPuzzleManager que controla el estado de la secuencia del fantasma")]
+    private KeypadPuzzleManager keypadPuzzleManager;
+
     private BoxCollider _zona;
     private bool _activado = false;
 
@@ -20,6 +23,14 @@ public class Trigger217 : MonoBehaviour
     void Update()
     {
         if (_activado) return;
+
+        if (keypadPuzzleManager != null)
+        {
+            var estado = keypadPuzzleManager.Estado;
+            bool estadoValido = estado == KeypadPuzzleManager.EstadoKeypad.CamaraDisponible
+                             || estado == KeypadPuzzleManager.EstadoKeypad.PuzzleCompletado;
+            if (!estadoValido) return;
+        }
 
         Camera cam = Camera.main;
         if (cam == null) return;

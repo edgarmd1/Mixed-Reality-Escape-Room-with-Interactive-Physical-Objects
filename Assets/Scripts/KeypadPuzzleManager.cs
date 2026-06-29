@@ -73,6 +73,10 @@ public class KeypadPuzzleManager : MonoBehaviour
     [SerializeField, Tooltip("KnockPuzzleManager que se activa al coger la llave (old)")]
     private KnockPuzzleManager knockPuzzleManager;
 
+    [Header("Cámara interactuable")]
+    [SerializeField, Tooltip("CamaraInteractable que se habilita al terminar la secuencia del fantasma")]
+    private CamaraInteractable camaraInteractable;
+
     [Header("Audio")]
     [SerializeField, Tooltip("Sonido de error al introducir la combinación incorrecta")]
     private AudioSource audioError;
@@ -303,6 +307,8 @@ public class KeypadPuzzleManager : MonoBehaviour
 
         if (camaraEnDestino != null)
             camaraEnDestino.SetActive(true);
+
+        camaraInteractable?.HabilitarGrab();
 
         estadoActual = EstadoKeypad.CamaraDisponible;
     }
