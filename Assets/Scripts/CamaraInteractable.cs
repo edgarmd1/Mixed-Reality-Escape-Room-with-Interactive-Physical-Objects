@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
@@ -110,14 +112,15 @@ public class CamaraInteractable : MonoBehaviour
     private void OnTocada(HoverEnterEventArgs args)
     {
         if (!_grabHabilitado) return;
+        if (HayMandoActivo()) return;
         if (!_camaraCogida)
-        {
             LogicaCogida();
-        }
     }
 
     private void OnCogida(SelectEnterEventArgs args)
     {
+        if (!_grabHabilitado) return;
+        if (HayMandoActivo()) return;
         if (!_camaraCogida)
         {
             _interactorActual = args.interactorObject;
@@ -354,5 +357,23 @@ public class CamaraInteractable : MonoBehaviour
             Gizmos.DrawWireSphere(posicionObjetivoBanera.position, 0.08f);
             Gizmos.DrawLine(transform.position, posicionObjetivoBanera.position);
         }
+    }
+
+    private static readonly List<InputDevice> s_MandoDevices = new List<InputDevice>();
+
+    private static bool HayMandoActivo()
+    {
+        InputDevices.GetDevicesWithCharacteristics(
+            InputDeviceCharacteristics.Controller | InputDeviceCharacteristics.HeldInHand,
+            s_MandoDevices);
+
+        foreach (var d in s_MandoDevices)
+        {
+            if (d.isValid &&
+                d.TryGetFeatureValue(CommonUsages.isTracked, out bool tracked) &&
+                tracked)
+                return true;
+        }
+        return false;
     }
 }

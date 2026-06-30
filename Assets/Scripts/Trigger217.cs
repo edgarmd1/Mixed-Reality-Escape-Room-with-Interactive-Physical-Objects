@@ -18,19 +18,25 @@ public class Trigger217 : MonoBehaviour
     {
         _zona = GetComponent<BoxCollider>();
         _zona.isTrigger = true;
+
+        if (keypadPuzzleManager == null)
+            keypadPuzzleManager = FindObjectOfType<KeypadPuzzleManager>();
+
+        if (keypadPuzzleManager == null)
+            Debug.LogError("No se encontró KeypadPuzzleManager");
     }
 
     void Update()
     {
         if (_activado) return;
 
-        if (keypadPuzzleManager != null)
-        {
-            var estado = keypadPuzzleManager.Estado;
-            bool estadoValido = estado == KeypadPuzzleManager.EstadoKeypad.CamaraDisponible
-                             || estado == KeypadPuzzleManager.EstadoKeypad.PuzzleCompletado;
-            if (!estadoValido) return;
-        }
+        if (keypadPuzzleManager == null)
+            return;
+
+        var estado = keypadPuzzleManager.Estado;
+        bool estadoValido = estado == KeypadPuzzleManager.EstadoKeypad.CamaraDisponible
+                         || estado == KeypadPuzzleManager.EstadoKeypad.PuzzleCompletado;
+        if (!estadoValido) return;
 
         Camera cam = Camera.main;
         if (cam == null) return;

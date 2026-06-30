@@ -23,6 +23,9 @@ public class CamaraAutoGrabHelper : MonoBehaviour
     [SerializeField, Tooltip("Activa el modo controller si detecta un mando físico.")]
     private bool autoActivarSinMando = true;
 
+    [SerializeField, Tooltip("XRGrabInteractable")]
+    private bool soloManos = true;
+
     private XRGrabInteractable _grab;
     private CamaraInteractable _camaraInteractable;
     private Unity.XR.CoreUtils.XROrigin _xrOrigin;
@@ -66,7 +69,8 @@ public class CamaraAutoGrabHelper : MonoBehaviour
         if (autoActivarSinMando)
         {
             bool hayMando = HayMandoActivo();
-            if (hayMando && !_grab.enabled)
+
+            if (!soloManos && hayMando && !_grab.enabled)
             {
                 _grab.enabled = true;
             }
