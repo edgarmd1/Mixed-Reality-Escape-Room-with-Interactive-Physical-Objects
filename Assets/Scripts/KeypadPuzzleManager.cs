@@ -23,7 +23,7 @@ public class KeypadPuzzleManager : MonoBehaviour
 
     [Header("Combinación")]
     [SerializeField, Tooltip("Combinación numérica correcta")]
-    private string combinacionCorrecta = "1351";
+    private string combinacionCorrecta = "1331";
 
     [Header("Arduino")]
     [SerializeField] private ArduinoLuz arduinoLuz;
